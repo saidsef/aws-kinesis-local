@@ -1,4 +1,4 @@
-# Docker Kinesis
+# Docker Kinesis Local
 
 Build for local AWS Kinesis
 
