@@ -9,7 +9,7 @@ Amazon Kinesis Streams enables you to build custom applications that process or 
 ## Components
 
  * NodeJS
- * [Kinesislite https://github.com/mhart/kinesalite]
+ * [Kinesislite](https://github.com/mhart/kinesalite)
 
 ## Deployment
 
