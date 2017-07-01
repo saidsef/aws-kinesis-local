@@ -1,7 +1,7 @@
 FROM ubuntu:16.04
 MAINTAINER Said Sef <saidsef@gmail.com>
 
-LABEL "uk.co.saidsef.aws-kinesis"
+LABEL "uk.co.saidsef.aws-kinesis"="Said Sef Associates Ltd"
 LABEL version="1.0"
 
 ENV NODE_ENV production
