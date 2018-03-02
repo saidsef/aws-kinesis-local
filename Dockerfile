@@ -1,4 +1,4 @@
-FROM node:slim
+FROM node:alpine
 MAINTAINER Said Sef <saidsef@gmail.com>
 
 LABEL "uk.co.saidsef.aws-kinesis"="Said Sef Associates Ltd"
