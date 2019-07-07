@@ -33,8 +33,28 @@ docker run --rm -ti saidsef/aws-kinesis --help
  --shardLimit <limit>   Shard limit for error reporting (default: 10)
  ```
 
-## Deployment
+## Local Deployment
 
 ```bash
 docker run -d -p 4567:4567 saidsef/aws-kinesis --help
+```
+
+## Kubernetes Deployment
+
+```bash
+kubectl apply -f deployment/
+
+```
+
+## Test
+
+For testing you'll need AWS CLI:
+
+```bash
+aws --endpoint-url=http://{kinesis-host}:4567 kinesis list-streams --region eu-west-1
+
+{
+    "StreamNames": []
+}
+
 ```

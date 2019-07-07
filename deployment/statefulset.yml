@@ -1,0 +1,34 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: kinesis
+  labels:
+    name: kinesis
+    app: kinesis
+spec:
+  serviceName: "kinesis"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kinesis
+  template:
+    metadata:
+      labels:
+        name: kinesis
+        app: kinesis
+    spec:
+      containers:
+        - image: saidsef/aws-kinesis-local
+          name: kinesis
+          ports:
+            - protocol: TCP
+              containerPort: 4567
+              name: kinesis
+          volumeMounts:
+            - name: kinesis-storage
+              mountPath: /data
+              subPath: data
+      volumes:
+        - name: kinesis-storage
+          emptyDir: {}
