@@ -11,7 +11,7 @@ spec:
   selector:
     app: kinesis
   ports:
-    - port: 4567
+    - port: 80
       protocol: TCP
       targetPort: 4567
       name: kinesis
