@@ -39,6 +39,15 @@ docker run --rm -ti saidsef/aws-kinesis --help
 docker run -d -p 4567:4567 saidsef/aws-kinesis --help
 ```
 
+```bash
+aws --endpoint-url=http://{kinesis-host}:4567 kinesis list-streams --region eu-west-1
+
+{
+    "StreamNames": []
+}
+
+```
+
 ## Kubernetes Deployment
 
 ```bash
@@ -46,12 +55,8 @@ kubectl apply -f deployment/
 
 ```
 
-## Test
-
-For testing you'll need AWS CLI:
-
 ```bash
-aws --endpoint-url=http://{kinesis-host}:4567 kinesis list-streams --region eu-west-1
+aws --endpoint-url=http://pod-ip kinesis list-streams --region eu-west-1
 
 {
     "StreamNames": []
