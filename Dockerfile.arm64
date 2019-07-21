@@ -16,5 +16,5 @@ EXPOSE ${PORT}
 
 WORKDIR /app
 
-CMD ["/app/node_modules/.bin/kinesalite"]
-ENTRYPOINT ["/app/node_modules/.bin/kinesalite"]
+CMD ["/node_modules/.bin/kinesalite"]
+ENTRYPOINT ["/node_modules/.bin/kinesalite"]
