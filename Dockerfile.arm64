@@ -9,11 +9,11 @@ ARG PORT=""
 ENV NODE_ENV production
 ENV PORT ${PORT:-4567}
 
-RUN npm install -g kinesalite
+RUN npm install kinesalite
 
 EXPOSE ${PORT}
 
-WORKDIR /data
+WORKDIR /app
 
-CMD ["/usr/local/bin/kinesalite"]
-ENTRYPOINT ["/usr/local/bin/kinesalite"]
+CMD ["/app/node_modules/.bin/kinesalite"]
+ENTRYPOINT ["/app/node_modules/.bin/kinesalite"]
