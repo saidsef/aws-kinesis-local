@@ -13,7 +13,7 @@ RUN npm install -g kinesalite
 
 EXPOSE ${PORT}
 
-WORKDIR /data
+WORKDIR /app
 
 CMD ["/usr/local/bin/kinesalite"]
 ENTRYPOINT ["/usr/local/bin/kinesalite"]
