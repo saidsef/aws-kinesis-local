@@ -1,4 +1,4 @@
-FROM arm64v8/node:alpine
+FROM arm64v8/python:3-alpine
 MAINTAINER Said Sef <saidsef@gmail.com>
 
 LABEL "uk.co.saidsef.aws-kinesis"="Said Sef Associates Ltd"
@@ -9,6 +9,7 @@ ARG PORT=""
 ENV NODE_ENV production
 ENV PORT ${PORT:-4567}
 
+RUN apk add -U nodejs npm
 RUN npm install kinesalite
 
 EXPOSE ${PORT}
