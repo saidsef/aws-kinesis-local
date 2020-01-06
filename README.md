@@ -51,12 +51,12 @@ aws --endpoint-url=http://{kinesis-host}:4567 kinesis list-streams --region eu-w
 ## Kubernetes Deployment
 
 ```bash
-kubectl apply -f deployment/
+kubectl apply -k deployment/
 
 ```
 
 ```bash
-aws --endpoint-url=http://pod-ip kinesis list-streams --region eu-west-1
+aws --endpoint-url=http://svc-ip kinesis list-streams --region eu-west-1
 
 {
     "StreamNames": []
