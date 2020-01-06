@@ -14,9 +14,9 @@ before_script:
 script:
   - |
    if [ $TRAVIS_BRANCH == "master" ]; then
-     TAG="latest"
+     export TAG="latest"
    else
-     TAG=$TRAVIS_BRANCH
+     export TAG=$TRAVIS_BRANCH
    fi
   - docker buildx create --use
   - docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t saidsef/node-webserver:$TAG --push .
