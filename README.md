@@ -16,7 +16,7 @@ Amazon Kinesis Streams enables you to build custom applications that process or 
  * [Kinesislite](https://github.com/mhart/kinesalite)
 
  ```bash
-docker run --rm -ti saidsef/aws-kinesis --help
+docker run --rm -ti saidsef/aws-kinesis-local --help
 
  Usage: kinesalite [--port <port>] [--path <path>] [--ssl] [options]
 
@@ -36,7 +36,7 @@ docker run --rm -ti saidsef/aws-kinesis --help
 ## Local Deployment
 
 ```bash
-docker run -d -p 4567:4567 saidsef/aws-kinesis --help
+docker run -d -p 4567:4567 saidsef/aws-kinesis-local --help
 ```
 
 ```bash
