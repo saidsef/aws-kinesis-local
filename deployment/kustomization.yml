@@ -5,5 +5,5 @@ kind: Kustomization
 namespace: web
 
 resources:
-- deployment.yml
+- statefulset.yml
 - service.yml
