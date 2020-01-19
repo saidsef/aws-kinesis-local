@@ -63,3 +63,13 @@ aws --endpoint-url=http://svc-ip kinesis list-streams --region eu-west-1
 }
 
 ```
+
+```javascript
+// npm install aws-sdk
+const AWS = require('aws-sdk);
+
+let kinesis = new AWS.Kinesis({ endpoint: "http://svc-ip", region: "eu-west-1"})
+kinesis.listStreams(Console.log);
+```
+> The `endpoint` value depends on your deployment type
+> See [AWS documentations](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Kinesis.html)
