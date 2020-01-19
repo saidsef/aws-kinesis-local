@@ -28,6 +28,22 @@ spec:
             - protocol: TCP
               containerPort: 4567
               name: kinesis
+          livenessProbe:
+            exec:
+              command:
+                - pgrep
+                - node
+            initialDelaySeconds: 3
+            periodSeconds: 3
+            successThreshold: 1
+            timeoutSeconds: 2
+          readinessProbe:
+            tcpSocket:
+                port: 4567
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 1
           volumeMounts:
             - name: kinesis-storage
               mountPath: /data
