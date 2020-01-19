@@ -1,5 +1,9 @@
 dist: xenial
 sudo: required
+branches:
+  only:
+  - master
+  - "/^release-.*$/"
 before_install:
   - curl -fsSL https://get.docker.com | sh
   - echo '{"experimental":"enabled"}' | sudo tee /etc/docker/daemon.json
