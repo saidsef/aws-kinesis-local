@@ -28,6 +28,13 @@ spec:
             - protocol: TCP
               containerPort: 4567
               name: kinesis
+          resources:
+            limits:
+              memory: 512Mi
+              cpu: 200m
+            requests:
+              memory: 128Mi
+              cpu: 100m
           livenessProbe:
             exec:
               command:
