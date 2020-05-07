@@ -36,7 +36,7 @@ docker run --rm -ti saidsef/aws-kinesis-local --help
 ## Local Deployment
 
 ```bash
-docker run -d -p 4567:4567 saidsef/aws-kinesis-local --help
+docker run -d -p 4567:4567 saidsef/aws-kinesis-local:latest --help
 ```
 
 ```bash
@@ -45,7 +45,6 @@ aws --endpoint-url=http://{kinesis-host}:4567 kinesis list-streams --region eu-w
 {
     "StreamNames": []
 }
-
 ```
 
 ## Kubernetes Deployment
@@ -61,7 +60,6 @@ aws --endpoint-url=http://kinesis.[namespace].svc kinesis list-streams --region 
 {
     "StreamNames": []
 }
-
 ```
 
 ```javascript
@@ -71,6 +69,7 @@ const AWS = require('aws-sdk);
 let kinesis = new AWS.Kinesis({ endpoint: "http://kinesis.[namespace].svc", region: "eu-west-1"})
 kinesis.listStreams(console.log);
 ```
+
 > The `endpoint` value depends on your deployment type
 
 > See [AWS documentations](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Kinesis.html)

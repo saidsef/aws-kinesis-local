@@ -11,7 +11,7 @@ ENV PORT ${PORT:-4567}
 
 WORKDIR /app
 
-RUN npm install -g kinesalite@3.3.0 && \
+RUN npm install -g kinesalite@3.3.1 && \
     mkdir -p /.npm /data && \
     chown -R nobody:nobody /app /.npm /data
 
