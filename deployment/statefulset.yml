@@ -56,8 +56,8 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             privileged: false
-            runAsGroup: 1000
-            runAsUser: 1000
+            runAsGroup: 65534
+            runAsUser: 65534
             capabilities:
              drop:
                - ALL
