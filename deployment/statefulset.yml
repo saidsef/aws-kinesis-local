@@ -21,9 +21,12 @@ spec:
         name: kinesis
         app: kinesis
     spec:
+      terminationGracePeriodSeconds: 60
       containers:
         - image: saidsef/aws-kinesis-local:latest
           name: kinesis
+          imagePullPolicy: Always
+          tty: true
           ports:
             - protocol: TCP
               containerPort: 4567
