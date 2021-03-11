@@ -2,7 +2,7 @@ FROM node:13-alpine
 
 LABEL maintainer="Said Sef <saidsef@gmail.com> (saidsef.co.uk/)"
 LABEL "uk.co.saidsef.aws-kinesis"="Said Sef Associates Ltd"
-LABEL version="2.5"
+LABEL version="2.6"
 
 ARG PORT=""
 
@@ -11,7 +11,7 @@ ENV PORT ${PORT:-4567}
 
 WORKDIR /app
 
-RUN npm install -g kinesalite@3.3.2 && \
+RUN npm install -g kinesalite@3.3.3 && \
     mkdir -p /.npm /data && \
     chown -R nobody:nobody /app /.npm /data
 
