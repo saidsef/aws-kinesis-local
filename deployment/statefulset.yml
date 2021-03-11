@@ -30,7 +30,7 @@ spec:
           ports:
             - protocol: TCP
               containerPort: 4567
-              name: kinesis
+              name: tcp-kinesis
           resources:
             limits:
               memory: 512Mi

@@ -14,4 +14,4 @@ spec:
     - port: 80
       protocol: TCP
       targetPort: 4567
-      name: kinesis
+      name: tcp-kinesis
