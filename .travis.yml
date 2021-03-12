@@ -8,6 +8,7 @@ before_install:
   - curl -LO https://github.com/docker/buildx/releases/download/v0.5.1/buildx-v0.5.1.linux-amd64
   - chmod +x buildx-v0.5.1.linux-amd64
   - mv buildx-v0.5.1.linux-amd64 buildx
+  - ./buildx create --name xbuilder --use
 before_script:
   - echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
 script:
