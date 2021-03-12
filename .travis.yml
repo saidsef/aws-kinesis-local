@@ -13,7 +13,6 @@ before_script:
   - echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
   - ./buildx create --name builderx --use
 script:
-  - ./buildx create --append --name builderx node-arm64
   - |
    if [ $TRAVIS_BRANCH == "master" ]; then
      export TAG="latest"
