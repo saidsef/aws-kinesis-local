@@ -1,20 +1,17 @@
-dist: xenial
+language: bash
+dist: bionic
 sudo: required
 branches:
   only:
   - master
   - "/^release-.*$/"
 before_install:
-  - curl -fsSL https://get.docker.com | sh
-  - echo '{"experimental":"enabled"}' | sudo tee /etc/docker/daemon.json
-  - mkdir -p $HOME/.docker
-  - echo '{"experimental":"enabled"}' | sudo tee $HOME/.docker/config.json
-  - sudo service docker start
-install:
-  - docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-  - docker buildx create --name xbuilder --use
+  - curl -LO https://github.com/docker/buildx/releases/download/v0.5.1/buildx-v0.5.1.linux-amd64
+  - chmod +x buildx-v0.5.1.linux-amd64
+  - mv buildx-v0.5.1.linux-amd64 buildx
 before_script:
   - echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+  - ./buildx create --name builderx --use
 script:
   - |
    if [ $TRAVIS_BRANCH == "master" ]; then
@@ -22,11 +19,8 @@ script:
    else
      export TAG=$TRAVIS_BRANCH
    fi
-  - docker buildx create --use
-  - docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t saidsef/aws-kinesis-local:$TAG --push .
+  - ./buildx build --platform linux/amd64 -t saidsef/aws-kinesis-local:$TAG --push .
 notifications:
   email: true
-  on_success: always
-  on_failure: change
 after_success:
   - echo "All done!"
