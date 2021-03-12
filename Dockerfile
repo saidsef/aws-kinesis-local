@@ -1,4 +1,4 @@
-FROM node:14-alpine
+FROM --platform=$BUILDPLATFORM node:14-alpine
 
 LABEL maintainer="Said Sef <saidsef@gmail.com> (saidsef.co.uk/)"
 LABEL "uk.co.saidsef.aws-kinesis"="Said Sef Associates Ltd"
