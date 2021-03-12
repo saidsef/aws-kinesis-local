@@ -1,18 +1,21 @@
-dist: xenial
+language: bash
+dist: bionic
 sudo: required
 branches:
   only:
   - master
   - "/^release-.*$/"
 before_install:
+  - echo '{"experimental":"enabled"}' | sudo tee $HOME/.docker/config.json
   - curl -LO https://github.com/docker/buildx/releases/download/v0.5.1/buildx-v0.5.1.linux-amd64
   - chmod +x buildx-v0.5.1.linux-amd64
   - mv buildx-v0.5.1.linux-amd64 buildx
-  - ./buildx create --name builderx --use
+  - sudo service docker start
 before_script:
   - echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
-  - ./buildx create --append --name builderx node-arm64
+  - ./buildx create --name builderx --use
 script:
+  - ./buildx create --append --name builderx node-arm64
   - |
    if [ $TRAVIS_BRANCH == "master" ]; then
      export TAG="latest"
