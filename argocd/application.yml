@@ -1,0 +1,21 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aws-kinesis
+  namespace: argocd
+spec:
+  destination:
+    namespace: data
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    path: deployment
+    repoURL: https://github.com/saidsef/aws-kinesis-local.git
+    targetRevision: master
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
