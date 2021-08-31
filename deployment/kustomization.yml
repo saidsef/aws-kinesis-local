@@ -7,3 +7,8 @@ namespace: web
 resources:
 - statefulset.yml
 - service.yml
+
+images:
+  - name: docker.io/saidsef/aws-kinesis-local:latest
+    newName: docker.io/saidsef/aws-kinesis-local
+    newTag: latest
