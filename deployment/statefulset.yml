@@ -23,7 +23,7 @@ spec:
     spec:
       terminationGracePeriodSeconds: 60
       containers:
-        - image: saidsef/aws-kinesis-local:latest
+        - image: docker.io/saidsef/aws-kinesis-local:latest
           name: kinesis
           imagePullPolicy: Always
           tty: true
@@ -33,10 +33,10 @@ spec:
               name: tcp-kinesis
           resources:
             limits:
-              memory: 512Mi
+              memory: 1Gi
               cpu: 200m
             requests:
-              memory: 128Mi
+              memory: 512Mi
               cpu: 100m
           livenessProbe:
             exec:
