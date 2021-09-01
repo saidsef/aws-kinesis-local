@@ -1,4 +1,4 @@
-# Docker Kinesis Local
+# Docker Kinesis Local [![CI](https://github.com/saidsef/aws-kinesis-local/actions/workflows/docker.yml/badge.svg)](#howto-and-documentation) [![Tagging](https://github.com/saidsef/aws-kinesis-local/actions/workflows/tagging.yml/badge.svg)](#howto-and-documentation) [![Release](https://github.com/saidsef/aws-kinesis-local/actions/workflows/release.yml/badge.svg)](#howto-and-documentation)
 
 Build for local AWS Kinesis
 
@@ -8,12 +8,12 @@ Amazon Kinesis Streams enables you to build custom applications that process or 
 
 ## Components
 
- * NodeJS
- * [Kinesislite](https://github.com/mhart/kinesalite)
+* NodeJS
+* [Kinesislite](https://github.com/mhart/kinesalite)
 
 ## HowTo and Documentation
 
- * [Kinesislite](https://github.com/mhart/kinesalite)
+* [Kinesislite](https://github.com/mhart/kinesalite)
 
  ```bash
 docker run --rm -ti saidsef/aws-kinesis-local --help
@@ -72,4 +72,4 @@ kinesis.listStreams(console.log);
 
 > The `endpoint` value depends on your deployment type
 
-> See [AWS documentations](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Kinesis.html)
+> See [AWS Kinesis documentations](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Kinesis.html)
