@@ -1,6 +1,7 @@
 name: Release
 on:
   push:
+    types: [published, created, edited]
     tags:
       - "v*"
   schedule:
