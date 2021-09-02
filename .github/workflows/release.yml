@@ -1,6 +1,8 @@
-# Reference docs: https://stackoverflow.com/questions/61686058/check-if-there-are-new-commits-since-the-latest-tag
 name: Release
 on:
+  push:
+    branches:
+      - "v*"
   schedule:
     - cron: '55 23 28 */1 *'
   workflow_dispatch:
@@ -18,17 +20,6 @@ jobs:
           export DATE=v$(echo `date +'%Y.%m'`)
           echo "DATE=${DATE}" >> $GITHUB_ENV
           echo "TAG=$(echo `git tag -l ${DATE}`)" >> $GITHUB_ENV
-      - name: Create models
-        if: ${{ env.TAG }}
-        run: |
-          docker run -v $PWD:/app:rw -w "/app" -u root jupyter/datascience-notebook:latest bash ./scripts/run.sh
-      - name: Cache multiple paths
-        uses: actions/cache@v2
-        if: ${{ env.TAG }}
-        with:
-          key: ${{ runner.os }}-${{ env.TAG }}-${{ hashFiles('data/news.json') }}
-          path: |
-            ${{ github.workspace }}/data/*
       - name: Create Release
         uses: actions/github-script@v4
         id: release
@@ -51,14 +42,20 @@ jobs:
 
               release_id = release.data.id;
             } catch (e) {
-              console.log("Release failed " + e)
+              let latest;
+              if (e.code == 422) { // Release alredy exists
+                latest = await github.repos.getLatestRelease({
+                  owner, repo
+                });
+              }
+              release_id = latest.data.id;
             }
 
-            return release_id;
+            return release_id
 
       - name: Upload Release Assets
         uses: actions/github-script@v4
-        if: ${{ steps.release.outputs.result && env.TAG }}
+        if: ${{ steps.release.outputs.result }}
         with:
           github-token: ${{ github.token }}
           script: |
