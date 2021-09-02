@@ -1,0 +1,75 @@
+# Reference docs: https://stackoverflow.com/questions/61686058/check-if-there-are-new-commits-since-the-latest-tag
+name: Release
+on:
+  schedule:
+    - cron: '55 23 28 */1 *'
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - name: Fetch remote tags
+        run: git fetch origin +refs/tags/*:refs/tags/*
+      - name: Set Tag Value
+        run: |
+          export DATE=v$(echo `date +'%Y.%m'`)
+          echo "DATE=${DATE}" >> $GITHUB_ENV
+          echo "TAG=$(echo `git tag -l ${DATE}`)" >> $GITHUB_ENV
+      - name: Create models
+        if: ${{ env.TAG }}
+        run: |
+          docker run -v $PWD:/app:rw -w "/app" -u root jupyter/datascience-notebook:latest bash ./scripts/run.sh
+      - name: Cache multiple paths
+        uses: actions/cache@v2
+        if: ${{ env.TAG }}
+        with:
+          key: ${{ runner.os }}-${{ env.TAG }}-${{ hashFiles('data/news.json') }}
+          path: |
+            ${{ github.workspace }}/data/*
+      - name: Create Release
+        uses: actions/github-script@v4
+        id: release
+        if: ${{ env.TAG }}
+        with:
+          github-token: ${{ github.token }}
+          result-encoding: string
+          script: |
+            const { repo: { owner, repo }, sha } = context;
+            const tag = process.env.DATE;
+            let release_id = 0;
+
+            try {
+              const release = await github.repos.createRelease({
+                owner, repo,
+                tag_name: tag,
+                draft: false,
+                target_commitish: sha
+              });
+
+              release_id = release.data.id;
+            } catch (e) {
+              console.log("Release failed " + e)
+            }
+
+            return release_id;
+
+      - name: Upload Release Assets
+        uses: actions/github-script@v4
+        if: ${{ steps.release.outputs.result && env.TAG }}
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const { repo: { owner, repo }, sha } = context;
+            const fs = require('fs').promises;
+
+            for (let file of await fs.readdir('./deployment')) {
+              await github.repos.uploadReleaseAsset({
+                owner, repo,
+                release_id: ${{ steps.release.outputs.result }},
+                name: file,
+                data: await fs.readFile(`./deployment/${file}`)
+              })
+            }
