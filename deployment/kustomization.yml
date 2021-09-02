@@ -7,6 +7,6 @@ resources:
 - service.yml
 
 images:
-  - name: docker.io/saidsef/aws-kinesis-local:latest
+  - name: kinesis
     newName: docker.io/saidsef/aws-kinesis-local
     newTag: latest
