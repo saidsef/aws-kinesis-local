@@ -1,7 +1,7 @@
 name: Release
 on:
   push:
-    branches:
+    tags:
       - "v*"
   schedule:
     - cron: '55 23 28 */1 *'
