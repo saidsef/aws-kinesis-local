@@ -67,11 +67,24 @@ jobs:
             const { repo: { owner, repo }, sha } = context;
             const fs = require('fs').promises;
 
-            for (let file of await fs.readdir('./deployment')) {
-              await github.repos.uploadReleaseAsset({
-                owner, repo,
-                release_id: ${{ steps.release.outputs.result }},
-                name: file,
-                data: await fs.readFile(`./deployment/${file}`)
-              })
+            try {
+              for (let file of await fs.readdir('./deployment')) {
+                await github.repos.uploadReleaseAsset({
+                  owner, repo,
+                  release_id: ${{ steps.release.outputs.result }},
+                  name: file,
+                  data: await fs.readFile(`./deployment/${file}`)
+                })
+              }
+            } catch (e) {
+              if (e.code == 422) { // Asset alredy exists
+                for (let file of await fs.readdir('./deployment')) {
+                  await github.repos.updateReleaseAsset({
+                    owner, repo,
+                    release_id: ${{ steps.release.outputs.result }},
+                    name: file,
+                    data: await fs.readFile(`./deployment/${file}`)
+                  })
+                }
+              }
             }
