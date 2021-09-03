@@ -1,11 +1,15 @@
 name: Release
 on:
   push:
-    types: [published, created, edited]
     tags:
       - "v*"
   schedule:
     - cron: '55 23 28 */1 *'
+  workflow_run:
+    workflows:
+      - Tagging
+    types:
+      - completed
   workflow_dispatch:
 
 jobs:
