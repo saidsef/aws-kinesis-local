@@ -5,7 +5,7 @@ on:
       - master
   workflow_run:
     workflows:
-      - CodeQL
+      - CI
     types:
       - completed
   workflow_dispatch:
@@ -34,9 +34,10 @@ jobs:
                 ref: "refs/tags/${{ env.DATE }}",
                 sha: context.sha
               });
-            } catch (e) {
-              console.log("Tag already exists: " + e)
-              tagExists.push(e);
+            } catch (e) { // Tag alredy exists
+              if (e.status == 422) {
+                tagExists.push(e);
+              }
             }
 
             if (tagExists.length > 0) {
