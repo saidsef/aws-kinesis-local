@@ -54,6 +54,12 @@ kubectl apply -k deployment/
 
 ```
 
+Or, to deploy via argocd:
+
+```bash
+kubectl apply -f argocd/application.yml
+```
+
 ```bash
 aws --endpoint-url=http://kinesis.[namespace].svc kinesis list-streams --region eu-west-1
 
