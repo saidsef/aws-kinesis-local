@@ -6,7 +6,11 @@ resources:
 - statefulset.yml
 - service.yml
 
+commonAnnotations:
+  app.kubernetes.io/name: kinesis
+  app.kubernetes.io/created-by: kustomizer
+
 images:
-  - name: kinesis
-    newName: docker.io/saidsef/aws-kinesis-local
-    newTag: latest
+- name: kinesis
+  newName: docker.io/saidsef/aws-kinesis-local
+  newTag: latest
