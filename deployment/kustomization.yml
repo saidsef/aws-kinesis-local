@@ -8,7 +8,8 @@ resources:
 
 commonAnnotations:
   app.kubernetes.io/name: kinesis
-  app.kubernetes.io/created-by: kustomizer
+  app.kubernetes.io/component: stream
+  app.kubernetes.io/managed-by: kustomizer
 
 images:
 - name: kinesis
