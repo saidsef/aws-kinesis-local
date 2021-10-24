@@ -1,15 +1,12 @@
 name: Release
 on:
-  push:
-    tags:
-      - "v*"
-  schedule:
-    - cron: '55 23 28 */1 *'
   workflow_run:
     workflows:
       - Tagging
     types:
       - completed
+    branch:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -41,6 +38,7 @@ jobs:
               const release = await github.repos.createRelease({
                 owner, repo,
                 tag_name: tag,
+                title: tag,
                 draft: false,
                 target_commitish: sha
               });
