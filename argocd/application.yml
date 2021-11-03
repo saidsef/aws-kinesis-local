@@ -1,0 +1,28 @@
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: aws-kinesis
+  namespace: argocd
+  annotations:
+    argocd-image-updater.argoproj.io/image-list: kinesis=docker.io/saidsef/aws-kinesis-local
+    argocd-image-updater.argoproj.io/kinesis.force-update: "true"
+    argocd-image-updater.argoproj.io/kinesis.update-strategy: latest
+    argocd-image-updater.argoproj.io/write-back-method: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  destination:
+    namespace: data
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    repoURL: 'https://github.com/saidsef/aws-kinesis-local.git'
+    path: deployment
+    targetRevision: HEAD
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

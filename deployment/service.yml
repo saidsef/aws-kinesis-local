@@ -1,0 +1,17 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kinesis
+  labels:
+    name: kinesis
+    app: kinesis
+spec:
+  type: ClusterIP
+  selector:
+    app: kinesis
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 4567
+      name: tcp-kinesis

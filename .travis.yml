@@ -1,0 +1,26 @@
+language: bash
+dist: bionic
+sudo: required
+branches:
+  only:
+  - master
+  - "/^release-.*$/"
+before_install:
+  - curl -LO https://github.com/docker/buildx/releases/download/v0.5.1/buildx-v0.5.1.linux-amd64
+  - chmod +x buildx-v0.5.1.linux-amd64
+  - mv buildx-v0.5.1.linux-amd64 buildx
+before_script:
+  - echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+  - ./buildx create --name builderx --use
+script:
+  - |
+   if [ $TRAVIS_BRANCH == "master" ]; then
+     export TAG="latest"
+   else
+     export TAG=$TRAVIS_BRANCH
+   fi
+  - ./buildx build --platform linux/amd64 -t saidsef/aws-kinesis-local:$TAG --push .
+notifications:
+  email: true
+after_success:
+  - echo "All done!"
