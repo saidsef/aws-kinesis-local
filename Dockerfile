@@ -2,7 +2,7 @@ FROM node:16-alpine
 
 LABEL maintainer="Said Sef <saidsef@gmail.com> (saidsef.co.uk/)"
 LABEL "uk.co.saidsef.aws-kinesis"="Said Sef Associates Ltd"
-LABEL version="2.6"
+LABEL version="3.1"
 
 ARG PORT=""
 
