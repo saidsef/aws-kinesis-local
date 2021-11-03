@@ -49,16 +49,30 @@ aws --endpoint-url=http://{kinesis-host}:4567 kinesis list-streams --region eu-w
 
 ## Kubernetes Deployment
 
+### HELM
+
+```shell
+helm repo add kinesis https://saidsef.github.io/aws-kinesis-local/
+helm repo update
+helm upgrade --install kinesis kinesis/kinesis --namespace kinesis --create-namespace
+```
+
+### Kubectl
+
 ```bash
 kubectl apply -k deployment/
 
 ```
 
-Or, to deploy via argocd:
+### ArgoCD
 
 ```bash
 kubectl apply -f argocd/application.yml
 ```
+
+## Testing
+
+### AWS CLI/SDK
 
 ```bash
 aws --endpoint-url=http://kinesis.[namespace].svc kinesis list-streams --region eu-west-1
