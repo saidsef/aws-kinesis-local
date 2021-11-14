@@ -1,4 +1,4 @@
-# Docker Kinesis Local [![CI](https://github.com/saidsef/aws-kinesis-local/actions/workflows/docker.yml/badge.svg)](#howto-and-documentation) [![Tagging](https://github.com/saidsef/aws-kinesis-local/actions/workflows/tagging.yml/badge.svg)](#howto-and-documentation) [![Release](https://github.com/saidsef/aws-kinesis-local/actions/workflows/release.yml/badge.svg)](#howto-and-documentation)
+# Docker Kinesis Local [![CI](https://github.com/saidsef/aws-kinesis-local/actions/workflows/docker.yml/badge.svg)](#howto-and-documentation) [![Tagging](https://github.com/saidsef/aws-kinesis-local/actions/workflows/charts.yml/badge.svg)](#howto-and-documentation)
 
 Build for local AWS Kinesis
 
