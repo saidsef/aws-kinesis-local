@@ -20,13 +20,16 @@ podAnnotations: {}
 podSecurityContext: {}
   # fsGroup: 2000
 
-securityContext: {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+    add:
+    - NET_BIND_SERVICE
+    - SYS_TIME
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 65534
 
 service:
   type: ClusterIP
