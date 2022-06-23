@@ -22,14 +22,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout source code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Set Tag Name
       run: |
         echo "TAG=$(echo ${GITHUB_REF##*/})" >> $GITHUB_ENV
         echo "DATE=v$(echo `date +'%Y.%m'`)" >> $GITHUB_ENV
         echo "REPO_NAME=$(echo ${PWD##*/})" >> $GITHUB_ENV
     - name: Login to DockerHub
-      uses: docker/login-action@v1
+      uses: docker/login-action@v2
       if: success()
       with:
         registry: ${{ env.REGISTRY }}
@@ -46,7 +46,7 @@ jobs:
       env:
         DOCKER_BUILDKIT: 1
     - name: Build and push Docker image - (TAG)
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v3
       if: success()
       env:
         DOCKER_BUILDKIT: 1
@@ -58,7 +58,7 @@ jobs:
         push: true
         tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPO_NAME }}:${{ env.TAG == 'main' && 'latest' || env.TAG }}
     - name: Build and push Docker image - (MAIN)
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v3
       if: ${{ contains(github.ref, 'main') }}
       env:
         DOCKER_BUILDKIT: 1
@@ -78,7 +78,7 @@ jobs:
         template: '@/contrib/sarif.tpl'
         output: 'trivy-results.sarif'
     - name: Upload Trivy scan results to GitHub Security
-      uses: github/codeql-action/upload-sarif@v1
+      uses: github/codeql-action/upload-sarif@v2
       if: success()
       with:
         sarif_file: 'trivy-results.sarif'
@@ -109,7 +109,7 @@ jobs:
     if: ${{ github.event_name == 'pull_request' }}
     steps:
     - name: Check out repository code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - uses: hmarr/auto-approve-action@v2
       with:
         github-token: "${{ secrets.GITHUB_TOKEN }}"
