@@ -91,7 +91,7 @@ jobs:
       - name: Create k8s Kind Cluster
         uses: helm/kind-action@v1.2.0
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Run K8s test
         run: |
           kubectl cluster-info
@@ -108,8 +108,13 @@ jobs:
     needs: [build, k8s-test]
     if: ${{ github.event_name == 'pull_request' }}
     steps:
-    - name: Check out repository code
-      uses: actions/checkout@v3
-    - uses: hmarr/auto-approve-action@v2
+    - name: Auto Approve PR
+      uses: actions/github-script@v6
       with:
-        github-token: "${{ secrets.GITHUB_TOKEN }}"
+       script: |
+        github.rest.pulls.createReview({
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          pull_number: context.issue.number,
+          event: "APPROVE"
+        })
