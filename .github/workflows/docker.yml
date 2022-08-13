@@ -25,7 +25,7 @@ jobs:
       uses: actions/checkout@v3
     - name: Set Tag Name
       run: |
-        echo "TAG=$(echo ${GITHUB_REF##*/})" >> $GITHUB_ENV
+        echo "TAG=${{ github.head_ref || github.ref_name }}" >> $GITHUB_ENV
         echo "DATE=v$(echo `date +'%Y.%m'`)" >> $GITHUB_ENV
         echo "REPO_NAME=$(echo ${PWD##*/})" >> $GITHUB_ENV
     - name: Login to DockerHub

@@ -1,20 +1,29 @@
 apiVersion: v2
-appVersion: "0.5.1"
+appVersion: &appVersion "0.5.2"
 description: A Kinesis Locaal Helm chart for Kubernetes
-kubeVersion: ">= 1.21"
+kubeVersion: ">= 1.22"
 name: kinesis
 type: application
-version: 0.5.1
-
+version: *appVersion
+home: https://github.com/saidsef/aws-kinesis-local
+icon: https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/main/dist/MediaServices/KinesisVideoStreams2.png
 keywords:
   - kinesis
   - aws
   - local
   - kubernetes
-
 maintainers:
   - name: Said Sef
     email: saidsef@gmail.com
-
+    url: https://saidsef.co.uk/
 sources:
   - https://github.com/saidsef/aws-kinesis-local.git
+annotations:
+  artifacthub.io/license: "MIT"
+  artifacthub.io/links: |
+    - name: README
+      url: https://github.com/saidsef/aws-kinesis-local/blob/main/README.md
+    - name: LICENSE
+      url: https://github.com/saidsef/aws-kinesis-local/blob/main/LICENSE.md
+    - name: CONTRIBUTING
+      url: https://github.com/saidsef/aws-kinesis-local/blob/main/CONTRIBUTING.md
