@@ -15,5 +15,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: '👋 Hi and Thanks for Reporting!',
-              labels: ['Triage']
+              labels: ['triage']
             })
