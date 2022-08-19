@@ -1,7 +1,7 @@
 apiVersion: v2
 appVersion: &appVersion "0.5.3"
 description: A Kinesis Locaal Helm chart for Kubernetes
-kubeVersion: ">= 1.22"
+kubeVersion: ">= 1.23"
 name: kinesis
 type: application
 version: *appVersion
