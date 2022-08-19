@@ -4,14 +4,13 @@ kind: StatefulSet
 metadata:
   name: kinesis
   labels:
-    name: kinesis
-    app: kinesis
+    app.kubernetes.io/name: kinesis
 spec:
   serviceName: "kinesis"
   replicas: 1
   selector:
     matchLabels:
-      app: kinesis
+      app.kubernetes.io/name: kinesis
   template:
     metadata:
       annotations:
@@ -30,7 +29,7 @@ spec:
           ports:
             - protocol: TCP
               containerPort: 4567
-              name: tcp-kinesis
+              name: tcp
           resources:
             limits:
               memory: 1Gi
@@ -69,9 +68,9 @@ spec:
                - NET_BIND_SERVICE
                - SYS_TIME
           volumeMounts:
-            - name: kinesis-storage
+            - name: storage
               mountPath: /data
               subPath: data
       volumes:
-        - name: kinesis-storage
+        - name: storage
           emptyDir: {}
