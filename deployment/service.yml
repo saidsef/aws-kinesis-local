@@ -4,14 +4,13 @@ kind: Service
 metadata:
   name: kinesis
   labels:
-    name: kinesis
-    app: kinesis
+    app.kubernetes.io/name: kinesis
 spec:
   type: ClusterIP
   selector:
-    app: kinesis
+    app.kubernetes.io/name: kinesis
   ports:
     - port: 80
       protocol: TCP
-      targetPort: 4567
-      name: tcp-kinesis
+      targetPort: tcp
+      name: tcp
