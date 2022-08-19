@@ -17,8 +17,7 @@ spec:
         prometheus.io/scrape: "true"
         prometheus.io/port: "4567"
       labels:
-        name: kinesis
-        app: kinesis
+        app.kubernetes.io/name: kinesis
     spec:
       terminationGracePeriodSeconds: 60
       containers:
