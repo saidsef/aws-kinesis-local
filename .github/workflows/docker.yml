@@ -91,6 +91,8 @@ jobs:
     steps:
       - name: Create k8s Kind Cluster
         uses: helm/kind-action@v1.3.0
+        with:
+          kubectl_version: "v1.23.10"
       - name: Checkout
         uses: actions/checkout@v3
       - name: Run K8s test
@@ -103,9 +105,11 @@ jobs:
           fi
           kubectl create namespace $NS
           kubectl apply -n $NS -k deployment/
-          kubectl get all -n $NS
 
           helm install kinesis charts/kinesis --namespace kinesis --create-namespace
+
+          kubectl get all -A
+          helm list -A
 
   auto-approve:
     runs-on: ubuntu-latest
