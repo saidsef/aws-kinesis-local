@@ -96,6 +96,7 @@ jobs:
       - name: Run K8s test
         run: |
           kubectl cluster-info
+          kubectl version --short
           export NS=`cat deployment/kustomization.yml  | grep namespace | awk '{ print $2 }'`
           if [ -z "$NS" ]; then
             export NS='data'
@@ -103,6 +104,8 @@ jobs:
           kubectl create namespace $NS
           kubectl apply -n $NS -k deployment/
           kubectl get all -n $NS
+
+          helm install kinesis charts/kinesis --namespace kinesis --create-namespace
 
   auto-approve:
     runs-on: ubuntu-latest
