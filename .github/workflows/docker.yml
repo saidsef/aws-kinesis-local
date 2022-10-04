@@ -90,7 +90,7 @@ jobs:
     if: ${{ ! contains(github.ref, 'main') }}
     steps:
       - name: Create k8s Kind Cluster
-        uses: helm/kind-action@v1.3.0
+        uses: helm/kind-action@v1.4.0
         with:
           kubectl_version: "v1.23.10"
       - name: Checkout
