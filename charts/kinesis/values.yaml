@@ -4,7 +4,7 @@ replicaCount: 1
 image:
   repository: docker.io/saidsef/aws-kinesis-local
   pullPolicy: IfNotPresent
-  tag: "latest"
+  tag: "v2023.01"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -21,15 +21,17 @@ podSecurityContext: {}
   # fsGroup: 2000
 
 securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  privileged: false
+  runAsNonRoot: true
+  runAsGroup: 65534
+  runAsUser: 65534
+  seccompProfile:
+    type: RuntimeDefault
   capabilities:
     drop:
-    - ALL
-    add:
-    - NET_BIND_SERVICE
-    - SYS_TIME
-  readOnlyRootFilesystem: true
-  runAsNonRoot: true
-  runAsUser: 65534
+      - ALL
 
 service:
   type: ClusterIP

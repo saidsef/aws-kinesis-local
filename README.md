@@ -16,7 +16,7 @@ Amazon Kinesis Streams enables you to build custom applications that process or 
 * [Kinesislite](https://github.com/mhart/kinesalite)
 
  ```bash
-docker run --rm -ti saidsef/aws-kinesis-local --help
+docker run --rm -ti docker.io/saidsef/aws-kinesis-local --help
 
  Usage: kinesalite [--port <port>] [--path <path>] [--ssl] [options]
 
@@ -36,7 +36,7 @@ docker run --rm -ti saidsef/aws-kinesis-local --help
 ## Local Deployment
 
 ```bash
-docker run -d -p 4567:4567 saidsef/aws-kinesis-local:latest --help
+docker run -d -p 4567:4567 docker.io/saidsef/aws-kinesis-local:latest --help
 ```
 
 ```bash
@@ -75,7 +75,7 @@ kubectl apply -f argocd/application.yml
 ### AWS CLI/SDK
 
 ```bash
-aws --endpoint-url=http://kinesis.[namespace].svc kinesis list-streams --region eu-west-1
+aws --endpoint-url=http://[kinesis|IP_ADDRESS] kinesis list-streams --region eu-west-1
 
 {
     "StreamNames": []
@@ -84,7 +84,7 @@ aws --endpoint-url=http://kinesis.[namespace].svc kinesis list-streams --region 
 
 ```javascript
 // npm install aws-sdk
-const AWS = require('aws-sdk);
+const AWS = require('aws-sdk');
 
 let kinesis = new AWS.Kinesis({ endpoint: "http://kinesis.[namespace].svc", region: "eu-west-1"})
 kinesis.listStreams(console.log);
