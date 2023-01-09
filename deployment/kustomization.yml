@@ -14,4 +14,4 @@ commonAnnotations:
 images:
 - name: kinesis
   newName: docker.io/saidsef/aws-kinesis-local
-  newTag: latest
+  newTag: v2023.01

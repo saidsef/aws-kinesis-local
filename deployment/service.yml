@@ -7,6 +7,12 @@ metadata:
     app.kubernetes.io/name: kinesis
 spec:
   type: ClusterIP
+  ipFamilyPolicy: PreferDualStack
+  sessionAffinity: ClientIP
+  publishNotReadyAddresses: true
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 60
   selector:
     app.kubernetes.io/name: kinesis
   ports:
