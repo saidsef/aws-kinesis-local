@@ -6,6 +6,9 @@ metadata:
     {{- include "kinesis.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.service.type }}
+  {{- if .Values.service.healess }}
+  clusterIP: None
+  {{- end }}
   ports:
     - port: {{ .Values.service.port }}
       targetPort: tcp
