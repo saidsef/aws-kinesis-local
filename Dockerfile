@@ -29,7 +29,7 @@ EXPOSE ${PORT}
 
 VOLUME ["/data"]
 
-HEALTHCHECK --interval=30s --timeout=10s CMD nc -zvw3 127.0.0.1 4567 || exit 1 
+HEALTHCHECK --interval=60s --timeout=10s CMD nc -zvw3 127.0.0.1 4567 || exit 1
 
 CMD ["/usr/local/bin/kinesalite", "--port", ${PORT}, "--path", ${KPATH}, "--shardLimit", ${SHARDLIMIT}, "--createStreamMs", ${CREATESTREAMMS}, "--deleteStreamMs", ${DELETESTREAMMS}]
 ENTRYPOINT ["/usr/local/bin/kinesalite"]
