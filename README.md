@@ -93,3 +93,13 @@ kinesis.listStreams(console.log);
 > The `endpoint` value depends on your deployment type
 
 > See [AWS Kinesis documentations](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Kinesis.html)
+
+## Source
+
+Our latest and greatest source of Jenkins can be found on [GitHub](#deployment). Fork us!
+
+## Contributing
+
+We would :heart:  you to contribute by making a [pull request](https://github.com/saidsef/aws-kinesis-local/pulls).
+
+Please read the official [Contribution Guide](./CONTRIBUTING.md) for more information on how you can contribute.
