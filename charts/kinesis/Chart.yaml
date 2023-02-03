@@ -29,7 +29,7 @@ annotations:
       url: https://github.com/saidsef/aws-kinesis-local/blob/main/CONTRIBUTING.md
   artifacthub.io/changes: |
     - kind: added
-      decription: Added Chart testing and validation to CI Chart workflow
+      description: Added Chart testing and validation to CI Chart workflow
     - kind: changed
       description: Changes workflow triggers to PR and merge to main
     - kind: fixed
