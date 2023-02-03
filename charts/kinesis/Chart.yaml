@@ -1,5 +1,5 @@
 apiVersion: v2
-appVersion: &appVersion "0.7.0"
+appVersion: &appVersion "0.7.1"
 description: A Kinesis Locaal Helm chart for Kubernetes
 kubeVersion: ">= 1.23"
 name: kinesis
@@ -27,3 +27,10 @@ annotations:
       url: https://github.com/saidsef/aws-kinesis-local/blob/main/LICENSE.md
     - name: CONTRIBUTING
       url: https://github.com/saidsef/aws-kinesis-local/blob/main/CONTRIBUTING.md
+  artifacthub.io/changes: |
+    - kind: added
+      decription: Added Chart testing and validation to CI Chart workflow
+    - kind: changed
+      description: Changes workflow triggers to PR and merge to main
+    - kind: fixed
+      description: Fixed CI workflow dependencies

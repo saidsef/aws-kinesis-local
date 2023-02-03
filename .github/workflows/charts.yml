@@ -1,41 +1,81 @@
 name: Charts
 
 on:
-  workflow_run:
-    workflows:
-      - CI
-    types:
-      - completed
+  push:
     branches:
       - main
     paths:
-      - "charts/**"
+      - charts/**
+  pull_request:
+    branches:
+      - main
+    paths:
+      - charts/**
   workflow_dispatch:
 
 jobs:
-  charts:
+  chart:
     runs-on: ubuntu-latest
-    if: ${{ contains(github.ref, 'main') }}
+    if: ${{ github.event_name == 'pull_request' || contains(github.ref, 'main') }}
     steps:
       - name: Checkout source code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Configure Git
-        run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
       - name: Install Helm
         uses: azure/setup-helm@v3
         with:
-          version: v3.4.0
-      - name: Copy Readme and License
+          version: v3.10.0
+      - name: Setup Chart Linting
+        if: ${{ github.event_name == 'pull_request' }}
+        id: lint
+        uses: helm/chart-testing-action@v2.3.1
+      - name: Configure Git
+        if: ${{ contains(github.ref, 'main') }}
         run: |
-          cp -v *.md charts/kinesis/
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+      - name: Copy Readme and License
+        if: ${{ contains(github.ref, 'main') }}
+        run: |
+          cp -v *.md charts/applicationset/
       - name: Run chart-releaser
+        if: ${{ contains(github.ref, 'main') }}
         uses: helm/chart-releaser-action@v1.5.0
         with:
           charts_dir: charts
           config: charts/cr.yml
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+  k8s-test:
+    runs-on: ubuntu-latest
+    needs: [chart]
+    if: ${{ ! contains(github.ref, 'main') }}
+    steps:
+      - name: Create k8s Kind Cluster
+        uses: helm/kind-action@v1.5.0
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Run K8s test
+        run: |
+          kubectl create ns kinesis
+          helm upgrade -i appsets charts/kinesis --namespace kinesis --create-namespace
+          helm list -A
+          kubectl get all -A
+  auto-approve:
+    runs-on: ubuntu-latest
+    needs: [chart, k8s-test]
+    if: ${{ github.event_name == 'pull_request' }}
+    steps:
+    - name: Auto Approve PR
+      uses: actions/github-script@v6
+      with:
+       script: |
+        github.rest.pulls.createReview({
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          pull_number: context.issue.number,
+          event: "APPROVE"
+        })
+
