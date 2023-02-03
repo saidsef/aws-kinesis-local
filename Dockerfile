@@ -1,4 +1,4 @@
-FROM node:19.4-alpine
+FROM node:19.6-alpine
 
 LABEL maintainer="Said Sef <saidsef@gmail.com> (saidsef.co.uk/)"
 LABEL "uk.co.saidsef.aws-kinesis"="Said Sef Associates Ltd"
