@@ -1,4 +1,4 @@
-FROM docker.io/node:19.7-alpine
+FROM docker.io/node:19.8-alpine
 
 LABEL maintainer="Said Sef <saidsef@gmail.com> (saidsef.co.uk/)"
 LABEL "uk.co.saidsef.aws-kinesis"="Said Sef Associates Ltd"
