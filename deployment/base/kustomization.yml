@@ -9,4 +9,4 @@ resources:
 images:
 - name: kinesis
   newName: docker.io/saidsef/aws-kinesis-local
-  newTag: v2023.04
+  newTag: v2023.09
