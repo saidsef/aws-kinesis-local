@@ -41,7 +41,7 @@ jobs:
           cp -v *.md charts/kinesis/
       - name: Run chart-releaser
         if: ${{ contains(github.ref, 'main') }}
-        uses: helm/chart-releaser-action@v1.5.0
+        uses: helm/chart-releaser-action@v1.6.0
         with:
           charts_dir: charts
           config: charts/cr.yml
