@@ -29,7 +29,7 @@ jobs:
       - name: Setup Chart Linting
         if: ${{ github.event_name == 'pull_request' }}
         id: lint
-        uses: helm/chart-testing-action@v2.4.0
+        uses: helm/chart-testing-action@v2.6.1
       - name: Configure Git
         if: ${{ contains(github.ref, 'main') }}
         run: |
@@ -41,7 +41,7 @@ jobs:
           cp -v *.md charts/kinesis/
       - name: Run chart-releaser
         if: ${{ contains(github.ref, 'main') }}
-        uses: helm/chart-releaser-action@v1.5.0
+        uses: helm/chart-releaser-action@v1.6.0
         with:
           charts_dir: charts
           config: charts/cr.yml
