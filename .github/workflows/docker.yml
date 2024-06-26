@@ -48,7 +48,7 @@ jobs:
       env:
         DOCKER_BUILDKIT: 1
     - name: Build and push Docker image - (TAG)
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       if: success()
       env:
         DOCKER_BUILDKIT: 1
@@ -60,7 +60,7 @@ jobs:
         push: true
         tags: ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ env.REPO_NAME }}:${{ env.TAG == 'main' && 'latest' || env.TAG }}
     - name: Build and push Docker image - (MAIN)
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v6
       if: ${{ contains(github.ref, 'main') }}
       env:
         DOCKER_BUILDKIT: 1
