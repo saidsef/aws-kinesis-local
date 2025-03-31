@@ -1,0 +1,40 @@
+apiVersion: v1
+entries:
+  kinesis:
+  - annotations:
+      artifacthub.io/changes: |
+        - kind: added
+          description: Added Chart documentation
+      artifacthub.io/license: MIT
+      artifacthub.io/links: |
+        - name: README
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/README.md
+        - name: LICENSE
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/LICENSE.md
+        - name: CONTRIBUTING
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/CONTRIBUTING.md
+    apiVersion: v2
+    appVersion: 0.7.3
+    created: "2025-03-31T09:22:49.300733216Z"
+    description: A Kinesis Locaal Helm chart for Kubernetes
+    digest: 00077a2357e5480b65dfcaad127b6276d8e752515d8be211835c32f00fa9462a
+    home: https://github.com/saidsef/aws-kinesis-local
+    icon: https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/main/dist/MediaServices/KinesisVideoStreams2.png
+    keywords:
+    - kinesis
+    - aws
+    - local
+    - kubernetes
+    kubeVersion: '>= 1.23'
+    maintainers:
+    - email: saidsef@gmail.com
+      name: Said Sef
+      url: https://saidsef.co.uk/
+    name: kinesis
+    sources:
+    - https://github.com/saidsef/aws-kinesis-local.git
+    type: application
+    urls:
+    - https://github.com/saidsef/aws-kinesis-local/releases/download/kinesis-0.7.3/kinesis-0.7.3.tgz
+    version: 0.7.3
+generated: "2025-03-31T09:22:49.300742544Z"
