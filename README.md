@@ -4,7 +4,12 @@ Build for local AWS Kinesis
 
 ## Amazon Kinesis Streams
 
-Amazon Kinesis Streams enables you to build custom applications that process or analyze streaming data for specialized needs. Amazon Kinesis Streams can continuously capture and store terabytes of data per hour from hundreds of thousands of sources such as website clickstreams, financial transactions, social media feeds, IT logs, and location-tracking events. With Amazon Kinesis Client Library (KCL), you can build Amazon Kinesis Applications and use streaming data to power real-time dashboards, generate alerts, implement dynamic pricing and advertising, and more. You can also emit data from Amazon Kinesis Streams to other AWS services such as Amazon Simple Storage Service (Amazon S3), Amazon Redshift, Amazon Elastic Map Reduce (Amazon EMR), and AWS Lambda.
+Amazon Kinesis Streams lets you build your own apps to deal with streaming data, tailored to your specific requirements. It achieves this by:
+
+* **Continuous Data Capture:** Reliably storing huge volumes of data (terabytes per hour) from masses of sources. Think website activity, financial trades, social media, system logs, and location tracking.
+* **Custom App Development:** Using the Amazon Kinesis Client Library (KCL) to build applications that use this stream of data.
+* **Real-Time Use Cases:** Powering things like live dashboards, automated alerts, dynamic pricing models, and targeted advertising.
+* **Integration with AWS:** Feeding data from Kinesis Streams into other AWS services, such as Amazon S3, Amazon Redshift, Amazon EMR, and AWS Lambda.
 
 ## Components
 
