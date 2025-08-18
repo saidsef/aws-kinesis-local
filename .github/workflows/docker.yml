@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout source code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - name: Set Tag Name
       run: |
         echo "TAG=${{ github.head_ref || github.ref_name }}" >> $GITHUB_ENV
@@ -96,7 +96,7 @@ jobs:
           verbosity: "10"
           kubectl_version: "v1.29.3"
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Run K8s test
         run: |
           kubectl version
