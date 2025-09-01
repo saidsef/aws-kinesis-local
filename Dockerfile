@@ -1,4 +1,4 @@
-FROM docker.io/node:24.6-alpine
+FROM docker.io/node:24.7-alpine
 
 LABEL org.opencontainers.image.authors="Said Sef <saidsef@gmail.com> (saidsef.co.uk/)"
 LABEL "uk.co.saidsef.aws-kinesis"="Said Sef Associates Ltd"
