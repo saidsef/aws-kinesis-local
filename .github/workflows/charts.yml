@@ -19,7 +19,7 @@ jobs:
     if: ${{ github.event_name == 'pull_request' || contains(github.ref, 'main') }}
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Install Helm
@@ -56,7 +56,7 @@ jobs:
       - name: Create k8s Kind Cluster
         uses: helm/kind-action@v1.13.0
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Run K8s test
         run: |
           kubectl create ns kinesis
