@@ -1,5 +1,5 @@
 apiVersion: v2
-appVersion: &appVersion "0.7.3"
+appVersion: &appVersion "0.7.4"
 description: A Kinesis Locaal Helm chart for Kubernetes
 kubeVersion: ">= 1.23"
 name: kinesis
@@ -28,5 +28,5 @@ annotations:
     - name: CONTRIBUTING
       url: https://github.com/saidsef/aws-kinesis-local/blob/main/CONTRIBUTING.md
   artifacthub.io/changes: |
-    - kind: added
-      description: Added Chart documentation
+    - kind: changed
+      description: Replace busybox wget helm test with aws-cli Kinesis API validation
