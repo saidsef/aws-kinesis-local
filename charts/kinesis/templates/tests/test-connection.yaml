@@ -8,8 +8,19 @@ metadata:
     "helm.sh/hook": test
 spec:
   containers:
-    - name: wget
-      image: busybox
-      command: ['wget']
-      args: ['{{ include "kinesis.fullname" . }}:{{ .Values.service.port }}']
+    - name: aws-cli
+      image: amazon/aws-cli:latest
+      command: ["aws"]
+      args:
+        - kinesis
+        - list-streams
+        - --endpoint-url
+        - "http://{{ include "kinesis.fullname" . }}:{{ .Values.service.port }}"
+        - --region
+        - "eu-west-1"
+      env:
+        - name: AWS_ACCESS_KEY_ID
+          value: "test"
+        - name: AWS_SECRET_ACCESS_KEY
+          value: "test"
   restartPolicy: Never
