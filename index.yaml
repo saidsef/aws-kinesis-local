@@ -3,6 +3,42 @@ entries:
   kinesis:
   - annotations:
       artifacthub.io/changes: |
+        - kind: changed
+          description: Replace busybox wget helm test with aws-cli Kinesis API validation
+      artifacthub.io/license: MIT
+      artifacthub.io/links: |
+        - name: README
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/README.md
+        - name: LICENSE
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/LICENSE.md
+        - name: CONTRIBUTING
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/CONTRIBUTING.md
+    apiVersion: v2
+    appVersion: 0.7.4
+    created: "2026-06-01T23:04:09.564551979Z"
+    description: A Kinesis Locaal Helm chart for Kubernetes
+    digest: 58a077009b5ccf561a64a65656307d4945bce6f9cfe9435ad98c8bc862054f60
+    home: https://github.com/saidsef/aws-kinesis-local
+    icon: https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/main/dist/MediaServices/KinesisVideoStreams2.png
+    keywords:
+    - kinesis
+    - aws
+    - local
+    - kubernetes
+    kubeVersion: '>= 1.23'
+    maintainers:
+    - email: saidsef@gmail.com
+      name: Said Sef
+      url: https://saidsef.co.uk/
+    name: kinesis
+    sources:
+    - https://github.com/saidsef/aws-kinesis-local.git
+    type: application
+    urls:
+    - https://github.com/saidsef/aws-kinesis-local/releases/download/kinesis-0.7.4/kinesis-0.7.4.tgz
+    version: 0.7.4
+  - annotations:
+      artifacthub.io/changes: |
         - kind: added
           description: Added Chart documentation
       artifacthub.io/license: MIT
@@ -37,4 +73,4 @@ entries:
     urls:
     - https://github.com/saidsef/aws-kinesis-local/releases/download/kinesis-0.7.3/kinesis-0.7.3.tgz
     version: 0.7.3
-generated: "2025-03-31T09:22:49.300742544Z"
+generated: "2026-06-01T23:04:09.564565324Z"
