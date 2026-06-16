@@ -9,15 +9,12 @@ spec:
   type: ClusterIP
   clusterIP: None
   ipFamilyPolicy: PreferDualStack
-  sessionAffinity: ClientIP
   publishNotReadyAddresses: true
-  sessionAffinityConfig:
-    clientIP:
-      timeoutSeconds: 60
   selector:
     app.kubernetes.io/name: kinesis
   ports:
     - port: 80
       protocol: TCP
       targetPort: tcp
+      appProtocol: tcp
       name: tcp

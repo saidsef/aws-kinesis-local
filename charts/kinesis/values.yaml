@@ -1,10 +1,11 @@
-
 replicaCount: 1
 
 image:
   repository: docker.io/saidsef/aws-kinesis-local
   pullPolicy: IfNotPresent
-  tag: "v2023.01"
+  # Date-style tag emitted by the docker CI workflow (vYYYY.MM). Leave empty to
+  # fall back to .Chart.AppVersion (the kinesalite upstream version).
+  tag: "v2026.06"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -13,7 +14,8 @@ fullnameOverride: ""
 serviceAccount:
   create: true
   annotations: {}
-  name: "kinesis"
+  # If empty, a name is derived from the fullname template.
+  name: ""
 
 podAnnotations: {}
 
@@ -36,22 +38,74 @@ securityContext:
 service:
   type: ClusterIP
   port: 80
+  headless: false
+  # Region passed to the `helm test` aws-cli invocation.
+  testRegion: eu-west-1
 
-resources: {}
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+# kinesalite tuning, surfaced as container env vars.
+env:
+  PORT: "4567"
+  KPATH: "/data"
+  SHARDLIMIT: "50"
+  CREATESTREAMMS: "50"
+  DELETESTREAMMS: "50"
+  UPDATESTREAMMS: "50"
 
-autoscaling:
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    cpu: 200m
+    memory: 1Gi
+
+livenessProbe:
+  tcpSocket:
+    port: tcp
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 2
+  failureThreshold: 3
+
+readinessProbe:
+  tcpSocket:
+    port: tcp
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 2
+  failureThreshold: 3
+
+startupProbe:
+  tcpSocket:
+    port: tcp
+  initialDelaySeconds: 2
+  periodSeconds: 2
+  failureThreshold: 30
+
+# When enabled, /data is backed by a StatefulSet volumeClaimTemplate.
+# Otherwise an emptyDir is used.
+persistence:
   enabled: false
-  # minReplicas: 1
-  # maxReplicas: 100
-  # targetCPUUtilizationPercentage: 80
-  # targetMemoryUtilizationPercentage: 80
+  size: 1Gi
+  storageClass: ""
+  accessModes:
+    - ReadWriteOnce
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+  # maxUnavailable: ""
+
+# Image used by the `helm test` hook to exercise the Kinesis API.
+testImage:
+  repository: amazon/aws-cli
+  tag: "2.17.0"
+  pullPolicy: IfNotPresent
+
+revisionHistoryLimit: 5
+terminationGracePeriodSeconds: 60
 
 nodeSelector: {}
 tolerations: []
 affinity: {}
+topologySpreadConstraints: []

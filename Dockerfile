@@ -1,43 +1,38 @@
 FROM docker.io/node:26.3-alpine
 
 LABEL org.opencontainers.image.authors="Said Sef <saidsef@gmail.com> (saidsef.co.uk/)"
-LABEL "uk.co.saidsef.aws-kinesis"="Said Sef Associates Ltd"
-LABEL version="3.1"
+LABEL uk.co.saidsef.aws-kinesis="Said Sef Associates Ltd"
+LABEL org.opencontainers.image.version="3.3.3"
 LABEL org.opencontainers.image.source="https://github.com/saidsef/aws-kinesis-local"
 LABEL org.opencontainers.image.documentation="https://github.com/saidsef/aws-kinesis-local/blob/main/README.md"
 LABEL org.opencontainers.image.licenses="MIT"
 
-ARG PORT=""
-ARG CREATESTREAMMS=""
-ARG DELETESTREAMMS=""
-ARG KPATH=""
-ARG UPDATESTREAMMS=""
-ARG SHARDLIMIT=""
-
-ENV AWS_DEFAULT_REGION="eu-west-1"
-ENV CREATESTREAMMS=${CREATESTREAMMS:-50}
-ENV DELETESTREAMMS=${DELETESTREAMMS:-50}
-ENV KPATH=${KPATH:-/data}
-ENV NODE_ENV=production
-ENV NODE_PENDING_DEPRECATION=1
-ENV NPM_CONFIG_CACHE=/data
-ENV PORT=${PORT:-4567}
-ENV SHARDLIMIT=${SHARDLIMIT:-50}
-ENV UPDATESTREAMMS=${UPDATESTREAMMS:-50}
+ENV AWS_DEFAULT_REGION=eu-west-1 \
+    CREATESTREAMMS=50 \
+    DELETESTREAMMS=50 \
+    KPATH=/data \
+    NODE_ENV=production \
+    NODE_PENDING_DEPRECATION=1 \
+    NPM_CONFIG_CACHE=/data \
+    PORT=4567 \
+    SHARDLIMIT=50 \
+    UPDATESTREAMMS=50
 
 WORKDIR /data
 
-RUN mkdir -p /.npm /data && \
-    npm install -g kinesalite@3.3.3 && \
-    chown -R nobody:nobody /data /.npm /data
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+
+RUN mkdir -p /.npm /data \
+ && npm install -g kinesalite@3.3.3 \
+ && chmod +x /usr/local/bin/docker-entrypoint.sh \
+ && chown -R nobody:nobody /data /.npm
 
 USER nobody
 
-EXPOSE ${PORT}
+EXPOSE 4567
 
 VOLUME ["/data"]
 
-HEALTHCHECK --interval=60s --timeout=10s CMD nc -zvw3 127.0.0.1 4567 || exit 1
+HEALTHCHECK --interval=60s --timeout=10s CMD nc -zvw3 127.0.0.1 "$PORT" || exit 1
 
-CMD ["/usr/local/bin/kinesalite", "--port", ${PORT}, "--path", ${KPATH}, "--shardLimit", ${SHARDLIMIT}, "--createStreamMs", ${CREATESTREAMMS}, "--deleteStreamMs", ${DELETESTREAMMS}]
-ENTRYPOINT ["/usr/local/bin/kinesalite"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

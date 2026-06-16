@@ -1,8 +1,8 @@
 # kinesis
 
-![Version: 0.7.2](https://img.shields.io/badge/Version-0.7.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.7.2](https://img.shields.io/badge/AppVersion-0.7.2-informational?style=flat-square)
+![Version: 0.8.0](https://img.shields.io/badge/Version-0.8.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.3.3](https://img.shields.io/badge/AppVersion-3.3.3-informational?style=flat-square)
 
-A Kinesis Locaal Helm chart for Kubernetes
+A Kinesis Local Helm chart for Kubernetes
 
 **Homepage:** <https://github.com/saidsef/aws-kinesis-local>
 
@@ -18,39 +18,57 @@ A Kinesis Locaal Helm chart for Kubernetes
 
 ## Requirements
 
-Kubernetes: `>= 1.23`
+Kubernetes: `>= 1.29.0`
 
 ## Values
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| affinity | object | `{}` |  |
-| autoscaling.enabled | bool | `false` |  |
-| fullnameOverride | string | `""` |  |
-| image.pullPolicy | string | `"IfNotPresent"` |  |
-| image.repository | string | `"docker.io/saidsef/aws-kinesis-local"` |  |
-| image.tag | string | `"v2023.01"` |  |
-| imagePullSecrets | list | `[]` |  |
-| nameOverride | string | `""` |  |
-| nodeSelector | object | `{}` |  |
-| podAnnotations | object | `{}` |  |
-| podSecurityContext | object | `{}` |  |
-| replicaCount | int | `1` |  |
-| resources | object | `{}` |  |
-| securityContext.allowPrivilegeEscalation | bool | `false` |  |
-| securityContext.capabilities.drop[0] | string | `"ALL"` |  |
-| securityContext.privileged | bool | `false` |  |
-| securityContext.readOnlyRootFilesystem | bool | `true` |  |
-| securityContext.runAsGroup | int | `65534` |  |
-| securityContext.runAsNonRoot | bool | `true` |  |
-| securityContext.runAsUser | int | `65534` |  |
-| securityContext.seccompProfile.type | string | `"RuntimeDefault"` |  |
-| service.port | int | `80` |  |
-| service.type | string | `"ClusterIP"` |  |
-| serviceAccount.annotations | object | `{}` |  |
-| serviceAccount.create | bool | `true` |  |
-| serviceAccount.name | string | `"kinesis"` |  |
-| tolerations | list | `[]` |  |
+| affinity | object | `{}` | Pod affinity rules. |
+| env.CREATESTREAMMS | string | `"50"` | kinesalite `--createStreamMs`. |
+| env.DELETESTREAMMS | string | `"50"` | kinesalite `--deleteStreamMs`. |
+| env.KPATH | string | `"/data"` | kinesalite `--path` (LevelDB directory). Mounted into the container. |
+| env.PORT | string | `"4567"` | kinesalite `--port`. Also drives the container port. |
+| env.SHARDLIMIT | string | `"50"` | kinesalite `--shardLimit`. |
+| env.UPDATESTREAMMS | string | `"50"` | kinesalite `--updateStreamMs`. |
+| fullnameOverride | string | `""` | Override the fully qualified app name. |
+| image.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |
+| image.repository | string | `"docker.io/saidsef/aws-kinesis-local"` | Image repository. |
+| image.tag | string | `"v2026.06"` | Date-style image tag emitted by the docker CI workflow. Empty falls back to `.Chart.AppVersion`. |
+| imagePullSecrets | list | `[]` | Pull secrets for private registries. |
+| livenessProbe | object | `tcpSocket port=tcp, periodSeconds=10` | Liveness probe spec. |
+| nameOverride | string | `""` | Override the chart name. |
+| nodeSelector | object | `{}` | Node selector. |
+| persistence.accessModes | list | `["ReadWriteOnce"]` | PVC access modes when persistence is enabled. |
+| persistence.enabled | bool | `false` | Back `/data` with a `volumeClaimTemplate` instead of `emptyDir`. |
+| persistence.size | string | `"1Gi"` | PVC size. |
+| persistence.storageClass | string | `""` | StorageClass name; empty uses the cluster default. |
+| podAnnotations | object | `{}` | Pod annotations. |
+| podDisruptionBudget.enabled | bool | `false` | Render a `policy/v1 PodDisruptionBudget`. |
+| podDisruptionBudget.minAvailable | int | `1` | PDB `minAvailable`. Mutually exclusive with `maxUnavailable`. |
+| podSecurityContext | object | `{}` | Pod-level securityContext. |
+| readinessProbe | object | `tcpSocket port=tcp, periodSeconds=5` | Readiness probe spec. |
+| replicaCount | int | `1` | StatefulSet replica count. |
+| resources.limits.cpu | string | `"200m"` | CPU limit. |
+| resources.limits.memory | string | `"1Gi"` | Memory limit. |
+| resources.requests.cpu | string | `"100m"` | CPU request. |
+| resources.requests.memory | string | `"512Mi"` | Memory request. |
+| revisionHistoryLimit | int | `5` | StatefulSet `revisionHistoryLimit`. |
+| securityContext | object | hardened defaults | Container `securityContext`: non-root, read-only rootfs, all caps dropped, seccomp RuntimeDefault. |
+| service.headless | bool | `false` | Set `clusterIP: None` for headless DNS. |
+| service.port | int | `80` | Service port. |
+| service.testRegion | string | `"eu-west-1"` | Region passed to the `helm test` aws-cli call. |
+| service.type | string | `"ClusterIP"` | Service type. |
+| serviceAccount.annotations | object | `{}` | ServiceAccount annotations. |
+| serviceAccount.create | bool | `true` | Whether to create a ServiceAccount. |
+| serviceAccount.name | string | `""` | If empty, defaults to the fullname. |
+| startupProbe | object | `tcpSocket port=tcp, failureThreshold=30` | Startup probe spec. |
+| terminationGracePeriodSeconds | int | `60` | Pod terminationGracePeriodSeconds. |
+| testImage.pullPolicy | string | `"IfNotPresent"` | Pull policy for the helm-test image. |
+| testImage.repository | string | `"amazon/aws-cli"` | helm-test image repo. |
+| testImage.tag | string | `"2.17.0"` | helm-test image tag (pinned). |
+| tolerations | list | `[]` | Pod tolerations. |
+| topologySpreadConstraints | list | `[]` | Pod topology spread constraints. |
 
 ----------------------------------------------
-Autogenerated from chart metadata using [helm-docs v1.11.3](https://github.com/norwoodj/helm-docs/releases/v1.11.3)
+Autogenerated from chart metadata using [helm-docs](https://github.com/norwoodj/helm-docs).

@@ -23,10 +23,9 @@ spec:
       enableServiceLinks: false
       terminationGracePeriodSeconds: 60
       containers:
-        - image: docker.io/saidsef/aws-kinesis-local:v2023.01
+        - image: docker.io/saidsef/aws-kinesis-local:v2026.06
           name: kinesis
-          imagePullPolicy: Always
-          tty: true
+          imagePullPolicy: IfNotPresent
           ports:
             - protocol: TCP
               containerPort: 4567
@@ -38,19 +37,22 @@ spec:
             requests:
               memory: 512Mi
               cpu: 100m
+          startupProbe:
+            tcpSocket:
+              port: tcp
+            initialDelaySeconds: 2
+            periodSeconds: 2
+            failureThreshold: 30
           livenessProbe:
-            exec:
-              command:
-                - pgrep
-                - node
-            initialDelaySeconds: 3
-            periodSeconds: 3
-            successThreshold: 1
-            failureThreshold: 2
+            tcpSocket:
+              port: tcp
+            initialDelaySeconds: 5
+            periodSeconds: 10
             timeoutSeconds: 2
+            failureThreshold: 3
           readinessProbe:
             tcpSocket:
-                port: tcp
+              port: tcp
             initialDelaySeconds: 5
             periodSeconds: 5
             successThreshold: 1
@@ -66,14 +68,18 @@ spec:
             seccompProfile:
               type: RuntimeDefault
             capabilities:
-             drop:
-               - ALL
+              drop:
+                - ALL
           volumeMounts:
             - name: storage
               mountPath: /data
               subPath: data
               readOnly: false
+            - name: npm-cache
+              mountPath: /.npm
       volumes:
         - name: storage
           emptyDir:
             sizeLimit: 1Gi
+        - name: npm-cache
+          emptyDir: {}

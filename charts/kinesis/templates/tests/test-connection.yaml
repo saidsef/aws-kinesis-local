@@ -6,10 +6,13 @@ metadata:
     {{- include "kinesis.labels" . | nindent 4 }}
   annotations:
     "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
+  restartPolicy: Never
   containers:
     - name: aws-cli
-      image: amazon/aws-cli:latest
+      image: "{{ .Values.testImage.repository }}:{{ .Values.testImage.tag }}"
+      imagePullPolicy: {{ .Values.testImage.pullPolicy }}
       command: ["aws"]
       args:
         - kinesis
@@ -17,10 +20,9 @@ spec:
         - --endpoint-url
         - "http://{{ include "kinesis.fullname" . }}:{{ .Values.service.port }}"
         - --region
-        - "eu-west-1"
+        - {{ .Values.service.testRegion | quote }}
       env:
         - name: AWS_ACCESS_KEY_ID
           value: "test"
         - name: AWS_SECRET_ACCESS_KEY
           value: "test"
-  restartPolicy: Never
