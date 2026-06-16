@@ -4,6 +4,48 @@ entries:
   - annotations:
       artifacthub.io/changes: |
         - kind: changed
+          description: Switch chart workload from Deployment to StatefulSet with optional persistence
+        - kind: added
+          description: PodDisruptionBudget template, startupProbe, configurable env block and helm test region
+        - kind: fixed
+          description: Headless service value (was service.healess) now honoured; autoscaling stub removed
+        - kind: changed
+          description: Bump kubeVersion to >= 1.32; appVersion tracks the kinesalite binary (3.3.3)
+      artifacthub.io/license: MIT
+      artifacthub.io/links: |
+        - name: README
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/README.md
+        - name: LICENSE
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/LICENSE.md
+        - name: CONTRIBUTING
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/CONTRIBUTING.md
+    apiVersion: v2
+    appVersion: 3.3.3
+    created: "2026-06-16T12:24:26.518588579Z"
+    description: A Kinesis Local Helm chart for Kubernetes
+    digest: 288ea4aad214301ff4d155c3ad5737401b478dd1e85bfb35bf45edc868062b0d
+    home: https://github.com/saidsef/aws-kinesis-local
+    icon: https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/main/dist/MediaServices/KinesisVideoStreams2.png
+    keywords:
+    - kinesis
+    - aws
+    - local
+    - kubernetes
+    kubeVersion: '>= 1.32.0'
+    maintainers:
+    - email: saidsef@gmail.com
+      name: Said Sef
+      url: https://saidsef.co.uk/
+    name: kinesis
+    sources:
+    - https://github.com/saidsef/aws-kinesis-local.git
+    type: application
+    urls:
+    - https://github.com/saidsef/aws-kinesis-local/releases/download/kinesis-0.8.0/kinesis-0.8.0.tgz
+    version: 0.8.0
+  - annotations:
+      artifacthub.io/changes: |
+        - kind: changed
           description: Replace busybox wget helm test with aws-cli Kinesis API validation
       artifacthub.io/license: MIT
       artifacthub.io/links: |
@@ -73,4 +115,4 @@ entries:
     urls:
     - https://github.com/saidsef/aws-kinesis-local/releases/download/kinesis-0.7.3/kinesis-0.7.3.tgz
     version: 0.7.3
-generated: "2026-06-01T23:04:09.564565324Z"
+generated: "2026-06-16T12:24:26.518601454Z"
