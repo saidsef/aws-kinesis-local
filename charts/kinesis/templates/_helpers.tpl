@@ -36,6 +36,7 @@ Common labels
 {{- define "kinesis.labels" -}}
 helm.sh/chart: {{ include "kinesis.chart" . }}
 {{ include "kinesis.selectorLabels" . }}
+app.kubernetes.io/component: stream
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
