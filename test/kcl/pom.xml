@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>uk.co.saidsef.kinesis</groupId>
+  <artifactId>kcl-test</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
+
+  <properties>
+    <maven.compiler.release>21</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <kcl.version>3.5.4</kcl.version>
+    <slf4j.version>2.0.20</slf4j.version>
+    <log.level>warn</log.level>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>software.amazon.kinesis</groupId>
+      <artifactId>amazon-kinesis-client</artifactId>
+      <version>${kcl.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.16.0</version>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.6.4</version>
+        <configuration>
+          <executable>java</executable>
+          <arguments>
+            <argument>-Dorg.slf4j.simpleLogger.defaultLogLevel=${log.level}</argument>
+            <argument>-Dorg.slf4j.simpleLogger.log.software.amazon.kinesis.worker.platform=off</argument>
+            <argument>-Dorg.slf4j.simpleLogger.showDateTime=true</argument>
+            <argument>-Dorg.slf4j.simpleLogger.dateTimeFormat=HH:mm:ss.SSS</argument>
+            <argument>-classpath</argument>
+            <classpath/>
+            <argument>uk.co.saidsef.kinesis.kcl.KclTest</argument>
+          </arguments>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
