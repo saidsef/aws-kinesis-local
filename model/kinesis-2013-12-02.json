@@ -1,0 +1,5986 @@
+{
+  "smithy": "2.0",
+  "metadata": {
+    "source": "https://raw.githubusercontent.com/aws/api-models-aws/6d00925efe97c160e67c2042e6c8fd2423ff3896/models/kinesis/service/2013-12-02/kinesis-2013-12-02.json",
+    "commit": "6d00925efe97c160e67c2042e6c8fd2423ff3896"
+  },
+  "shapes": {
+    "com.amazonaws.kinesis#AccessDeniedException": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "com.amazonaws.kinesis#ErrorMessage"
+        }
+      },
+      "traits": {
+        "smithy.api#error": "client"
+      }
+    },
+    "com.amazonaws.kinesis#AddTagsToStream": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#AddTagsToStreamInput"
+      },
+      "output": {
+        "target": "smithy.api#Unit"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#AddTagsToStreamInput": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "Tags": {
+          "target": "com.amazonaws.kinesis#TagMap",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#BooleanObject": {
+      "type": "boolean"
+    },
+    "com.amazonaws.kinesis#BucketARN": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 2048
+        },
+        "smithy.api#pattern": "^arn:aws[-a-z0-9]*:s3:::[a-z0-9._-]{3,63}$"
+      }
+    },
+    "com.amazonaws.kinesis#ChannelARN": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 2048
+        },
+        "smithy.api#pattern": "^arn:aws.*:kinesis:.*:\\d{12}:channel/\\S+$"
+      }
+    },
+    "com.amazonaws.kinesis#ChannelCountObject": {
+      "type": "integer",
+      "traits": {
+        "smithy.api#range": {
+          "min": 0,
+          "max": 1000000
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ChannelDescription": {
+      "type": "structure",
+      "members": {
+        "ChannelName": {
+          "target": "com.amazonaws.kinesis#ChannelName",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ChannelARN": {
+          "target": "com.amazonaws.kinesis#ChannelARN",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ChannelId": {
+          "target": "com.amazonaws.kinesis#ChannelId",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ChannelStatus": {
+          "target": "com.amazonaws.kinesis#ChannelStatus",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ChannelStatusReason": {
+          "target": "com.amazonaws.kinesis#ChannelStatusReason"
+        },
+        "ChannelCreationTimestamp": {
+          "target": "com.amazonaws.kinesis#Timestamp",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ServiceExecutionRoleARN": {
+          "target": "com.amazonaws.kinesis#RoleARN",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamConfigurationList": {
+          "target": "com.amazonaws.kinesis#ChannelStreamDescriptionList",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "S3DestinationConfiguration": {
+          "target": "com.amazonaws.kinesis#S3DestinationDescription"
+        },
+        "S3TablesDestinationConfiguration": {
+          "target": "com.amazonaws.kinesis#S3TablesDestinationDescription"
+        },
+        "EncryptionConfiguration": {
+          "target": "com.amazonaws.kinesis#ChannelEncryptionConfiguration"
+        },
+        "LoggingConfiguration": {
+          "target": "com.amazonaws.kinesis#ChannelLoggingConfiguration",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ChannelDestinationType": {
+      "type": "enum",
+      "members": {
+        "S3": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "S3"
+          }
+        },
+        "S3_TABLES": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "S3_TABLES"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ChannelEncryptionConfiguration": {
+      "type": "structure",
+      "members": {
+        "EncryptionType": {
+          "target": "com.amazonaws.kinesis#ChannelEncryptionType",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "KeyId": {
+          "target": "com.amazonaws.kinesis#KeyId",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ChannelEncryptionType": {
+      "type": "enum",
+      "members": {
+        "KMS": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "KMS"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ChannelId": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 64
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ChannelLoggingConfiguration": {
+      "type": "structure",
+      "members": {
+        "CloudWatchLogs": {
+          "target": "com.amazonaws.kinesis#CloudWatchLogs",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ChannelLoggingUpdateInput": {
+      "type": "structure",
+      "members": {
+        "CloudWatchLogs": {
+          "target": "com.amazonaws.kinesis#CloudWatchLogsUpdateInput",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ChannelName": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 128
+        },
+        "smithy.api#pattern": "^[a-zA-Z0-9_.-]+$"
+      }
+    },
+    "com.amazonaws.kinesis#ChannelStatus": {
+      "type": "enum",
+      "members": {
+        "CREATING": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "CREATING"
+          }
+        },
+        "ACTIVE": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "ACTIVE"
+          }
+        },
+        "UPDATING": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "UPDATING"
+          }
+        },
+        "DELETING": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "DELETING"
+          }
+        },
+        "FAILED": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "FAILED"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ChannelStatusReason": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 2048
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ChannelStreamConfiguration": {
+      "type": "structure",
+      "members": {
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "RecordConfiguration": {
+          "target": "com.amazonaws.kinesis#RecordConfiguration",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ChannelStreamConfigurationList": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.kinesis#ChannelStreamConfiguration"
+      },
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 10000
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ChannelStreamDescription": {
+      "type": "structure",
+      "members": {
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamCreationTimestamp": {
+          "target": "com.amazonaws.kinesis#Timestamp",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "RecordConfiguration": {
+          "target": "com.amazonaws.kinesis#RecordConfiguration",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ChannelStreamDescriptionList": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.kinesis#ChannelStreamDescription"
+      },
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 10000
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ChannelStreamIdentifier": {
+      "type": "structure",
+      "members": {
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamCreationTimestamp": {
+          "target": "com.amazonaws.kinesis#Timestamp",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ChannelStreamIdentifierList": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.kinesis#ChannelStreamIdentifier"
+      },
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 10000
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ChannelSummary": {
+      "type": "structure",
+      "members": {
+        "ChannelName": {
+          "target": "com.amazonaws.kinesis#ChannelName",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ChannelARN": {
+          "target": "com.amazonaws.kinesis#ChannelARN",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ChannelId": {
+          "target": "com.amazonaws.kinesis#ChannelId",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ChannelStatus": {
+          "target": "com.amazonaws.kinesis#ChannelStatus",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ChannelStatusReason": {
+          "target": "com.amazonaws.kinesis#ChannelStatusReason"
+        },
+        "ChannelCreationTimestamp": {
+          "target": "com.amazonaws.kinesis#Timestamp",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ChannelDestinationType": {
+          "target": "com.amazonaws.kinesis#ChannelDestinationType",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "Streams": {
+          "target": "com.amazonaws.kinesis#ChannelStreamIdentifierList",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ChannelSummaryList": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.kinesis#ChannelSummary"
+      }
+    },
+    "com.amazonaws.kinesis#ChildShard": {
+      "type": "structure",
+      "members": {
+        "ShardId": {
+          "target": "com.amazonaws.kinesis#ShardId",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ParentShards": {
+          "target": "com.amazonaws.kinesis#ShardIdList",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "HashKeyRange": {
+          "target": "com.amazonaws.kinesis#HashKeyRange",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ChildShardList": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.kinesis#ChildShard"
+      }
+    },
+    "com.amazonaws.kinesis#CloudWatchLogGroupName": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 512
+        },
+        "smithy.api#pattern": "^[\\.\\-_/#A-Za-z0-9]+$"
+      }
+    },
+    "com.amazonaws.kinesis#CloudWatchLogStreamName": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 512
+        },
+        "smithy.api#pattern": "^[^:*]*$"
+      }
+    },
+    "com.amazonaws.kinesis#CloudWatchLogs": {
+      "type": "structure",
+      "members": {
+        "Enabled": {
+          "target": "com.amazonaws.kinesis#BooleanObject",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "LogGroupName": {
+          "target": "com.amazonaws.kinesis#CloudWatchLogGroupName"
+        },
+        "LogStreamName": {
+          "target": "com.amazonaws.kinesis#CloudWatchLogStreamName"
+        }
+      }
+    },
+    "com.amazonaws.kinesis#CloudWatchLogsUpdateInput": {
+      "type": "structure",
+      "members": {
+        "Enabled": {
+          "target": "com.amazonaws.kinesis#BooleanObject",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "LogGroupName": {
+          "target": "com.amazonaws.kinesis#CloudWatchLogGroupName"
+        },
+        "LogStreamName": {
+          "target": "com.amazonaws.kinesis#CloudWatchLogStreamName"
+        }
+      }
+    },
+    "com.amazonaws.kinesis#Consumer": {
+      "type": "structure",
+      "members": {
+        "ConsumerName": {
+          "target": "com.amazonaws.kinesis#ConsumerName",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ConsumerARN": {
+          "target": "com.amazonaws.kinesis#ConsumerARN",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ConsumerStatus": {
+          "target": "com.amazonaws.kinesis#ConsumerStatus",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ConsumerCreationTimestamp": {
+          "target": "com.amazonaws.kinesis#Timestamp",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ConsumerARN": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 2048
+        },
+        "smithy.api#pattern": "^(arn):aws.*:kinesis:.*:\\d{12}:.*stream\\/[a-zA-Z0-9_.-]+\\/consumer\\/[a-zA-Z0-9_.-]+:[0-9]+$"
+      }
+    },
+    "com.amazonaws.kinesis#ConsumerCountObject": {
+      "type": "integer",
+      "traits": {
+        "smithy.api#range": {
+          "min": 0,
+          "max": 1000000
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ConsumerDescription": {
+      "type": "structure",
+      "members": {
+        "ConsumerName": {
+          "target": "com.amazonaws.kinesis#ConsumerName",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ConsumerARN": {
+          "target": "com.amazonaws.kinesis#ConsumerARN",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ConsumerStatus": {
+          "target": "com.amazonaws.kinesis#ConsumerStatus",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ConsumerCreationTimestamp": {
+          "target": "com.amazonaws.kinesis#Timestamp",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ConsumerList": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.kinesis#Consumer"
+      }
+    },
+    "com.amazonaws.kinesis#ConsumerName": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 128
+        },
+        "smithy.api#pattern": "^[a-zA-Z0-9_.-]+$"
+      }
+    },
+    "com.amazonaws.kinesis#ConsumerStatus": {
+      "type": "enum",
+      "members": {
+        "CREATING": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "CREATING"
+          }
+        },
+        "DELETING": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "DELETING"
+          }
+        },
+        "ACTIVE": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "ACTIVE"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#CreateChannel": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#CreateChannelInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#CreateChannelOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSAccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSDisabledException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSInvalidStateException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSNotFoundException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSOptInRequired"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSThrottlingException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ValidationException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#CreateChannelInput": {
+      "type": "structure",
+      "members": {
+        "ChannelName": {
+          "target": "com.amazonaws.kinesis#ChannelName",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ServiceExecutionRoleARN": {
+          "target": "com.amazonaws.kinesis#RoleARN",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamConfigurationList": {
+          "target": "com.amazonaws.kinesis#ChannelStreamConfigurationList",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "S3DestinationConfiguration": {
+          "target": "com.amazonaws.kinesis#S3DestinationConfiguration"
+        },
+        "S3TablesDestinationConfiguration": {
+          "target": "com.amazonaws.kinesis#S3TablesDestinationConfiguration"
+        },
+        "EncryptionConfiguration": {
+          "target": "com.amazonaws.kinesis#ChannelEncryptionConfiguration"
+        },
+        "Tags": {
+          "target": "com.amazonaws.kinesis#TagMap"
+        },
+        "LoggingConfiguration": {
+          "target": "com.amazonaws.kinesis#ChannelLoggingConfiguration"
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#CreateChannelOutput": {
+      "type": "structure",
+      "members": {
+        "ChannelDescription": {
+          "target": "com.amazonaws.kinesis#ChannelDescription",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#CreateStream": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#CreateStreamInput"
+      },
+      "output": {
+        "target": "smithy.api#Unit"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ValidationException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#CreateStreamInput": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ShardCount": {
+          "target": "com.amazonaws.kinesis#PositiveIntegerObject"
+        },
+        "StreamModeDetails": {
+          "target": "com.amazonaws.kinesis#StreamModeDetails"
+        },
+        "Tags": {
+          "target": "com.amazonaws.kinesis#TagMap"
+        },
+        "WarmThroughputMiBps": {
+          "target": "com.amazonaws.kinesis#NaturalIntegerObject"
+        },
+        "MaxRecordSizeInKiB": {
+          "target": "com.amazonaws.kinesis#MaxRecordSizeInKiB"
+        },
+        "RecordDistributionStrategy": {
+          "target": "com.amazonaws.kinesis#RecordDistributionStrategy"
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#Data": {
+      "type": "blob",
+      "traits": {
+        "smithy.api#length": {
+          "min": 0,
+          "max": 10485760
+        }
+      }
+    },
+    "com.amazonaws.kinesis#DataFreshnessInSeconds": {
+      "type": "integer"
+    },
+    "com.amazonaws.kinesis#DeadLetterQueueS3Configuration": {
+      "type": "structure",
+      "members": {
+        "BucketARN": {
+          "target": "com.amazonaws.kinesis#BucketARN",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ExpectedBucketOwner": {
+          "target": "com.amazonaws.kinesis#ExpectedBucketOwner",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ErrorOutputPrefix": {
+          "target": "com.amazonaws.kinesis#S3ErrorOutputPrefix"
+        }
+      }
+    },
+    "com.amazonaws.kinesis#DecreaseStreamRetentionPeriod": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#DecreaseStreamRetentionPeriodInput"
+      },
+      "output": {
+        "target": "smithy.api#Unit"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#DecreaseStreamRetentionPeriodInput": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "RetentionPeriodHours": {
+          "target": "com.amazonaws.kinesis#RetentionPeriodHours",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#DeleteChannel": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#DeleteChannelInput"
+      },
+      "output": {
+        "target": "smithy.api#Unit"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ValidationException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#DeleteChannelInput": {
+      "type": "structure",
+      "members": {
+        "ChannelARN": {
+          "target": "com.amazonaws.kinesis#ChannelARN",
+          "traits": {
+            "smithy.api#required": {},
+            "smithy.rules#contextParam": {
+              "name": "ChannelARN"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#DeleteResourcePolicy": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#DeleteResourcePolicyInput"
+      },
+      "output": {
+        "target": "smithy.api#Unit"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#DeleteResourcePolicyInput": {
+      "type": "structure",
+      "members": {
+        "ResourceARN": {
+          "target": "com.amazonaws.kinesis#ResourceARN",
+          "traits": {
+            "smithy.api#required": {},
+            "smithy.rules#contextParam": {
+              "name": "ResourceARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#DeleteStream": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#DeleteStreamInput"
+      },
+      "output": {
+        "target": "smithy.api#Unit"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#DeleteStreamInput": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "EnforceConsumerDeletion": {
+          "target": "com.amazonaws.kinesis#BooleanObject"
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#DeregisterStreamConsumer": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#DeregisterStreamConsumerInput"
+      },
+      "output": {
+        "target": "smithy.api#Unit"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#DeregisterStreamConsumerInput": {
+      "type": "structure",
+      "members": {
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "ConsumerName": {
+          "target": "com.amazonaws.kinesis#ConsumerName"
+        },
+        "ConsumerARN": {
+          "target": "com.amazonaws.kinesis#ConsumerARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "ConsumerARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#DescribeAccountSettings": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#DescribeAccountSettingsInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#DescribeAccountSettingsOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#DescribeAccountSettingsInput": {
+      "type": "structure",
+      "members": {},
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#DescribeAccountSettingsOutput": {
+      "type": "structure",
+      "members": {
+        "MinimumThroughputBillingCommitment": {
+          "target": "com.amazonaws.kinesis#MinimumThroughputBillingCommitmentOutput"
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#DescribeChannel": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#DescribeChannelInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#DescribeChannelOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ValidationException"
+        }
+      ],
+      "traits": {
+        "smithy.api#readonly": {},
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        },
+        "smithy.waiters#waitable": {
+          "ChannelActive": {
+            "acceptors": [
+              {
+                "state": "success",
+                "matcher": {
+                  "output": {
+                    "path": "ChannelDescription.ChannelStatus",
+                    "expected": "ACTIVE",
+                    "comparator": "stringEquals"
+                  }
+                }
+              },
+              {
+                "state": "retry",
+                "matcher": {
+                  "output": {
+                    "path": "ChannelDescription.ChannelStatus",
+                    "expected": "CREATING",
+                    "comparator": "stringEquals"
+                  }
+                }
+              },
+              {
+                "state": "retry",
+                "matcher": {
+                  "output": {
+                    "path": "ChannelDescription.ChannelStatus",
+                    "expected": "UPDATING",
+                    "comparator": "stringEquals"
+                  }
+                }
+              },
+              {
+                "state": "failure",
+                "matcher": {
+                  "output": {
+                    "path": "ChannelDescription.ChannelStatus",
+                    "expected": "DELETING",
+                    "comparator": "stringEquals"
+                  }
+                }
+              },
+              {
+                "state": "failure",
+                "matcher": {
+                  "output": {
+                    "path": "ChannelDescription.ChannelStatus",
+                    "expected": "FAILED",
+                    "comparator": "stringEquals"
+                  }
+                }
+              }
+            ],
+            "minDelay": 10
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#DescribeChannelInput": {
+      "type": "structure",
+      "members": {
+        "ChannelARN": {
+          "target": "com.amazonaws.kinesis#ChannelARN",
+          "traits": {
+            "smithy.api#required": {},
+            "smithy.rules#contextParam": {
+              "name": "ChannelARN"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#DescribeChannelOutput": {
+      "type": "structure",
+      "members": {
+        "ChannelDescription": {
+          "target": "com.amazonaws.kinesis#ChannelDescription",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#DescribeLimits": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#DescribeLimitsInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#DescribeLimitsOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#DescribeLimitsInput": {
+      "type": "structure",
+      "members": {},
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#DescribeLimitsOutput": {
+      "type": "structure",
+      "members": {
+        "ShardLimit": {
+          "target": "com.amazonaws.kinesis#ShardCountObject",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "OpenShardCount": {
+          "target": "com.amazonaws.kinesis#ShardCountObject",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "OnDemandStreamCount": {
+          "target": "com.amazonaws.kinesis#OnDemandStreamCountObject",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "OnDemandStreamCountLimit": {
+          "target": "com.amazonaws.kinesis#OnDemandStreamCountLimitObject",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ChannelCount": {
+          "target": "com.amazonaws.kinesis#ChannelCountObject"
+        },
+        "ChannelCountLimit": {
+          "target": "com.amazonaws.kinesis#ChannelCountObject"
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#DescribeStream": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#DescribeStreamInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#DescribeStreamOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        },
+        "smithy.waiters#waitable": {
+          "StreamExists": {
+            "acceptors": [
+              {
+                "state": "success",
+                "matcher": {
+                  "output": {
+                    "path": "StreamDescription.StreamStatus",
+                    "expected": "ACTIVE",
+                    "comparator": "stringEquals"
+                  }
+                }
+              }
+            ],
+            "minDelay": 10
+          },
+          "StreamNotExists": {
+            "acceptors": [
+              {
+                "state": "success",
+                "matcher": {
+                  "errorType": "ResourceNotFoundException"
+                }
+              }
+            ],
+            "minDelay": 10
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#DescribeStreamConsumer": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#DescribeStreamConsumerInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#DescribeStreamConsumerOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#DescribeStreamConsumerInput": {
+      "type": "structure",
+      "members": {
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "ConsumerName": {
+          "target": "com.amazonaws.kinesis#ConsumerName"
+        },
+        "ConsumerARN": {
+          "target": "com.amazonaws.kinesis#ConsumerARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "ConsumerARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#DescribeStreamConsumerOutput": {
+      "type": "structure",
+      "members": {
+        "ConsumerDescription": {
+          "target": "com.amazonaws.kinesis#ConsumerDescription",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#DescribeStreamInput": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "Limit": {
+          "target": "com.amazonaws.kinesis#DescribeStreamInputLimit"
+        },
+        "ExclusiveStartShardId": {
+          "target": "com.amazonaws.kinesis#ShardId"
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#DescribeStreamInputLimit": {
+      "type": "integer",
+      "traits": {
+        "smithy.api#range": {
+          "min": 1,
+          "max": 10000
+        }
+      }
+    },
+    "com.amazonaws.kinesis#DescribeStreamOutput": {
+      "type": "structure",
+      "members": {
+        "StreamDescription": {
+          "target": "com.amazonaws.kinesis#StreamDescription",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#DescribeStreamSummary": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#DescribeStreamSummaryInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#DescribeStreamSummaryOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#DescribeStreamSummaryInput": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#DescribeStreamSummaryOutput": {
+      "type": "structure",
+      "members": {
+        "StreamDescriptionSummary": {
+          "target": "com.amazonaws.kinesis#StreamDescriptionSummary",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#DisableEnhancedMonitoring": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#DisableEnhancedMonitoringInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#EnhancedMonitoringOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#DisableEnhancedMonitoringInput": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "ShardLevelMetrics": {
+          "target": "com.amazonaws.kinesis#MetricsNameList",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#DryRunOperationException": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "com.amazonaws.kinesis#ErrorMessage"
+        }
+      },
+      "traits": {
+        "smithy.api#error": "client"
+      }
+    },
+    "com.amazonaws.kinesis#EnableEnhancedMonitoring": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#EnableEnhancedMonitoringInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#EnhancedMonitoringOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#EnableEnhancedMonitoringInput": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "ShardLevelMetrics": {
+          "target": "com.amazonaws.kinesis#MetricsNameList",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#EncryptionType": {
+      "type": "enum",
+      "members": {
+        "NONE": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "NONE"
+          }
+        },
+        "KMS": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "KMS"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#EnhancedMetrics": {
+      "type": "structure",
+      "members": {
+        "ShardLevelMetrics": {
+          "target": "com.amazonaws.kinesis#MetricsNameList"
+        }
+      }
+    },
+    "com.amazonaws.kinesis#EnhancedMonitoringList": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.kinesis#EnhancedMetrics"
+      }
+    },
+    "com.amazonaws.kinesis#EnhancedMonitoringOutput": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "CurrentShardLevelMetrics": {
+          "target": "com.amazonaws.kinesis#MetricsNameList"
+        },
+        "DesiredShardLevelMetrics": {
+          "target": "com.amazonaws.kinesis#MetricsNameList"
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN"
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ErrorCode": {
+      "type": "string"
+    },
+    "com.amazonaws.kinesis#ErrorMessage": {
+      "type": "string"
+    },
+    "com.amazonaws.kinesis#ExpectedBucketOwner": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 12,
+          "max": 12
+        },
+        "smithy.api#pattern": "^\\d{12}$"
+      }
+    },
+    "com.amazonaws.kinesis#ExpiredIteratorException": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "com.amazonaws.kinesis#ErrorMessage"
+        }
+      },
+      "traits": {
+        "smithy.api#error": "client"
+      }
+    },
+    "com.amazonaws.kinesis#ExpiredNextTokenException": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "com.amazonaws.kinesis#ErrorMessage"
+        }
+      },
+      "traits": {
+        "smithy.api#error": "client"
+      }
+    },
+    "com.amazonaws.kinesis#GSRSchemaARN": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 512
+        },
+        "smithy.api#pattern": "^arn:aws[-a-z0-9]*:glue:[-a-z0-9]+:\\d{12}:schema/[-a-zA-Z0-9_$#.]+/[-a-zA-Z0-9_$#.]+$"
+      }
+    },
+    "com.amazonaws.kinesis#GetRecords": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#GetRecordsInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#GetRecordsOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#DryRunOperationException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ExpiredIteratorException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InternalFailureException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSAccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSDisabledException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSInvalidStateException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSNotFoundException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSOptInRequired"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSThrottlingException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ProvisionedThroughputExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "data"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#GetRecordsInput": {
+      "type": "structure",
+      "members": {
+        "ShardIterator": {
+          "target": "com.amazonaws.kinesis#ShardIterator",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "Limit": {
+          "target": "com.amazonaws.kinesis#GetRecordsInputLimit"
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        },
+        "DryRun": {
+          "target": "com.amazonaws.kinesis#BooleanObject"
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#GetRecordsInputLimit": {
+      "type": "integer",
+      "traits": {
+        "smithy.api#range": {
+          "min": 1,
+          "max": 10000
+        }
+      }
+    },
+    "com.amazonaws.kinesis#GetRecordsOutput": {
+      "type": "structure",
+      "members": {
+        "Records": {
+          "target": "com.amazonaws.kinesis#RecordList",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "NextShardIterator": {
+          "target": "com.amazonaws.kinesis#ShardIterator"
+        },
+        "MillisBehindLatest": {
+          "target": "com.amazonaws.kinesis#MillisBehindLatest"
+        },
+        "ChildShards": {
+          "target": "com.amazonaws.kinesis#ChildShardList"
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#GetResourcePolicy": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#GetResourcePolicyInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#GetResourcePolicyOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#GetResourcePolicyInput": {
+      "type": "structure",
+      "members": {
+        "ResourceARN": {
+          "target": "com.amazonaws.kinesis#ResourceARN",
+          "traits": {
+            "smithy.api#required": {},
+            "smithy.rules#contextParam": {
+              "name": "ResourceARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#GetResourcePolicyOutput": {
+      "type": "structure",
+      "members": {
+        "Policy": {
+          "target": "com.amazonaws.kinesis#Policy",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#GetShardIterator": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#GetShardIteratorInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#GetShardIteratorOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#DryRunOperationException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InternalFailureException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ProvisionedThroughputExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "data"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#GetShardIteratorInput": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "ShardId": {
+          "target": "com.amazonaws.kinesis#ShardId",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ShardIteratorType": {
+          "target": "com.amazonaws.kinesis#ShardIteratorType",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StartingSequenceNumber": {
+          "target": "com.amazonaws.kinesis#SequenceNumber"
+        },
+        "Timestamp": {
+          "target": "com.amazonaws.kinesis#Timestamp"
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        },
+        "DryRun": {
+          "target": "com.amazonaws.kinesis#BooleanObject"
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#GetShardIteratorOutput": {
+      "type": "structure",
+      "members": {
+        "ShardIterator": {
+          "target": "com.amazonaws.kinesis#ShardIterator"
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#HashKey": {
+      "type": "string",
+      "traits": {
+        "smithy.api#pattern": "^(0|([1-9]\\d{0,38}))$"
+      }
+    },
+    "com.amazonaws.kinesis#HashKeyRange": {
+      "type": "structure",
+      "members": {
+        "StartingHashKey": {
+          "target": "com.amazonaws.kinesis#HashKey",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "EndingHashKey": {
+          "target": "com.amazonaws.kinesis#HashKey",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#IncreaseStreamRetentionPeriod": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#IncreaseStreamRetentionPeriodInput"
+      },
+      "output": {
+        "target": "smithy.api#Unit"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#IncreaseStreamRetentionPeriodInput": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "RetentionPeriodHours": {
+          "target": "com.amazonaws.kinesis#RetentionPeriodHours",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#InternalFailureException": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "com.amazonaws.kinesis#ErrorMessage"
+        }
+      },
+      "traits": {
+        "smithy.api#error": "server"
+      }
+    },
+    "com.amazonaws.kinesis#InvalidArgumentException": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "com.amazonaws.kinesis#ErrorMessage"
+        }
+      },
+      "traits": {
+        "smithy.api#error": "client"
+      }
+    },
+    "com.amazonaws.kinesis#KMSAccessDeniedException": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "com.amazonaws.kinesis#ErrorMessage"
+        }
+      },
+      "traits": {
+        "smithy.api#error": "client"
+      }
+    },
+    "com.amazonaws.kinesis#KMSDisabledException": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "com.amazonaws.kinesis#ErrorMessage"
+        }
+      },
+      "traits": {
+        "smithy.api#error": "client"
+      }
+    },
+    "com.amazonaws.kinesis#KMSInvalidStateException": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "com.amazonaws.kinesis#ErrorMessage"
+        }
+      },
+      "traits": {
+        "smithy.api#error": "client"
+      }
+    },
+    "com.amazonaws.kinesis#KMSNotFoundException": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "com.amazonaws.kinesis#ErrorMessage"
+        }
+      },
+      "traits": {
+        "smithy.api#error": "client"
+      }
+    },
+    "com.amazonaws.kinesis#KMSOptInRequired": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "com.amazonaws.kinesis#ErrorMessage"
+        }
+      },
+      "traits": {
+        "smithy.api#error": "client"
+      }
+    },
+    "com.amazonaws.kinesis#KMSThrottlingException": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "com.amazonaws.kinesis#ErrorMessage"
+        }
+      },
+      "traits": {
+        "smithy.api#error": "client"
+      }
+    },
+    "com.amazonaws.kinesis#KeyId": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 2048
+        }
+      }
+    },
+    "com.amazonaws.kinesis#Kinesis_20131202": {
+      "type": "service",
+      "version": "2013-12-02",
+      "operations": [
+        {
+          "target": "com.amazonaws.kinesis#AddTagsToStream"
+        },
+        {
+          "target": "com.amazonaws.kinesis#CreateChannel"
+        },
+        {
+          "target": "com.amazonaws.kinesis#CreateStream"
+        },
+        {
+          "target": "com.amazonaws.kinesis#DecreaseStreamRetentionPeriod"
+        },
+        {
+          "target": "com.amazonaws.kinesis#DeleteChannel"
+        },
+        {
+          "target": "com.amazonaws.kinesis#DeleteResourcePolicy"
+        },
+        {
+          "target": "com.amazonaws.kinesis#DeleteStream"
+        },
+        {
+          "target": "com.amazonaws.kinesis#DeregisterStreamConsumer"
+        },
+        {
+          "target": "com.amazonaws.kinesis#DescribeAccountSettings"
+        },
+        {
+          "target": "com.amazonaws.kinesis#DescribeChannel"
+        },
+        {
+          "target": "com.amazonaws.kinesis#DescribeLimits"
+        },
+        {
+          "target": "com.amazonaws.kinesis#DescribeStream"
+        },
+        {
+          "target": "com.amazonaws.kinesis#DescribeStreamConsumer"
+        },
+        {
+          "target": "com.amazonaws.kinesis#DescribeStreamSummary"
+        },
+        {
+          "target": "com.amazonaws.kinesis#DisableEnhancedMonitoring"
+        },
+        {
+          "target": "com.amazonaws.kinesis#EnableEnhancedMonitoring"
+        },
+        {
+          "target": "com.amazonaws.kinesis#GetRecords"
+        },
+        {
+          "target": "com.amazonaws.kinesis#GetResourcePolicy"
+        },
+        {
+          "target": "com.amazonaws.kinesis#GetShardIterator"
+        },
+        {
+          "target": "com.amazonaws.kinesis#IncreaseStreamRetentionPeriod"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ListChannels"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ListShards"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ListStreamConsumers"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ListStreams"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ListTagsForResource"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ListTagsForStream"
+        },
+        {
+          "target": "com.amazonaws.kinesis#MergeShards"
+        },
+        {
+          "target": "com.amazonaws.kinesis#PutRecord"
+        },
+        {
+          "target": "com.amazonaws.kinesis#PutRecords"
+        },
+        {
+          "target": "com.amazonaws.kinesis#PutResourcePolicy"
+        },
+        {
+          "target": "com.amazonaws.kinesis#RegisterStreamConsumer"
+        },
+        {
+          "target": "com.amazonaws.kinesis#RemoveTagsFromStream"
+        },
+        {
+          "target": "com.amazonaws.kinesis#SplitShard"
+        },
+        {
+          "target": "com.amazonaws.kinesis#StartStreamEncryption"
+        },
+        {
+          "target": "com.amazonaws.kinesis#StopStreamEncryption"
+        },
+        {
+          "target": "com.amazonaws.kinesis#SubscribeToShard"
+        },
+        {
+          "target": "com.amazonaws.kinesis#TagResource"
+        },
+        {
+          "target": "com.amazonaws.kinesis#UntagResource"
+        },
+        {
+          "target": "com.amazonaws.kinesis#UpdateAccountSettings"
+        },
+        {
+          "target": "com.amazonaws.kinesis#UpdateChannel"
+        },
+        {
+          "target": "com.amazonaws.kinesis#UpdateMaxRecordSize"
+        },
+        {
+          "target": "com.amazonaws.kinesis#UpdateShardCount"
+        },
+        {
+          "target": "com.amazonaws.kinesis#UpdateStreamMode"
+        },
+        {
+          "target": "com.amazonaws.kinesis#UpdateStreamRecordDistributionStrategy"
+        },
+        {
+          "target": "com.amazonaws.kinesis#UpdateStreamWarmThroughput"
+        }
+      ],
+      "traits": {
+        "aws.api#service": {
+          "sdkId": "Kinesis",
+          "arnNamespace": "kinesis",
+          "cloudFormationName": "Kinesis",
+          "cloudTrailEventSource": "kinesis.amazonaws.com",
+          "endpointPrefix": "kinesis"
+        },
+        "aws.auth#sigv4": {
+          "name": "kinesis"
+        },
+        "aws.protocols#awsJson1_1": {
+          "http": [
+            "http/1.1",
+            "h2"
+          ],
+          "eventStreamHttp": [
+            "h2"
+          ]
+        },
+        "smithy.api#title": "Amazon Kinesis",
+        "smithy.api#xmlNamespace": {
+          "uri": "http://kinesis.amazonaws.com/doc/2013-12-02"
+        }
+      }
+    },
+    "com.amazonaws.kinesis#LimitExceededException": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "com.amazonaws.kinesis#ErrorMessage"
+        }
+      },
+      "traits": {
+        "smithy.api#error": "client"
+      }
+    },
+    "com.amazonaws.kinesis#ListChannels": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#ListChannelsInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#ListChannelsOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ExpiredNextTokenException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ValidationException"
+        }
+      ],
+      "traits": {
+        "smithy.api#paginated": {
+          "inputToken": "NextToken",
+          "outputToken": "NextToken",
+          "items": "ChannelSummaries",
+          "pageSize": "MaxResults"
+        },
+        "smithy.api#readonly": {},
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ListChannelsInput": {
+      "type": "structure",
+      "members": {
+        "StreamFilter": {
+          "target": "com.amazonaws.kinesis#StreamFilterList"
+        },
+        "MaxResults": {
+          "target": "com.amazonaws.kinesis#ListChannelsInputLimit"
+        },
+        "NextToken": {
+          "target": "com.amazonaws.kinesis#NextToken"
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#ListChannelsInputLimit": {
+      "type": "integer",
+      "traits": {
+        "smithy.api#range": {
+          "min": 1,
+          "max": 10000
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ListChannelsOutput": {
+      "type": "structure",
+      "members": {
+        "ChannelSummaries": {
+          "target": "com.amazonaws.kinesis#ChannelSummaryList",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "NextToken": {
+          "target": "com.amazonaws.kinesis#NextToken"
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#ListShards": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#ListShardsInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#ListShardsOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ExpiredNextTokenException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ListShardsInput": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "NextToken": {
+          "target": "com.amazonaws.kinesis#NextToken"
+        },
+        "ExclusiveStartShardId": {
+          "target": "com.amazonaws.kinesis#ShardId"
+        },
+        "MaxResults": {
+          "target": "com.amazonaws.kinesis#ListShardsInputLimit"
+        },
+        "StreamCreationTimestamp": {
+          "target": "com.amazonaws.kinesis#Timestamp"
+        },
+        "ShardFilter": {
+          "target": "com.amazonaws.kinesis#ShardFilter"
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#ListShardsInputLimit": {
+      "type": "integer",
+      "traits": {
+        "smithy.api#range": {
+          "min": 1,
+          "max": 10000
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ListShardsOutput": {
+      "type": "structure",
+      "members": {
+        "Shards": {
+          "target": "com.amazonaws.kinesis#ShardList"
+        },
+        "NextToken": {
+          "target": "com.amazonaws.kinesis#NextToken"
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#ListStreamConsumers": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#ListStreamConsumersInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#ListStreamConsumersOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#ExpiredNextTokenException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.api#paginated": {
+          "inputToken": "NextToken",
+          "outputToken": "NextToken",
+          "pageSize": "MaxResults"
+        },
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ListStreamConsumersInput": {
+      "type": "structure",
+      "members": {
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.api#required": {},
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "NextToken": {
+          "target": "com.amazonaws.kinesis#NextToken"
+        },
+        "MaxResults": {
+          "target": "com.amazonaws.kinesis#ListStreamConsumersInputLimit"
+        },
+        "StreamCreationTimestamp": {
+          "target": "com.amazonaws.kinesis#Timestamp"
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#ListStreamConsumersInputLimit": {
+      "type": "integer",
+      "traits": {
+        "smithy.api#range": {
+          "min": 1,
+          "max": 10000
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ListStreamConsumersOutput": {
+      "type": "structure",
+      "members": {
+        "Consumers": {
+          "target": "com.amazonaws.kinesis#ConsumerList"
+        },
+        "NextToken": {
+          "target": "com.amazonaws.kinesis#NextToken"
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#ListStreams": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#ListStreamsInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#ListStreamsOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#ExpiredNextTokenException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        }
+      ],
+      "traits": {
+        "smithy.api#paginated": {
+          "inputToken": "NextToken",
+          "outputToken": "NextToken",
+          "pageSize": "Limit"
+        },
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ListStreamsInput": {
+      "type": "structure",
+      "members": {
+        "Limit": {
+          "target": "com.amazonaws.kinesis#ListStreamsInputLimit"
+        },
+        "ExclusiveStartStreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "NextToken": {
+          "target": "com.amazonaws.kinesis#NextToken"
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#ListStreamsInputLimit": {
+      "type": "integer",
+      "traits": {
+        "smithy.api#range": {
+          "min": 1,
+          "max": 10000
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ListStreamsOutput": {
+      "type": "structure",
+      "members": {
+        "StreamNames": {
+          "target": "com.amazonaws.kinesis#StreamNameList",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "HasMoreStreams": {
+          "target": "com.amazonaws.kinesis#BooleanObject",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "NextToken": {
+          "target": "com.amazonaws.kinesis#NextToken"
+        },
+        "StreamSummaries": {
+          "target": "com.amazonaws.kinesis#StreamSummaryList"
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#ListTagsForResource": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#ListTagsForResourceInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#ListTagsForResourceOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ListTagsForResourceInput": {
+      "type": "structure",
+      "members": {
+        "ResourceARN": {
+          "target": "com.amazonaws.kinesis#ResourceARN",
+          "traits": {
+            "smithy.api#required": {},
+            "smithy.rules#contextParam": {
+              "name": "ResourceARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#ListTagsForResourceOutput": {
+      "type": "structure",
+      "members": {
+        "Tags": {
+          "target": "com.amazonaws.kinesis#TagList"
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#ListTagsForStream": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#ListTagsForStreamInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#ListTagsForStreamOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ListTagsForStreamInput": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "ExclusiveStartTagKey": {
+          "target": "com.amazonaws.kinesis#TagKey"
+        },
+        "Limit": {
+          "target": "com.amazonaws.kinesis#ListTagsForStreamInputLimit"
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#ListTagsForStreamInputLimit": {
+      "type": "integer",
+      "traits": {
+        "smithy.api#range": {
+          "min": 1,
+          "max": 50
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ListTagsForStreamOutput": {
+      "type": "structure",
+      "members": {
+        "Tags": {
+          "target": "com.amazonaws.kinesis#TagList",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "HasMoreTags": {
+          "target": "com.amazonaws.kinesis#BooleanObject",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#MaxRecordSizeInKiB": {
+      "type": "integer",
+      "traits": {
+        "smithy.api#range": {
+          "min": 1024,
+          "max": 10240
+        }
+      }
+    },
+    "com.amazonaws.kinesis#MergeShards": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#MergeShardsInput"
+      },
+      "output": {
+        "target": "smithy.api#Unit"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ValidationException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#MergeShardsInput": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "ShardToMerge": {
+          "target": "com.amazonaws.kinesis#ShardId",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "AdjacentShardToMerge": {
+          "target": "com.amazonaws.kinesis#ShardId",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#MetricsName": {
+      "type": "enum",
+      "members": {
+        "INCOMING_BYTES": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "IncomingBytes"
+          }
+        },
+        "INCOMING_RECORDS": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "IncomingRecords"
+          }
+        },
+        "OUTGOING_BYTES": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "OutgoingBytes"
+          }
+        },
+        "OUTGOING_RECORDS": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "OutgoingRecords"
+          }
+        },
+        "WRITE_PROVISIONED_THROUGHPUT_EXCEEDED": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "WriteProvisionedThroughputExceeded"
+          }
+        },
+        "READ_PROVISIONED_THROUGHPUT_EXCEEDED": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "ReadProvisionedThroughputExceeded"
+          }
+        },
+        "ITERATOR_AGE_MILLISECONDS": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "IteratorAgeMilliseconds"
+          }
+        },
+        "ALL": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "ALL"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#MetricsNameList": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.kinesis#MetricsName"
+      },
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 7
+        }
+      }
+    },
+    "com.amazonaws.kinesis#MillisBehindLatest": {
+      "type": "long",
+      "traits": {
+        "smithy.api#range": {
+          "min": 0
+        }
+      }
+    },
+    "com.amazonaws.kinesis#MinimumThroughputBillingCommitmentInput": {
+      "type": "structure",
+      "members": {
+        "Status": {
+          "target": "com.amazonaws.kinesis#MinimumThroughputBillingCommitmentInputStatus",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#MinimumThroughputBillingCommitmentInputStatus": {
+      "type": "enum",
+      "members": {
+        "ENABLED": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "ENABLED"
+          }
+        },
+        "DISABLED": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "DISABLED"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#MinimumThroughputBillingCommitmentOutput": {
+      "type": "structure",
+      "members": {
+        "Status": {
+          "target": "com.amazonaws.kinesis#MinimumThroughputBillingCommitmentOutputStatus",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StartedAt": {
+          "target": "com.amazonaws.kinesis#Timestamp"
+        },
+        "EndedAt": {
+          "target": "com.amazonaws.kinesis#Timestamp"
+        },
+        "EarliestAllowedEndAt": {
+          "target": "com.amazonaws.kinesis#Timestamp"
+        }
+      }
+    },
+    "com.amazonaws.kinesis#MinimumThroughputBillingCommitmentOutputStatus": {
+      "type": "enum",
+      "members": {
+        "ENABLED": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "ENABLED"
+          }
+        },
+        "DISABLED": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "DISABLED"
+          }
+        },
+        "ENABLED_UNTIL_EARLIEST_ALLOWED_END": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "ENABLED_UNTIL_EARLIEST_ALLOWED_END"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#NaturalIntegerObject": {
+      "type": "integer",
+      "traits": {
+        "smithy.api#range": {
+          "min": 0
+        }
+      }
+    },
+    "com.amazonaws.kinesis#NextToken": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 1048576
+        }
+      }
+    },
+    "com.amazonaws.kinesis#OnDemandStreamCountLimitObject": {
+      "type": "integer",
+      "traits": {
+        "smithy.api#range": {
+          "min": 0,
+          "max": 1000000
+        }
+      }
+    },
+    "com.amazonaws.kinesis#OnDemandStreamCountObject": {
+      "type": "integer",
+      "traits": {
+        "smithy.api#range": {
+          "min": 0,
+          "max": 1000000
+        }
+      }
+    },
+    "com.amazonaws.kinesis#PartitionField": {
+      "type": "structure",
+      "members": {
+        "Transform": {
+          "target": "com.amazonaws.kinesis#PartitionTransform",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "SourceName": {
+          "target": "com.amazonaws.kinesis#PartitionSourceName",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#PartitionFieldList": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.kinesis#PartitionField"
+      },
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 10
+        }
+      }
+    },
+    "com.amazonaws.kinesis#PartitionKey": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 256
+        }
+      }
+    },
+    "com.amazonaws.kinesis#PartitionSourceName": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 255
+        },
+        "smithy.api#pattern": "^[a-zA-Z0-9\\.\\_]+$"
+      }
+    },
+    "com.amazonaws.kinesis#PartitionSpec": {
+      "type": "structure",
+      "members": {
+        "PartitionFields": {
+          "target": "com.amazonaws.kinesis#PartitionFieldList",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#PartitionTransform": {
+      "type": "enum",
+      "members": {
+        "TIME_HOUR": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "TIME_HOUR"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#Policy": {
+      "type": "string"
+    },
+    "com.amazonaws.kinesis#PositiveIntegerObject": {
+      "type": "integer",
+      "traits": {
+        "smithy.api#range": {
+          "min": 1
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ProvisionedThroughputExceededException": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "com.amazonaws.kinesis#ErrorMessage"
+        }
+      },
+      "traits": {
+        "smithy.api#error": "client"
+      }
+    },
+    "com.amazonaws.kinesis#PutRecord": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#PutRecordInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#PutRecordOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#DryRunOperationException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InternalFailureException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSAccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSDisabledException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSInvalidStateException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSNotFoundException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSOptInRequired"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSThrottlingException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ProvisionedThroughputExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "data"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#PutRecordInput": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "Data": {
+          "target": "com.amazonaws.kinesis#Data",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "PartitionKey": {
+          "target": "com.amazonaws.kinesis#PartitionKey"
+        },
+        "ExplicitHashKey": {
+          "target": "com.amazonaws.kinesis#HashKey"
+        },
+        "SequenceNumberForOrdering": {
+          "target": "com.amazonaws.kinesis#SequenceNumber"
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        },
+        "DryRun": {
+          "target": "com.amazonaws.kinesis#BooleanObject"
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#PutRecordOutput": {
+      "type": "structure",
+      "members": {
+        "ShardId": {
+          "target": "com.amazonaws.kinesis#ShardId",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "SequenceNumber": {
+          "target": "com.amazonaws.kinesis#SequenceNumber",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "EncryptionType": {
+          "target": "com.amazonaws.kinesis#EncryptionType"
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#PutRecords": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#PutRecordsInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#PutRecordsOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#DryRunOperationException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InternalFailureException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSAccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSDisabledException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSInvalidStateException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSNotFoundException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSOptInRequired"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSThrottlingException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ProvisionedThroughputExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "data"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#PutRecordsInput": {
+      "type": "structure",
+      "members": {
+        "Records": {
+          "target": "com.amazonaws.kinesis#PutRecordsRequestEntryList",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        },
+        "DryRun": {
+          "target": "com.amazonaws.kinesis#BooleanObject"
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#PutRecordsOutput": {
+      "type": "structure",
+      "members": {
+        "FailedRecordCount": {
+          "target": "com.amazonaws.kinesis#PositiveIntegerObject"
+        },
+        "Records": {
+          "target": "com.amazonaws.kinesis#PutRecordsResultEntryList",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "EncryptionType": {
+          "target": "com.amazonaws.kinesis#EncryptionType"
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#PutRecordsRequestEntry": {
+      "type": "structure",
+      "members": {
+        "Data": {
+          "target": "com.amazonaws.kinesis#Data",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ExplicitHashKey": {
+          "target": "com.amazonaws.kinesis#HashKey"
+        },
+        "PartitionKey": {
+          "target": "com.amazonaws.kinesis#PartitionKey"
+        }
+      }
+    },
+    "com.amazonaws.kinesis#PutRecordsRequestEntryList": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.kinesis#PutRecordsRequestEntry"
+      },
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 500
+        }
+      }
+    },
+    "com.amazonaws.kinesis#PutRecordsResultEntry": {
+      "type": "structure",
+      "members": {
+        "SequenceNumber": {
+          "target": "com.amazonaws.kinesis#SequenceNumber"
+        },
+        "ShardId": {
+          "target": "com.amazonaws.kinesis#ShardId"
+        },
+        "ErrorCode": {
+          "target": "com.amazonaws.kinesis#ErrorCode"
+        },
+        "ErrorMessage": {
+          "target": "com.amazonaws.kinesis#ErrorMessage"
+        }
+      }
+    },
+    "com.amazonaws.kinesis#PutRecordsResultEntryList": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.kinesis#PutRecordsResultEntry"
+      },
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 500
+        }
+      }
+    },
+    "com.amazonaws.kinesis#PutResourcePolicy": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#PutResourcePolicyInput"
+      },
+      "output": {
+        "target": "smithy.api#Unit"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#PutResourcePolicyInput": {
+      "type": "structure",
+      "members": {
+        "ResourceARN": {
+          "target": "com.amazonaws.kinesis#ResourceARN",
+          "traits": {
+            "smithy.api#required": {},
+            "smithy.rules#contextParam": {
+              "name": "ResourceARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        },
+        "Policy": {
+          "target": "com.amazonaws.kinesis#Policy",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#Record": {
+      "type": "structure",
+      "members": {
+        "SequenceNumber": {
+          "target": "com.amazonaws.kinesis#SequenceNumber",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ApproximateArrivalTimestamp": {
+          "target": "com.amazonaws.kinesis#Timestamp"
+        },
+        "Data": {
+          "target": "com.amazonaws.kinesis#Data",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "PartitionKey": {
+          "target": "com.amazonaws.kinesis#PartitionKey"
+        },
+        "EncryptionType": {
+          "target": "com.amazonaws.kinesis#EncryptionType"
+        }
+      }
+    },
+    "com.amazonaws.kinesis#RecordConfiguration": {
+      "type": "structure",
+      "members": {
+        "RecordFormatType": {
+          "target": "com.amazonaws.kinesis#RecordFormatType",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "GSRSchemaARN": {
+          "target": "com.amazonaws.kinesis#GSRSchemaARN"
+        }
+      }
+    },
+    "com.amazonaws.kinesis#RecordDistributionStrategy": {
+      "type": "enum",
+      "members": {
+        "AUTO": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "AUTO"
+          }
+        },
+        "USER_PARTITION_KEY": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "USER_PARTITION_KEY"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#RecordFormatType": {
+      "type": "enum",
+      "members": {
+        "GSR_JSON": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "GSR_JSON"
+          }
+        },
+        "JSON": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "JSON"
+          }
+        },
+        "STRING": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "STRING"
+          }
+        },
+        "BYTE_ARRAY": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "BYTE_ARRAY"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#RecordList": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.kinesis#Record"
+      }
+    },
+    "com.amazonaws.kinesis#RegisterStreamConsumer": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#RegisterStreamConsumerInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#RegisterStreamConsumerOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#RegisterStreamConsumerInput": {
+      "type": "structure",
+      "members": {
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.api#required": {},
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "ConsumerName": {
+          "target": "com.amazonaws.kinesis#ConsumerName",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        },
+        "Tags": {
+          "target": "com.amazonaws.kinesis#TagMap"
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#RegisterStreamConsumerOutput": {
+      "type": "structure",
+      "members": {
+        "Consumer": {
+          "target": "com.amazonaws.kinesis#Consumer",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#RemoveTagsFromStream": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#RemoveTagsFromStreamInput"
+      },
+      "output": {
+        "target": "smithy.api#Unit"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#RemoveTagsFromStreamInput": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "TagKeys": {
+          "target": "com.amazonaws.kinesis#TagKeyList",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#ResourceARN": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 2048
+        },
+        "smithy.api#pattern": "^arn:aws.*:kinesis:.*:\\d{12}:.*(stream|channel)/\\S+$"
+      }
+    },
+    "com.amazonaws.kinesis#ResourceInUseException": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "com.amazonaws.kinesis#ErrorMessage"
+        }
+      },
+      "traits": {
+        "smithy.api#error": "client"
+      }
+    },
+    "com.amazonaws.kinesis#ResourceNotFoundException": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "com.amazonaws.kinesis#ErrorMessage"
+        }
+      },
+      "traits": {
+        "smithy.api#error": "client"
+      }
+    },
+    "com.amazonaws.kinesis#RetentionPeriodHours": {
+      "type": "integer"
+    },
+    "com.amazonaws.kinesis#RoleARN": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 512
+        },
+        "smithy.api#pattern": "^arn:aws[-a-z0-9]*:iam::\\d{12}:role/[a-zA-Z_0-9+=,.@\\-_/]+$"
+      }
+    },
+    "com.amazonaws.kinesis#S3CompressionType": {
+      "type": "enum",
+      "members": {
+        "NONE": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "NONE"
+          }
+        },
+        "GZIP": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "GZIP"
+          }
+        },
+        "ZSTD": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "ZSTD"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#S3DestinationConfiguration": {
+      "type": "structure",
+      "members": {
+        "DataFreshnessInSeconds": {
+          "target": "com.amazonaws.kinesis#DataFreshnessInSeconds"
+        },
+        "DeadLetterQueueS3Configuration": {
+          "target": "com.amazonaws.kinesis#DeadLetterQueueS3Configuration"
+        },
+        "StorageConfiguration": {
+          "target": "com.amazonaws.kinesis#S3StorageConfiguration",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#S3DestinationDescription": {
+      "type": "structure",
+      "members": {
+        "DataFreshnessInSeconds": {
+          "target": "com.amazonaws.kinesis#DataFreshnessInSeconds",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "DeadLetterQueueS3Configuration": {
+          "target": "com.amazonaws.kinesis#DeadLetterQueueS3Configuration",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StorageConfiguration": {
+          "target": "com.amazonaws.kinesis#S3StorageConfiguration",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#S3DestinationUpdateInput": {
+      "type": "structure",
+      "members": {
+        "DataFreshnessInSeconds": {
+          "target": "com.amazonaws.kinesis#DataFreshnessInSeconds",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#S3ErrorOutputPrefix": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 512
+        },
+        "smithy.api#pattern": "^[0-9A-Za-z!\\-_'.*()\\/]+$"
+      }
+    },
+    "com.amazonaws.kinesis#S3OutputKeyTemplate": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 1024
+        },
+        "smithy.api#pattern": "^[0-9A-Za-z!\\-_'.*()\\/=:{}]+$"
+      }
+    },
+    "com.amazonaws.kinesis#S3StorageClass": {
+      "type": "enum",
+      "members": {
+        "STANDARD": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "STANDARD"
+          }
+        },
+        "INTELLIGENT_TIERING": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "INTELLIGENT_TIERING"
+          }
+        },
+        "GLACIER_IR": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "GLACIER_IR"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#S3StorageConfiguration": {
+      "type": "structure",
+      "members": {
+        "BucketARN": {
+          "target": "com.amazonaws.kinesis#BucketARN",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ExpectedBucketOwner": {
+          "target": "com.amazonaws.kinesis#ExpectedBucketOwner",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "OutputKeyTemplate": {
+          "target": "com.amazonaws.kinesis#S3OutputKeyTemplate"
+        },
+        "StorageClass": {
+          "target": "com.amazonaws.kinesis#S3StorageClass"
+        },
+        "CompressionType": {
+          "target": "com.amazonaws.kinesis#S3CompressionType",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#S3TablesCompressionType": {
+      "type": "enum",
+      "members": {
+        "NONE": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "NONE"
+          }
+        },
+        "ZSTD": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "ZSTD"
+          }
+        },
+        "SNAPPY": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "SNAPPY"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#S3TablesConfiguration": {
+      "type": "structure",
+      "members": {
+        "TableBucketARN": {
+          "target": "com.amazonaws.kinesis#TableBucketARN",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "Namespace": {
+          "target": "com.amazonaws.kinesis#S3TablesNamespace",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "TableName": {
+          "target": "com.amazonaws.kinesis#S3TablesTableName",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "CompressionType": {
+          "target": "com.amazonaws.kinesis#S3TablesCompressionType",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "PartitionSpec": {
+          "target": "com.amazonaws.kinesis#PartitionSpec"
+        }
+      }
+    },
+    "com.amazonaws.kinesis#S3TablesConfigurationList": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.kinesis#S3TablesConfiguration"
+      },
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 10000
+        }
+      }
+    },
+    "com.amazonaws.kinesis#S3TablesDestinationConfiguration": {
+      "type": "structure",
+      "members": {
+        "DataFreshnessInSeconds": {
+          "target": "com.amazonaws.kinesis#DataFreshnessInSeconds"
+        },
+        "DeadLetterQueueS3Configuration": {
+          "target": "com.amazonaws.kinesis#DeadLetterQueueS3Configuration",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "S3TablesConfigurationList": {
+          "target": "com.amazonaws.kinesis#S3TablesConfigurationList",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#S3TablesDestinationDescription": {
+      "type": "structure",
+      "members": {
+        "DataFreshnessInSeconds": {
+          "target": "com.amazonaws.kinesis#DataFreshnessInSeconds",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "DeadLetterQueueS3Configuration": {
+          "target": "com.amazonaws.kinesis#DeadLetterQueueS3Configuration",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "S3TablesConfigurationList": {
+          "target": "com.amazonaws.kinesis#S3TablesConfigurationList",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#S3TablesDestinationUpdateInput": {
+      "type": "structure",
+      "members": {
+        "DataFreshnessInSeconds": {
+          "target": "com.amazonaws.kinesis#DataFreshnessInSeconds",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#S3TablesNamespace": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 255
+        },
+        "smithy.api#pattern": "^[0-9a-z_]+$"
+      }
+    },
+    "com.amazonaws.kinesis#S3TablesTableName": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 255
+        },
+        "smithy.api#pattern": "^[0-9a-z_]+$"
+      }
+    },
+    "com.amazonaws.kinesis#ScalingType": {
+      "type": "enum",
+      "members": {
+        "UNIFORM_SCALING": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "UNIFORM_SCALING"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#SequenceNumber": {
+      "type": "string",
+      "traits": {
+        "smithy.api#pattern": "^(0|([1-9]\\d{0,128}))$"
+      }
+    },
+    "com.amazonaws.kinesis#SequenceNumberRange": {
+      "type": "structure",
+      "members": {
+        "StartingSequenceNumber": {
+          "target": "com.amazonaws.kinesis#SequenceNumber",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "EndingSequenceNumber": {
+          "target": "com.amazonaws.kinesis#SequenceNumber"
+        }
+      }
+    },
+    "com.amazonaws.kinesis#Shard": {
+      "type": "structure",
+      "members": {
+        "ShardId": {
+          "target": "com.amazonaws.kinesis#ShardId",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ParentShardId": {
+          "target": "com.amazonaws.kinesis#ShardId"
+        },
+        "AdjacentParentShardId": {
+          "target": "com.amazonaws.kinesis#ShardId"
+        },
+        "HashKeyRange": {
+          "target": "com.amazonaws.kinesis#HashKeyRange",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "SequenceNumberRange": {
+          "target": "com.amazonaws.kinesis#SequenceNumberRange",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ShardCountObject": {
+      "type": "integer",
+      "traits": {
+        "smithy.api#range": {
+          "min": 0,
+          "max": 1000000
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ShardFilter": {
+      "type": "structure",
+      "members": {
+        "Type": {
+          "target": "com.amazonaws.kinesis#ShardFilterType",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ShardId": {
+          "target": "com.amazonaws.kinesis#ShardId"
+        },
+        "Timestamp": {
+          "target": "com.amazonaws.kinesis#Timestamp"
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ShardFilterType": {
+      "type": "enum",
+      "members": {
+        "AFTER_SHARD_ID": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "AFTER_SHARD_ID"
+          }
+        },
+        "AT_TRIM_HORIZON": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "AT_TRIM_HORIZON"
+          }
+        },
+        "FROM_TRIM_HORIZON": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "FROM_TRIM_HORIZON"
+          }
+        },
+        "AT_LATEST": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "AT_LATEST"
+          }
+        },
+        "AT_TIMESTAMP": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "AT_TIMESTAMP"
+          }
+        },
+        "FROM_TIMESTAMP": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "FROM_TIMESTAMP"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ShardId": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 128
+        },
+        "smithy.api#pattern": "^[a-zA-Z0-9_.-]+$"
+      }
+    },
+    "com.amazonaws.kinesis#ShardIdList": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.kinesis#ShardId"
+      }
+    },
+    "com.amazonaws.kinesis#ShardIterator": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 512
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ShardIteratorType": {
+      "type": "enum",
+      "members": {
+        "AT_SEQUENCE_NUMBER": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "AT_SEQUENCE_NUMBER"
+          }
+        },
+        "AFTER_SEQUENCE_NUMBER": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "AFTER_SEQUENCE_NUMBER"
+          }
+        },
+        "TRIM_HORIZON": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "TRIM_HORIZON"
+          }
+        },
+        "LATEST": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "LATEST"
+          }
+        },
+        "AT_TIMESTAMP": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "AT_TIMESTAMP"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#ShardList": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.kinesis#Shard"
+      }
+    },
+    "com.amazonaws.kinesis#SplitShard": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#SplitShardInput"
+      },
+      "output": {
+        "target": "smithy.api#Unit"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ValidationException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#SplitShardInput": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "ShardToSplit": {
+          "target": "com.amazonaws.kinesis#ShardId",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "NewStartingHashKey": {
+          "target": "com.amazonaws.kinesis#HashKey",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#StartStreamEncryption": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#StartStreamEncryptionInput"
+      },
+      "output": {
+        "target": "smithy.api#Unit"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSAccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSDisabledException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSInvalidStateException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSNotFoundException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSOptInRequired"
+        },
+        {
+          "target": "com.amazonaws.kinesis#KMSThrottlingException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#StartStreamEncryptionInput": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "EncryptionType": {
+          "target": "com.amazonaws.kinesis#EncryptionType",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "KeyId": {
+          "target": "com.amazonaws.kinesis#KeyId",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#StartingPosition": {
+      "type": "structure",
+      "members": {
+        "Type": {
+          "target": "com.amazonaws.kinesis#ShardIteratorType",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "SequenceNumber": {
+          "target": "com.amazonaws.kinesis#SequenceNumber"
+        },
+        "Timestamp": {
+          "target": "com.amazonaws.kinesis#Timestamp"
+        }
+      }
+    },
+    "com.amazonaws.kinesis#StopStreamEncryption": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#StopStreamEncryptionInput"
+      },
+      "output": {
+        "target": "smithy.api#Unit"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#StopStreamEncryptionInput": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "EncryptionType": {
+          "target": "com.amazonaws.kinesis#EncryptionType",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "KeyId": {
+          "target": "com.amazonaws.kinesis#KeyId",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#StreamARN": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 2048
+        },
+        "smithy.api#pattern": "^arn:aws.*:kinesis:.*:\\d{12}:stream/\\S+$"
+      }
+    },
+    "com.amazonaws.kinesis#StreamDescription": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamStatus": {
+          "target": "com.amazonaws.kinesis#StreamStatus",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamModeDetails": {
+          "target": "com.amazonaws.kinesis#StreamModeDetails"
+        },
+        "Shards": {
+          "target": "com.amazonaws.kinesis#ShardList",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "HasMoreShards": {
+          "target": "com.amazonaws.kinesis#BooleanObject",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "RetentionPeriodHours": {
+          "target": "com.amazonaws.kinesis#RetentionPeriodHours",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamCreationTimestamp": {
+          "target": "com.amazonaws.kinesis#Timestamp",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "EnhancedMonitoring": {
+          "target": "com.amazonaws.kinesis#EnhancedMonitoringList",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "EncryptionType": {
+          "target": "com.amazonaws.kinesis#EncryptionType"
+        },
+        "KeyId": {
+          "target": "com.amazonaws.kinesis#KeyId"
+        }
+      }
+    },
+    "com.amazonaws.kinesis#StreamDescriptionSummary": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId"
+        },
+        "StreamStatus": {
+          "target": "com.amazonaws.kinesis#StreamStatus",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamModeDetails": {
+          "target": "com.amazonaws.kinesis#StreamModeDetails"
+        },
+        "RetentionPeriodHours": {
+          "target": "com.amazonaws.kinesis#RetentionPeriodHours",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamCreationTimestamp": {
+          "target": "com.amazonaws.kinesis#Timestamp",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "EnhancedMonitoring": {
+          "target": "com.amazonaws.kinesis#EnhancedMonitoringList",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "EncryptionType": {
+          "target": "com.amazonaws.kinesis#EncryptionType"
+        },
+        "KeyId": {
+          "target": "com.amazonaws.kinesis#KeyId"
+        },
+        "OpenShardCount": {
+          "target": "com.amazonaws.kinesis#ShardCountObject",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ConsumerCount": {
+          "target": "com.amazonaws.kinesis#ConsumerCountObject"
+        },
+        "WarmThroughput": {
+          "target": "com.amazonaws.kinesis#WarmThroughputObject"
+        },
+        "MaxRecordSizeInKiB": {
+          "target": "com.amazonaws.kinesis#MaxRecordSizeInKiB"
+        },
+        "ChannelCount": {
+          "target": "com.amazonaws.kinesis#ChannelCountObject"
+        },
+        "RecordDistributionStrategy": {
+          "target": "com.amazonaws.kinesis#RecordDistributionStrategy"
+        }
+      }
+    },
+    "com.amazonaws.kinesis#StreamFilter": {
+      "type": "structure",
+      "members": {
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamCreationTimestamp": {
+          "target": "com.amazonaws.kinesis#Timestamp"
+        }
+      }
+    },
+    "com.amazonaws.kinesis#StreamFilterList": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.kinesis#StreamFilter"
+      },
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 10000
+        }
+      }
+    },
+    "com.amazonaws.kinesis#StreamId": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 24
+        },
+        "smithy.api#pattern": "^[a-z0-9]{20}-[a-z0-9]{3}$"
+      }
+    },
+    "com.amazonaws.kinesis#StreamMode": {
+      "type": "enum",
+      "members": {
+        "PROVISIONED": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "PROVISIONED"
+          }
+        },
+        "ON_DEMAND": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "ON_DEMAND"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#StreamModeDetails": {
+      "type": "structure",
+      "members": {
+        "StreamMode": {
+          "target": "com.amazonaws.kinesis#StreamMode",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#StreamName": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 128
+        },
+        "smithy.api#pattern": "^[a-zA-Z0-9_.-]+$"
+      }
+    },
+    "com.amazonaws.kinesis#StreamNameList": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.kinesis#StreamName"
+      }
+    },
+    "com.amazonaws.kinesis#StreamStatus": {
+      "type": "enum",
+      "members": {
+        "CREATING": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "CREATING"
+          }
+        },
+        "DELETING": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "DELETING"
+          }
+        },
+        "ACTIVE": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "ACTIVE"
+          }
+        },
+        "UPDATING": {
+          "target": "smithy.api#Unit",
+          "traits": {
+            "smithy.api#enumValue": "UPDATING"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#StreamSummary": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamStatus": {
+          "target": "com.amazonaws.kinesis#StreamStatus",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamModeDetails": {
+          "target": "com.amazonaws.kinesis#StreamModeDetails"
+        },
+        "StreamCreationTimestamp": {
+          "target": "com.amazonaws.kinesis#Timestamp"
+        }
+      }
+    },
+    "com.amazonaws.kinesis#StreamSummaryList": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.kinesis#StreamSummary"
+      }
+    },
+    "com.amazonaws.kinesis#SubscribeToShard": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#SubscribeToShardInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#SubscribeToShardOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#DryRunOperationException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "data"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#SubscribeToShardEvent": {
+      "type": "structure",
+      "members": {
+        "Records": {
+          "target": "com.amazonaws.kinesis#RecordList",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ContinuationSequenceNumber": {
+          "target": "com.amazonaws.kinesis#SequenceNumber",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "MillisBehindLatest": {
+          "target": "com.amazonaws.kinesis#MillisBehindLatest",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ChildShards": {
+          "target": "com.amazonaws.kinesis#ChildShardList"
+        }
+      }
+    },
+    "com.amazonaws.kinesis#SubscribeToShardEventStream": {
+      "type": "union",
+      "members": {
+        "SubscribeToShardEvent": {
+          "target": "com.amazonaws.kinesis#SubscribeToShardEvent"
+        },
+        "ResourceNotFoundException": {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        },
+        "ResourceInUseException": {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        "KMSDisabledException": {
+          "target": "com.amazonaws.kinesis#KMSDisabledException"
+        },
+        "KMSInvalidStateException": {
+          "target": "com.amazonaws.kinesis#KMSInvalidStateException"
+        },
+        "KMSAccessDeniedException": {
+          "target": "com.amazonaws.kinesis#KMSAccessDeniedException"
+        },
+        "KMSNotFoundException": {
+          "target": "com.amazonaws.kinesis#KMSNotFoundException"
+        },
+        "KMSOptInRequired": {
+          "target": "com.amazonaws.kinesis#KMSOptInRequired"
+        },
+        "KMSThrottlingException": {
+          "target": "com.amazonaws.kinesis#KMSThrottlingException"
+        },
+        "InternalFailureException": {
+          "target": "com.amazonaws.kinesis#InternalFailureException"
+        }
+      },
+      "traits": {
+        "smithy.api#streaming": {}
+      }
+    },
+    "com.amazonaws.kinesis#SubscribeToShardInput": {
+      "type": "structure",
+      "members": {
+        "ConsumerARN": {
+          "target": "com.amazonaws.kinesis#ConsumerARN",
+          "traits": {
+            "smithy.api#required": {},
+            "smithy.rules#contextParam": {
+              "name": "ConsumerARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        },
+        "ShardId": {
+          "target": "com.amazonaws.kinesis#ShardId",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StartingPosition": {
+          "target": "com.amazonaws.kinesis#StartingPosition",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "DryRun": {
+          "target": "com.amazonaws.kinesis#BooleanObject"
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#SubscribeToShardOutput": {
+      "type": "structure",
+      "members": {
+        "EventStream": {
+          "target": "com.amazonaws.kinesis#SubscribeToShardEventStream",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#TableBucketARN": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 2048
+        },
+        "smithy.api#pattern": "^arn:aws[-a-z0-9]*:s3tables:[-a-z0-9]+:\\d{12}:bucket/[a-z0-9_-]{3,63}$"
+      }
+    },
+    "com.amazonaws.kinesis#Tag": {
+      "type": "structure",
+      "members": {
+        "Key": {
+          "target": "com.amazonaws.kinesis#TagKey",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "Value": {
+          "target": "com.amazonaws.kinesis#TagValue"
+        }
+      }
+    },
+    "com.amazonaws.kinesis#TagKey": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 128
+        }
+      }
+    },
+    "com.amazonaws.kinesis#TagKeyList": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.kinesis#TagKey"
+      },
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 50
+        }
+      }
+    },
+    "com.amazonaws.kinesis#TagList": {
+      "type": "list",
+      "member": {
+        "target": "com.amazonaws.kinesis#Tag"
+      },
+      "traits": {
+        "smithy.api#length": {
+          "min": 0,
+          "max": 200
+        }
+      }
+    },
+    "com.amazonaws.kinesis#TagMap": {
+      "type": "map",
+      "key": {
+        "target": "com.amazonaws.kinesis#TagKey"
+      },
+      "value": {
+        "target": "com.amazonaws.kinesis#TagValue"
+      },
+      "traits": {
+        "smithy.api#length": {
+          "min": 1,
+          "max": 200
+        }
+      }
+    },
+    "com.amazonaws.kinesis#TagResource": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#TagResourceInput"
+      },
+      "output": {
+        "target": "smithy.api#Unit"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#TagResourceInput": {
+      "type": "structure",
+      "members": {
+        "Tags": {
+          "target": "com.amazonaws.kinesis#TagMap",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ResourceARN": {
+          "target": "com.amazonaws.kinesis#ResourceARN",
+          "traits": {
+            "smithy.api#required": {},
+            "smithy.rules#contextParam": {
+              "name": "ResourceARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#TagValue": {
+      "type": "string",
+      "traits": {
+        "smithy.api#length": {
+          "min": 0,
+          "max": 256
+        }
+      }
+    },
+    "com.amazonaws.kinesis#Timestamp": {
+      "type": "timestamp"
+    },
+    "com.amazonaws.kinesis#UntagResource": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#UntagResourceInput"
+      },
+      "output": {
+        "target": "smithy.api#Unit"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#UntagResourceInput": {
+      "type": "structure",
+      "members": {
+        "TagKeys": {
+          "target": "com.amazonaws.kinesis#TagKeyList",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ResourceARN": {
+          "target": "com.amazonaws.kinesis#ResourceARN",
+          "traits": {
+            "smithy.api#required": {},
+            "smithy.rules#contextParam": {
+              "name": "ResourceARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#UpdateAccountSettings": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#UpdateAccountSettingsInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#UpdateAccountSettingsOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ValidationException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#UpdateAccountSettingsInput": {
+      "type": "structure",
+      "members": {
+        "MinimumThroughputBillingCommitment": {
+          "target": "com.amazonaws.kinesis#MinimumThroughputBillingCommitmentInput",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#UpdateAccountSettingsOutput": {
+      "type": "structure",
+      "members": {
+        "MinimumThroughputBillingCommitment": {
+          "target": "com.amazonaws.kinesis#MinimumThroughputBillingCommitmentOutput"
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#UpdateChannel": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#UpdateChannelInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#UpdateChannelOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ValidationException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#UpdateChannelInput": {
+      "type": "structure",
+      "members": {
+        "ChannelARN": {
+          "target": "com.amazonaws.kinesis#ChannelARN",
+          "traits": {
+            "smithy.api#required": {},
+            "smithy.rules#contextParam": {
+              "name": "ChannelARN"
+            }
+          }
+        },
+        "S3DestinationConfiguration": {
+          "target": "com.amazonaws.kinesis#S3DestinationUpdateInput"
+        },
+        "S3TablesDestinationConfiguration": {
+          "target": "com.amazonaws.kinesis#S3TablesDestinationUpdateInput"
+        },
+        "LoggingConfiguration": {
+          "target": "com.amazonaws.kinesis#ChannelLoggingUpdateInput"
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#UpdateChannelOutput": {
+      "type": "structure",
+      "members": {
+        "ChannelDescription": {
+          "target": "com.amazonaws.kinesis#ChannelDescription",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#UpdateMaxRecordSize": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#UpdateMaxRecordSizeInput"
+      },
+      "output": {
+        "target": "smithy.api#Unit"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ValidationException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#UpdateMaxRecordSizeInput": {
+      "type": "structure",
+      "members": {
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        },
+        "MaxRecordSizeInKiB": {
+          "target": "com.amazonaws.kinesis#MaxRecordSizeInKiB",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#UpdateShardCount": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#UpdateShardCountInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#UpdateShardCountOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ValidationException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#UpdateShardCountInput": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "TargetShardCount": {
+          "target": "com.amazonaws.kinesis#PositiveIntegerObject",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "ScalingType": {
+          "target": "com.amazonaws.kinesis#ScalingType",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#UpdateShardCountOutput": {
+      "type": "structure",
+      "members": {
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "CurrentShardCount": {
+          "target": "com.amazonaws.kinesis#PositiveIntegerObject"
+        },
+        "TargetShardCount": {
+          "target": "com.amazonaws.kinesis#PositiveIntegerObject"
+        },
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN"
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#UpdateStreamMode": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#UpdateStreamModeInput"
+      },
+      "output": {
+        "target": "smithy.api#Unit"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ValidationException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#UpdateStreamModeInput": {
+      "type": "structure",
+      "members": {
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.api#required": {},
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        },
+        "StreamModeDetails": {
+          "target": "com.amazonaws.kinesis#StreamModeDetails",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        },
+        "WarmThroughputMiBps": {
+          "target": "com.amazonaws.kinesis#NaturalIntegerObject"
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#UpdateStreamRecordDistributionStrategy": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#UpdateStreamRecordDistributionStrategyInput"
+      },
+      "output": {
+        "target": "smithy.api#Unit"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ValidationException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#UpdateStreamRecordDistributionStrategyInput": {
+      "type": "structure",
+      "members": {
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.api#required": {},
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        },
+        "RecordDistributionStrategy": {
+          "target": "com.amazonaws.kinesis#RecordDistributionStrategy",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#UpdateStreamWarmThroughput": {
+      "type": "operation",
+      "input": {
+        "target": "com.amazonaws.kinesis#UpdateStreamWarmThroughputInput"
+      },
+      "output": {
+        "target": "com.amazonaws.kinesis#UpdateStreamWarmThroughputOutput"
+      },
+      "errors": [
+        {
+          "target": "com.amazonaws.kinesis#AccessDeniedException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#InvalidArgumentException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#LimitExceededException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceInUseException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ResourceNotFoundException"
+        },
+        {
+          "target": "com.amazonaws.kinesis#ValidationException"
+        }
+      ],
+      "traits": {
+        "smithy.rules#staticContextParams": {
+          "OperationType": {
+            "value": "control"
+          }
+        }
+      }
+    },
+    "com.amazonaws.kinesis#UpdateStreamWarmThroughputInput": {
+      "type": "structure",
+      "members": {
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamARN"
+            }
+          }
+        },
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "StreamId": {
+          "target": "com.amazonaws.kinesis#StreamId",
+          "traits": {
+            "smithy.rules#contextParam": {
+              "name": "StreamId"
+            }
+          }
+        },
+        "WarmThroughputMiBps": {
+          "target": "com.amazonaws.kinesis#NaturalIntegerObject",
+          "traits": {
+            "smithy.api#required": {}
+          }
+        }
+      },
+      "traits": {
+        "smithy.api#input": {}
+      }
+    },
+    "com.amazonaws.kinesis#UpdateStreamWarmThroughputOutput": {
+      "type": "structure",
+      "members": {
+        "StreamARN": {
+          "target": "com.amazonaws.kinesis#StreamARN"
+        },
+        "StreamName": {
+          "target": "com.amazonaws.kinesis#StreamName"
+        },
+        "WarmThroughput": {
+          "target": "com.amazonaws.kinesis#WarmThroughputObject"
+        }
+      },
+      "traits": {
+        "smithy.api#output": {}
+      }
+    },
+    "com.amazonaws.kinesis#ValidationException": {
+      "type": "structure",
+      "members": {
+        "message": {
+          "target": "com.amazonaws.kinesis#ErrorMessage"
+        }
+      },
+      "traits": {
+        "smithy.api#error": "client"
+      }
+    },
+    "com.amazonaws.kinesis#WarmThroughputObject": {
+      "type": "structure",
+      "members": {
+        "TargetMiBps": {
+          "target": "com.amazonaws.kinesis#NaturalIntegerObject"
+        },
+        "CurrentMiBps": {
+          "target": "com.amazonaws.kinesis#NaturalIntegerObject"
+        }
+      }
+    }
+  }
+}
