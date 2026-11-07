@@ -206,7 +206,7 @@ jobs:
     if: ${{ ! contains(github.ref, 'main') }}
     steps:
       - name: Create k8s Kind Cluster
-        uses: helm/kind-action@v1.15.1
+        uses: helm/kind-action@v1.15.2
         with:
           verbosity: "10"
           kubectl_version: "v1.29.3"
