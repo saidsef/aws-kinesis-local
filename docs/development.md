@@ -56,14 +56,9 @@ The version in `package.json` drives each release. Bump it in a pull request, an
 3. It tags the commit `v<version>` and creates a GitHub release with generated notes. It never moves an existing tag.
 4. It publishes `@saidsef/aws-kinesis-local` to npm through [trusted publishing](https://docs.npmjs.com/trusted-publishers), so the workflow needs no npm token and npm records provenance for the package.
 
-npm attaches a trusted publisher only to a package that already exists, so the workflow publishes the first version with a token instead. While the package is not on npm, the npm step uses the `NPM_TOKEN` repository secret, and skips the publish with a warning when that secret is not set.
+The trusted publisher on npmjs.com names the user `saidsef`, the repository `aws-kinesis-local` and the workflow `release.yml`, and allows `npm publish`. Renaming the workflow file or moving the repository breaks publishing until the trusted publisher matches again. If a publish fails, use "Re-run jobs" on that workflow run.
 
-1. On npmjs.com, create a granular access token that can publish to the `@saidsef` scope and expires within a few days. Save it as the `NPM_TOKEN` Actions secret of the repository.
-2. Merge the first version, so that the workflow publishes it with the token. If the publish fails, use "Re-run jobs" on that workflow run.
-3. In the package settings on npmjs.com, add a trusted publisher for GitHub Actions with the user `saidsef`, the repository `aws-kinesis-local` and the workflow `release.yml`, and allow `npm publish`.
-4. Delete the `NPM_TOKEN` secret and revoke the token.
-5. Merge the next version bump within 2 days, because npm expires a trusted publisher that has not published in its first 2 days.
-6. After that publish, set the publishing access to require two-factor authentication and disallow tokens.
+npm accepts a trusted publisher only for a package that already has a version, so version 1.0.0 was published by hand from its tag. Every later version goes through the workflow.
 
 ## Chart
 
