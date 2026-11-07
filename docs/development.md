@@ -1,5 +1,24 @@
 # Development
 
+## Source
+
+The TypeScript source lives in [`src/`](https://github.com/saidsef/aws-kinesis-local/tree/main/src). Node.js runs it directly, so development needs no build step:
+
+```bash
+npm ci
+npm start -- --port 4567 --path ./data
+```
+
+| Command | What it does |
+| --- | --- |
+| `npm run generate` | Generates `src/generated/model.ts` from the Smithy model. The test, typecheck and build commands run it first. |
+| `npm run typecheck` | Checks every source and test file with TypeScript. |
+| `npm test` | Runs the unit and integration tests against a server in the same process. |
+| `npm run build` | Compiles the source and its type declarations to `dist/`, which the npm package and the image ship. |
+| `npm run model -- <commit>` | Downloads the Kinesis Smithy model from `aws/api-models-aws` at that commit and strips its documentation. |
+
+[Architecture](specs/architecture.md) describes the source layout, and [Request validation](specs/validation.md) describes the model and the generator. The source has no comments. The pages under `docs/specs/` hold the reasons behind the design.
+
 ## Image
 
 ```bash
@@ -7,7 +26,42 @@ docker build -t aws-kinesis-local .
 docker run --rm -p 4567:4567 aws-kinesis-local
 ```
 
-The Dockerfile installs a pinned kinesalite release with npm. `docker-entrypoint.sh` maps the variables in [Configuration](configuration.md) to kinesalite flags.
+The Dockerfile compiles the source in a build stage and copies only the compiled JavaScript into the runtime stage. The runtime stage has no npm packages, and it removes npm, npx, Corepack and Yarn from the Node.js image. `docker-entrypoint.sh` maps the variables in [Configuration](configuration.md) to command-line flags.
+
+## Tests against the image
+
+[Testing](specs/testing.md) describes each suite. The client suites share one container and together create more shards than the default limit, so start it with a higher one:
+
+```bash
+docker run -d -p 4567:4567 -e SHARDLIMIT=1000 aws-kinesis-local
+```
+
+These commands then run the suites from the repository root:
+
+```bash
+KINESIS_ENDPOINT=http://127.0.0.1:4567 npm run test:endpoint
+KINESIS_ENDPOINT=http://127.0.0.1:4567 sh test/clients/aws-cli.sh
+KINESIS_ENDPOINT=http://127.0.0.1:4567 python test/clients/test_boto3.py
+IMAGE=aws-kinesis-local sh test/kcl/run.sh
+```
+
+The Kinesis Client Library suite starts its own containers and needs only Docker.
+
+## Releases
+
+The version in `package.json` drives each release. Bump it in a pull request, and the [Release](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/release.yml) workflow does the rest when the pull request merges:
+
+1. It does nothing when the tag `v<version>` exists and npm already has that version.
+2. It runs the typecheck, the tests and the Kinesis Client Library suite against a fresh image.
+3. It tags the commit `v<version>` and creates a GitHub release with generated notes. It never moves an existing tag.
+4. It publishes `@saidsef/aws-kinesis-local` to npm through [trusted publishing](https://docs.npmjs.com/trusted-publishers), so the workflow needs no npm token and npm records provenance for the package.
+
+npm attaches a trusted publisher to a package that already exists, so the first version goes out by hand. Until then, the workflow tags and releases each version but skips the npm step.
+
+1. Publish the first version from its tag with `npm publish`, which asks for the 2FA code.
+2. In the package settings on npmjs.com, add a trusted publisher for GitHub Actions with the user `saidsef`, the repository `aws-kinesis-local` and the workflow `release.yml`, and allow `npm publish`.
+3. Merge the next version bump within 2 days, because npm expires a trusted publisher that has not published in its first 2 days.
+4. After that publish, set the publishing access to require two-factor authentication and disallow tokens.
 
 ## Chart
 
@@ -34,7 +88,8 @@ Read the Docs builds this site from `mkdocs.yml` with MkDocs Material. To previe
 
 | Workflow | Trigger | What it does |
 | --- | --- | --- |
-| [CI](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/ci.yml) | Changes to `Dockerfile` or the workflow | Builds the image for `linux/amd64` and `linux/arm64`, pushes it to Docker Hub and scans it with Trivy. On pull requests, it deploys the Kustomize manifests and the chart to a kind cluster. |
+| [CI](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/ci.yml) | Changes to the source, tests, model, package files, Dockerfile, entrypoint or the workflow | Typechecks and tests the source, installs the packed npm package and runs it, then builds the image and runs the SDK, AWS CLI and boto3 suites and a Trivy scan against it. When those pass, it builds the image for `linux/amd64` and `linux/arm64` and pushes it to Docker Hub. On pull requests, it deploys the Kustomize manifests and the chart to a kind cluster. |
+| [Release](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/release.yml) | Changes on main to the source, model, package files or the workflow | Tests a new version, tags it, creates a GitHub release and publishes it to npm, as [Releases](#releases) describes. |
 | [Charts](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/charts.yml) | Changes under `charts/` | Lints the chart and checks the chart README. On pull requests, it installs the chart in a kind cluster. On main, it publishes the chart. |
 | [Issues](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/issues.yml) | New or reopened issues | Posts a comment that thanks the reporter. |
 
@@ -42,4 +97,4 @@ GitHub withholds repository secrets from pull requests opened from forks and by 
 
 ## Image tags
 
-The CI workflow tags each image with its branch name, with `/` replaced by `-`. A build from main is tagged `latest` and `vYYYY.MM` for the month of the build, so each build from main replaces that month's tag. The chart and the Kustomize manifests reference a `vYYYY.MM` tag.
+The CI workflow tags each image with its branch name, with `/` replaced by `-`. A build from main is tagged `latest` and `vYYYY.MM` for the month of the build, so each build from main replaces that month's tag. The chart and the Kustomize manifests reference a `vYYYY.MM` tag. The image's `org.opencontainers.image.version` label carries the version from `package.json`.

@@ -1,57 +1,53 @@
 # Supported operations
 
-The image runs [kinesalite](https://github.com/mhart/kinesalite), which implements part of the [Kinesis Data Streams API](https://docs.aws.amazon.com/kinesis/latest/APIReference/API_Operations.html). kinesalite has not had a release since October 2020.
+aws-kinesis-local implements all 45 operations in the [Kinesis Data Streams API](https://docs.aws.amazon.com/kinesis/latest/APIReference/API_Operations.html) and checks every request against the Smithy model that AWS publishes for Kinesis. [Request validation](specs/validation.md) describes how it generates those checks.
 
-## Implemented operations
-
-| Area | Operations |
-| --- | --- |
-| Streams | `CreateStream`, `DeleteStream`, `DescribeStream`, `DescribeStreamSummary`, `ListStreams` |
-| Shards | `ListShards`, `SplitShard`, `MergeShards` |
-| Records | `PutRecord`, `PutRecords`, `GetShardIterator`, `GetRecords` |
-| Tags | `AddTagsToStream`, `RemoveTagsFromStream`, `ListTagsForStream` |
-| Retention | `IncreaseStreamRetentionPeriod`, `DecreaseStreamRetentionPeriod` |
-
-kinesalite answers every other operation with `UnknownOperationException`.
-
-## Missing features
-
-kinesalite does not implement the operations behind these features.
+## Operations
 
 | Feature | Operations |
 | --- | --- |
+| Streams | `CreateStream`, `DeleteStream`, `DescribeStream`, `DescribeStreamSummary`, `ListStreams` |
+| Records | `PutRecord`, `PutRecords`, `GetShardIterator`, `GetRecords` |
+| Shards | `ListShards`, `SplitShard`, `MergeShards`, `UpdateShardCount` |
+| Retention | `IncreaseStreamRetentionPeriod`, `DecreaseStreamRetentionPeriod` |
+| Tags | `AddTagsToStream`, `RemoveTagsFromStream`, `ListTagsForStream`, `TagResource`, `UntagResource`, `ListTagsForResource` |
+| Capacity and limits | `UpdateStreamMode`, `UpdateMaxRecordSize`, `UpdateStreamWarmThroughput`, `UpdateStreamRecordDistributionStrategy` |
 | Enhanced fan-out | `RegisterStreamConsumer`, `DescribeStreamConsumer`, `ListStreamConsumers`, `DeregisterStreamConsumer`, `SubscribeToShard` |
-| On-demand capacity mode | `UpdateStreamMode` |
-| Resharding to a target shard count | `UpdateShardCount` |
-| Server-side encryption | `StartStreamEncryption`, `StopStreamEncryption` |
-| Enhanced monitoring | `EnableEnhancedMonitoring`, `DisableEnhancedMonitoring` |
-| Account limits | `DescribeLimits` |
-| Resource-based policies | `GetResourcePolicy`, `PutResourcePolicy`, `DeleteResourcePolicy` |
+| Encryption and monitoring | `StartStreamEncryption`, `StopStreamEncryption`, `EnableEnhancedMonitoring`, `DisableEnhancedMonitoring` |
+| Account settings and resource policies | `DescribeLimits`, `DescribeAccountSettings`, `UpdateAccountSettings`, `GetResourcePolicy`, `PutResourcePolicy`, `DeleteResourcePolicy` |
+| Channels | `CreateChannel`, `DeleteChannel`, `DescribeChannel`, `ListChannels`, `UpdateChannel` |
 
-To change the number of shards in a stream, call `SplitShard` and `MergeShards`.
+Every operation that takes a stream name also accepts the stream ARN in `StreamARN`. aws-kinesis-local serves JSON and CBOR over HTTP/1.1 and HTTP/2 on the same port.
 
 ## Differences from AWS
 
-- `CreateStream` ignores `StreamModeDetails` and requires `ShardCount`, so every stream uses provisioned capacity.
-- kinesalite ignores the `StreamARN` parameter. A request that names a stream by ARN alone fails with `ValidationException`, so pass `StreamName` instead.
-- Streams are not scoped to a region. Every client sees the same streams, whatever region it sends.
+aws-kinesis-local keeps state for every operation, but it does not run the AWS services behind some of them.
+
+| Area | Behaviour |
+| --- | --- |
+| Authentication | aws-kinesis-local requires an `Authorization` header or the SigV4 query parameters, but it does not check the signature. Any access key and secret key work. |
+| Regions and accounts | Streams are not scoped to a region or an account. aws-kinesis-local finds a stream by the name in its ARN and ignores the region and account in the ARN. |
+| Throughput | aws-kinesis-local never returns `ProvisionedThroughputExceededException` and does not enforce the per-second call limits of each operation. |
+| On-demand capacity | An on-demand stream starts with 4 shards and does not scale by itself. |
+| Encryption | aws-kinesis-local records the encryption type and key ID and reports `EncryptionType` on records, but it does not call KMS or encrypt the data. |
+| Enhanced monitoring | aws-kinesis-local records the shard-level metrics that are enabled, but it does not publish them to CloudWatch. |
+| Resource policies | aws-kinesis-local stores policies and returns them, but it does not enforce them. |
+| Channels | aws-kinesis-local records the channel configuration and its status, but it does not deliver records to Amazon S3 or Amazon S3 Tables. |
+| Account settings | `UpdateAccountSettings` enables and disables the minimum throughput billing commitment immediately, without a minimum commitment window. |
+| Error messages | Messages for the 17 operations that kinesalite implemented match kinesalite 3.3.3. aws-kinesis-local writes its own messages for the other operations, so their wording can differ from AWS. |
+
+[Upgrading from kinesalite](specs/upgrading.md) lists every response that differs from the kinesalite image.
 
 ## Kinesis Client Library
 
-The Kinesis Client Library (KCL) 2.x and later reads with enhanced fan-out unless it is configured for polling, so a consumer with default settings cannot read from kinesalite. Configure polling with `PollingConfig`:
-
-```java
-RetrievalConfig retrievalConfig = configsBuilder.retrievalConfig()
-    .retrievalSpecificConfig(new PollingConfig(streamName, kinesisClient));
-```
-
-The AWS SDK for Java 2.x configures `KinesisAsyncClient` for HTTP/2 by default, and kinesalite serves HTTP/1.1 only. Build the client that KCL uses with an HTTP/1.1 client:
+The Kinesis Client Library (KCL) works in both polling and enhanced fan-out mode, with the default settings of the AWS SDK for Java: CBOR and HTTP/2. Point the Kinesis client at aws-kinesis-local:
 
 ```java
 KinesisAsyncClient kinesisClient = KinesisAsyncClient.builder()
     .endpointOverride(URI.create("http://localhost:4567"))
-    .httpClientBuilder(NettyNioAsyncHttpClient.builder().protocol(Protocol.HTTP1_1))
+    .region(Region.EU_WEST_1)
+    .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("test", "test")))
     .build();
 ```
 
-KCL keeps its leases in DynamoDB and publishes metrics to CloudWatch, and this image provides neither. Point the KCL DynamoDB client at a local DynamoDB, such as [DynamoDB local](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html) or [dynalite](https://github.com/mhart/dynalite), and turn metrics off with `MetricsLevel.NONE`.
+KCL keeps its leases in DynamoDB and publishes metrics to CloudWatch, and aws-kinesis-local provides neither. Point the KCL DynamoDB client at a local DynamoDB, such as [DynamoDB local](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.html), and turn metrics off with `MetricsLevel.NONE`. The release workflow runs [a KCL consumer](https://github.com/saidsef/aws-kinesis-local/tree/main/test/kcl) in both modes against the image before it publishes a release.
