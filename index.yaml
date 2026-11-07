@@ -4,6 +4,44 @@ entries:
   - annotations:
       artifacthub.io/changes: |
         - kind: changed
+          description: Generate the chart README from helm-docs comments in values.yaml
+        - kind: fixed
+          description: Chart README states the Kubernetes version that kubeVersion requires
+      artifacthub.io/license: MIT
+      artifacthub.io/links: |
+        - name: README
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/README.md
+        - name: LICENSE
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/LICENSE.md
+        - name: CONTRIBUTING
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/CONTRIBUTING.md
+    apiVersion: v2
+    appVersion: 3.3.3
+    created: "2026-11-07T14:51:59.473068547Z"
+    description: A Kinesis Local Helm chart for Kubernetes
+    digest: 14042c784d7af0b2683565d98b56cd3773d6243f2885b1ff18663229aade678e
+    home: https://github.com/saidsef/aws-kinesis-local
+    icon: https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/main/dist/MediaServices/KinesisVideoStreams2.png
+    keywords:
+    - kinesis
+    - aws
+    - local
+    - kubernetes
+    kubeVersion: '>= 1.32.0'
+    maintainers:
+    - email: saidsef@gmail.com
+      name: Said Sef
+      url: https://saidsef.co.uk/
+    name: kinesis
+    sources:
+    - https://github.com/saidsef/aws-kinesis-local.git
+    type: application
+    urls:
+    - https://github.com/saidsef/aws-kinesis-local/releases/download/kinesis-0.8.1/kinesis-0.8.1.tgz
+    version: 0.8.1
+  - annotations:
+      artifacthub.io/changes: |
+        - kind: changed
           description: Switch chart workload from Deployment to StatefulSet with optional persistence
         - kind: added
           description: PodDisruptionBudget template, startupProbe, configurable env block and helm test region
@@ -115,4 +153,4 @@ entries:
     urls:
     - https://github.com/saidsef/aws-kinesis-local/releases/download/kinesis-0.7.3/kinesis-0.7.3.tgz
     version: 0.7.3
-generated: "2026-06-16T12:24:26.518601454Z"
+generated: "2026-11-07T14:51:59.473086703Z"
