@@ -55,7 +55,9 @@
     "typecheck": "tsc --noEmit",
     "pretest": "npm run generate",
     "test": "node --test --test-concurrency=1 --test-timeout=120000 'test/unit/**/*.test.ts' 'test/integration/**/*.test.ts'",
+    "pretest:endpoint": "npm run generate",
     "test:endpoint": "node --test --test-timeout=120000 test/integration/sdk.test.ts",
+    "prestart": "npm run generate",
     "start": "node src/cli.ts"
   },
   "devDependencies": {
