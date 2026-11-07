@@ -6,13 +6,13 @@ on:
       - main
     paths:
       - "Dockerfile"
-      - ".github/workflows/docker.yml"
+      - ".github/workflows/ci.yml"
   pull_request:
     branches:
       - main
     paths:
       - "Dockerfile"
-      - ".github/workflows/docker.yml"
+      - ".github/workflows/ci.yml"
   workflow_dispatch:
 
 env:

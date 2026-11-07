@@ -28,6 +28,13 @@ jobs:
           version: v3.16.3
       - name: Helm lint
         run: helm lint charts/kinesis
+      - name: Check chart README
+        run: |
+          docker run --rm --volume "$PWD:/helm-docs" -u "$(id -u)" jnorwood/helm-docs:v1.14.2
+          if ! git diff --exit-code -- charts/kinesis/README.md; then
+            echo "::error file=charts/kinesis/README.md::The chart README is out of date. Run helm-docs and commit the result."
+            exit 1
+          fi
       - name: Setup Chart Linting
         if: ${{ github.event_name == 'pull_request' }}
         id: lint

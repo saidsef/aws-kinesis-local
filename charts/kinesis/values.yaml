@@ -1,27 +1,38 @@
+# -- StatefulSet replica count.
 replicaCount: 1
 
 image:
+  # -- Image repository.
   repository: docker.io/saidsef/aws-kinesis-local
+  # -- Image pull policy.
   pullPolicy: IfNotPresent
-  # Date-style tag emitted by the docker CI workflow (vYYYY.MM). Leave empty to
-  # fall back to .Chart.AppVersion (the kinesalite upstream version).
+  # -- Date-style image tag (`vYYYY.MM`) that the CI workflow publishes from main. Empty falls back to `.Chart.AppVersion`.
   tag: "v2026.06"
 
+# -- Pull secrets for private registries.
 imagePullSecrets: []
+# -- Override the chart name.
 nameOverride: ""
+# -- Override the fully qualified app name.
 fullnameOverride: ""
 
 serviceAccount:
+  # -- Whether to create a ServiceAccount.
   create: true
+  # -- ServiceAccount annotations.
   annotations: {}
-  # If empty, a name is derived from the fullname template.
+  # -- If empty, defaults to the fullname.
   name: ""
 
+# -- Pod annotations.
 podAnnotations: {}
 
+# -- Pod-level securityContext.
 podSecurityContext: {}
   # fsGroup: 2000
 
+# -- Container `securityContext`: non-root, read-only rootfs, all caps dropped, seccomp RuntimeDefault.
+# @default -- hardened defaults
 securityContext:
   allowPrivilegeEscalation: false
   readOnlyRootFilesystem: true
@@ -36,29 +47,44 @@ securityContext:
       - ALL
 
 service:
+  # -- Service type.
   type: ClusterIP
+  # -- Service port.
   port: 80
+  # -- Set `clusterIP: None` for headless DNS.
   headless: false
-  # Region passed to the `helm test` aws-cli invocation.
+  # -- Region passed to the `helm test` aws-cli call.
   testRegion: eu-west-1
 
 # kinesalite tuning, surfaced as container env vars.
 env:
+  # -- kinesalite `--port`. Also drives the container port.
   PORT: "4567"
+  # -- kinesalite `--path` (LevelDB directory). Mounted into the container.
   KPATH: "/data"
+  # -- kinesalite `--shardLimit`.
   SHARDLIMIT: "50"
+  # -- kinesalite `--createStreamMs`.
   CREATESTREAMMS: "50"
+  # -- kinesalite `--deleteStreamMs`.
   DELETESTREAMMS: "50"
+  # -- kinesalite `--updateStreamMs`.
   UPDATESTREAMMS: "50"
 
 resources:
   requests:
+    # -- CPU request.
     cpu: 100m
+    # -- Memory request.
     memory: 512Mi
   limits:
+    # -- CPU limit.
     cpu: 200m
+    # -- Memory limit.
     memory: 1Gi
 
+# -- Liveness probe spec.
+# @default -- `tcpSocket port=tcp, periodSeconds=10`
 livenessProbe:
   tcpSocket:
     port: tcp
@@ -67,6 +93,8 @@ livenessProbe:
   timeoutSeconds: 2
   failureThreshold: 3
 
+# -- Readiness probe spec.
+# @default -- `tcpSocket port=tcp, periodSeconds=5`
 readinessProbe:
   tcpSocket:
     port: tcp
@@ -75,6 +103,8 @@ readinessProbe:
   timeoutSeconds: 2
   failureThreshold: 3
 
+# -- Startup probe spec.
+# @default -- `tcpSocket port=tcp, failureThreshold=30`
 startupProbe:
   tcpSocket:
     port: tcp
@@ -82,30 +112,43 @@ startupProbe:
   periodSeconds: 2
   failureThreshold: 30
 
-# When enabled, /data is backed by a StatefulSet volumeClaimTemplate.
-# Otherwise an emptyDir is used.
 persistence:
+  # -- Back `/data` with a `volumeClaimTemplate` instead of `emptyDir`.
   enabled: false
+  # -- PVC size.
   size: 1Gi
+  # -- StorageClass name. Empty uses the cluster default.
   storageClass: ""
+  # -- PVC access modes when persistence is enabled.
   accessModes:
     - ReadWriteOnce
 
 podDisruptionBudget:
+  # -- Render a `policy/v1 PodDisruptionBudget`.
   enabled: false
+  # -- PDB `minAvailable`. Mutually exclusive with `maxUnavailable`.
   minAvailable: 1
   # maxUnavailable: ""
 
 # Image used by the `helm test` hook to exercise the Kinesis API.
 testImage:
+  # -- helm-test image repo.
   repository: amazon/aws-cli
+  # -- helm-test image tag (pinned).
   tag: "2.17.0"
+  # -- Pull policy for the helm-test image.
   pullPolicy: IfNotPresent
 
+# -- StatefulSet `revisionHistoryLimit`.
 revisionHistoryLimit: 5
+# -- Pod terminationGracePeriodSeconds.
 terminationGracePeriodSeconds: 60
 
+# -- Node selector.
 nodeSelector: {}
+# -- Pod tolerations.
 tolerations: []
+# -- Pod affinity rules.
 affinity: {}
+# -- Pod topology spread constraints.
 topologySpreadConstraints: []

@@ -1,0 +1,25 @@
+site_name: aws-kinesis-local
+repo_url: https://github.com/saidsef/aws-kinesis-local
+strict: true
+theme:
+  name: material
+  palette:
+    primary: teal
+  features:
+  - content.code.copy
+markdown_extensions:
+- codehilite
+- admonition
+- tables
+- toc:
+    permalink: true
+    toc_depth: 3
+- pymdownx.superfences
+nav:
+  - Overview: index.md
+  - Configuration: configuration.md
+  - Clients: clients.md
+  - Kubernetes: kubernetes.md
+  - Supported Operations: supported-operations.md
+  - Development: development.md
+  - Chart Values: https://github.com/saidsef/aws-kinesis-local/blob/main/charts/kinesis/README.md
