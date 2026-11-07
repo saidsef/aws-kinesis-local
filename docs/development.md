@@ -99,4 +99,4 @@ GitHub withholds repository secrets from pull requests opened from forks and by 
 
 ## Image tags
 
-The CI workflow tags each image with its branch name, with `/` replaced by `-`. A build from main is tagged `latest` and `vYYYY.MM` for the month of the build, so each build from main replaces that month's tag. The chart and the Kustomize manifests reference a `vYYYY.MM` tag. The image's `org.opencontainers.image.version` label carries the version from `package.json`.
+The CI workflow tags each image with its branch name, with `/` replaced by `-`. A build from main is tagged `latest` and `vYYYY.MM` for the month of the build, so each build from main replaces that month's tag. The chart and the Kustomize manifests reference a `vYYYY.MM` tag. The image carries the standard OCI labels. CI sets `org.opencontainers.image.version` from `package.json`, and adds `org.opencontainers.image.created` and `org.opencontainers.image.revision` for each build. A local build reports the version as `dev`.

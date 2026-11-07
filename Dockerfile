@@ -14,13 +14,17 @@ RUN npm run build \
 
 FROM docker.io/node:26.13-alpine
 
-LABEL org.opencontainers.image.authors="Said Sef <saidsef@gmail.com> (saidsef.co.uk/)"
-LABEL uk.co.saidsef.aws-kinesis="Said Sef Associates Ltd"
-ARG VERSION=1.0.0
-LABEL org.opencontainers.image.version="${VERSION}"
-LABEL org.opencontainers.image.source="https://github.com/saidsef/aws-kinesis-local"
-LABEL org.opencontainers.image.documentation="https://aws-kinesis-local.readthedocs.io/"
-LABEL org.opencontainers.image.licenses="MIT"
+ARG VERSION=dev
+
+LABEL org.opencontainers.image.title="aws-kinesis-local" \
+      org.opencontainers.image.description="Amazon Kinesis Data Streams API on your machine, for development and CI" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.authors="Said Sef <saidsef@gmail.com>" \
+      org.opencontainers.image.vendor="Said Sef Associates Ltd" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.url="https://github.com/saidsef/aws-kinesis-local" \
+      org.opencontainers.image.source="https://github.com/saidsef/aws-kinesis-local" \
+      org.opencontainers.image.documentation="https://aws-kinesis-local.readthedocs.io/"
 
 ENV AWS_DEFAULT_REGION=eu-west-1 \
     CREATESTREAMMS=50 \
