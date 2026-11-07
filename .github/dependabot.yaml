@@ -12,3 +12,26 @@ updates:
       interval: "weekly"
     pull-request-branch-name:
       separator: "-"
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    pull-request-branch-name:
+      separator: "-"
+    groups:
+      aws-sdk:
+        patterns:
+          - "@aws-sdk/*"
+          - "@smithy/*"
+  - package-ecosystem: "pip"
+    directory: "/test/clients"
+    schedule:
+      interval: "weekly"
+    pull-request-branch-name:
+      separator: "-"
+  - package-ecosystem: "maven"
+    directory: "/test/kcl"
+    schedule:
+      interval: "weekly"
+    pull-request-branch-name:
+      separator: "-"
