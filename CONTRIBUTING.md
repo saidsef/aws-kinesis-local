@@ -7,9 +7,9 @@ Please note we have a code of conduct, please follow it in all your interactions
 ## Pull Request Process
 
 1. Ensure any install or build dependencies are removed before the end of the layer when doing a build.
-2. Update the README.md with details of changes to the interface, this includes new environment variables, exposed ports, useful file locations and container parameters.
-3. Increase the version numbers is managed by the GitHub Actions CI workflow `tagging.yml`
-4. You may merge the Pull Request in once you have the sign-off of from the project team, or if you do not have permission to do that, you may request a reviewer to merge it for you.
+2. Update the documentation under `docs/` with any change to the interface, such as new environment variables, exposed ports, file locations or container parameters.
+3. Bump `version` in `charts/kinesis/Chart.yaml` with every chart change. The CI workflow (`ci.yml`) tags each image, and the Charts workflow (`charts.yml`) publishes each new chart version. See [Development](docs/development.md).
+4. You may merge the Pull Request in once you have the sign-off from the project team, or if you do not have permission to do that, you may request a reviewer to merge it for you.
 
 ## Code of Conduct
 

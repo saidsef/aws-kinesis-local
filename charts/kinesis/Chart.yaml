@@ -2,7 +2,7 @@ apiVersion: v2
 name: kinesis
 description: A Kinesis Local Helm chart for Kubernetes
 type: application
-version: 0.8.0
+version: 0.8.1
 appVersion: "3.3.3"
 kubeVersion: ">= 1.32.0"
 home: https://github.com/saidsef/aws-kinesis-local
@@ -29,10 +29,6 @@ annotations:
       url: https://github.com/saidsef/aws-kinesis-local/blob/main/CONTRIBUTING.md
   artifacthub.io/changes: |
     - kind: changed
-      description: Switch chart workload from Deployment to StatefulSet with optional persistence
-    - kind: added
-      description: PodDisruptionBudget template, startupProbe, configurable env block and helm test region
+      description: Generate the chart README from helm-docs comments in values.yaml
     - kind: fixed
-      description: Headless service value (was service.healess) now honoured; autoscaling stub removed
-    - kind: changed
-      description: Bump kubeVersion to >= 1.32; appVersion tracks the kinesalite binary (3.3.3)
+      description: Chart README states the Kubernetes version that kubeVersion requires
