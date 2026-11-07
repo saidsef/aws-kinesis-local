@@ -13,7 +13,6 @@ on:
       - "tsconfig.json"
       - "tsconfig.build.json"
       - ".github/workflows/release.yml"
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -53,7 +52,7 @@ jobs:
             echo "exists=true" >> "$GITHUB_OUTPUT"
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::$NAME is not on npm yet, so this run skips npm publish. Publish the first version by hand, then add the trusted publisher."
+            echo "::notice::$NAME is not on npm yet, so this run publishes with the NPM_TOKEN secret when it is set."
           fi
           if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
             echo "published=true" >> "$GITHUB_OUTPUT"
@@ -120,10 +119,12 @@ jobs:
   npm:
     runs-on: ubuntu-latest
     needs: [version, verify, release]
-    if: ${{ !cancelled() && needs.verify.result == 'success' && needs.release.result != 'failure' && needs.version.outputs.exists == 'true' && needs.version.outputs.published == 'false' }}
+    if: ${{ !cancelled() && needs.verify.result == 'success' && needs.release.result != 'failure' && needs.version.outputs.published == 'false' }}
     permissions:
       contents: read
       id-token: write
+    env:
+      FIRST_PUBLISH_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - name: Checkout source code
         uses: actions/checkout@v7
@@ -134,5 +135,14 @@ jobs:
           registry-url: https://registry.npmjs.org
       - name: Install dependencies
         run: npm ci
-      - name: Publish to npm
+      - name: Publish through the trusted publisher
+        if: ${{ needs.version.outputs.exists == 'true' }}
         run: npm publish
+      - name: Publish the first version with the NPM_TOKEN secret
+        if: ${{ needs.version.outputs.exists == 'false' && env.FIRST_PUBLISH_TOKEN != '' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance
+      - name: Report that the first version is waiting for a token
+        if: ${{ needs.version.outputs.exists == 'false' && env.FIRST_PUBLISH_TOKEN == '' }}
+        run: echo "::warning::The package is not on npm and the NPM_TOKEN secret is not set, so nothing was published."
