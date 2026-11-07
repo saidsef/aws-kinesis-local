@@ -2,3 +2,6 @@
 *.swp
 *.lit
 site
+node_modules
+dist
+src/generated

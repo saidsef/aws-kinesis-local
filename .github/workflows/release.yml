@@ -1,0 +1,148 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "model/**"
+      - "scripts/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.json"
+      - "tsconfig.build.json"
+      - ".github/workflows/release.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/main' }}
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tagged: ${{ steps.version.outputs.tagged }}
+      exists: ${{ steps.version.outputs.exists }}
+      published: ${{ steps.version.outputs.published }}
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+      - name: Compare the version with the tags and with npm
+        id: version
+        run: |
+          NAME=$(jq -r .name package.json)
+          VERSION=$(jq -r .version package.json)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if git ls-remote --exit-code --tags origin "refs/tags/v$VERSION" >/dev/null; then
+            echo "tagged=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "tagged=false" >> "$GITHUB_OUTPUT"
+          fi
+          if npm view "$NAME" name >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::$NAME is not on npm yet, so this run publishes with the NPM_TOKEN secret when it is set."
+          fi
+          if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  verify:
+    runs-on: ubuntu-latest
+    needs: [version]
+    if: ${{ needs.version.outputs.tagged == 'false' || needs.version.outputs.published == 'false' }}
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Unit and integration tests
+        run: npm test
+      - name: Build the image
+        run: docker build --build-arg VERSION="${{ needs.version.outputs.version }}" -t aws-kinesis-local:release .
+      - name: Cache Maven packages for the Kinesis Client Library test
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/kcl-m2
+          key: kcl-m2-${{ hashFiles('test/kcl/pom.xml') }}
+      - name: Test the Kinesis Client Library
+        run: IMAGE=aws-kinesis-local:release MAVEN_CACHE="$RUNNER_TEMP/kcl-m2" sh test/kcl/run.sh
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [version, verify]
+    if: ${{ needs.version.outputs.tagged == 'false' }}
+    permissions:
+      contents: write
+    steps:
+      - name: Create the tag and the GitHub release
+        uses: actions/github-script@v9
+        env:
+          TAG: v${{ needs.version.outputs.version }}
+        with:
+          script: |
+            const { owner, repo } = context.repo
+            const tag = process.env.TAG
+            try {
+              await github.rest.git.createRef({ owner, repo, ref: `refs/tags/${tag}`, sha: context.sha })
+            } catch (error) {
+              if (error.status !== 422) throw error
+              core.info(`Tag ${tag} already exists, so it stays where it is.`)
+            }
+            try {
+              await github.rest.repos.createRelease({ owner, repo, tag_name: tag, generate_release_notes: true })
+            } catch (error) {
+              if (error.status !== 422) throw error
+              core.info(`Release ${tag} already exists.`)
+            }
+
+  npm:
+    runs-on: ubuntu-latest
+    needs: [version, verify, release]
+    if: ${{ !cancelled() && needs.verify.result == 'success' && needs.release.result != 'failure' && needs.version.outputs.published == 'false' }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      FIRST_PUBLISH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          registry-url: https://registry.npmjs.org
+      - name: Install dependencies
+        run: npm ci
+      - name: Publish through the trusted publisher
+        if: ${{ needs.version.outputs.exists == 'true' }}
+        run: npm publish
+      - name: Publish the first version with the NPM_TOKEN secret
+        if: ${{ needs.version.outputs.exists == 'false' && env.FIRST_PUBLISH_TOKEN != '' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance
+      - name: Report that the first version is waiting for a token
+        if: ${{ needs.version.outputs.exists == 'false' && env.FIRST_PUBLISH_TOKEN == '' }}
+        run: echo "::warning::The package is not on npm and the NPM_TOKEN secret is not set, so nothing was published."

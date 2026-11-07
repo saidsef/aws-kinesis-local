@@ -1,6 +1,6 @@
 # Kubernetes
 
-The Helm chart and the Kustomize manifests each deploy kinesalite as a single StatefulSet behind a Service. The chart exposes every setting as a value. The Kustomize manifests fix their settings and suit a pinned deployment.
+The Helm chart and the Kustomize manifests each deploy aws-kinesis-local as a single StatefulSet behind a Service. The chart exposes every setting as a value. The Kustomize manifests fix their settings and suit a pinned deployment.
 
 ## Helm
 
@@ -12,7 +12,7 @@ helm upgrade --install kinesis kinesis/kinesis --namespace kinesis --create-name
 
 In `kinesis/kinesis`, the first `kinesis` is the repository added above and the second is the chart. The [chart README](https://github.com/saidsef/aws-kinesis-local/blob/main/charts/kinesis/README.md) lists every value and the Kubernetes versions that the chart supports.
 
-Without persistence, the chart mounts an `emptyDir` at `/data`, so streams last only as long as the pod. Common overrides:
+Without persistence, the chart mounts an `emptyDir` at `/data`, so streams last only as long as the pod. With persistence, aws-kinesis-local keeps its SQLite database on the PersistentVolumeClaim. Common overrides:
 
 ```shell
 # Keep streams on a PersistentVolumeClaim
@@ -22,7 +22,7 @@ helm upgrade --install kinesis kinesis/kinesis \
 # Make the Service headless
 helm upgrade --install kinesis kinesis/kinesis --set service.headless=true
 
-# Raise the kinesalite shard limit
+# Raise the shard limit
 helm upgrade --install kinesis kinesis/kinesis --set env.SHARDLIMIT=200
 ```
 

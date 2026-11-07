@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-exec kinesalite \
+exec node /opt/aws-kinesis-local/cli.js \
   --port "${PORT:-4567}" \
   --path "${KPATH:-/data}" \
   --shardLimit "${SHARDLIMIT:-50}" \

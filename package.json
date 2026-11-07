@@ -1,0 +1,71 @@
+{
+  "name": "@saidsef/aws-kinesis-local",
+  "version": "1.0.0",
+  "description": "Local Amazon Kinesis Data Streams server for development and CI, with all 45 operations, enhanced fan-out, JSON and CBOR over HTTP/1.1 and HTTP/2",
+  "keywords": [
+    "aws",
+    "kinesis",
+    "kinesis-data-streams",
+    "local",
+    "mock",
+    "testing",
+    "kcl",
+    "enhanced-fan-out",
+    "kinesalite"
+  ],
+  "author": "Said Sef <saidsef@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://aws-kinesis-local.readthedocs.io/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/saidsef/aws-kinesis-local.git"
+  },
+  "bugs": {
+    "url": "https://github.com/saidsef/aws-kinesis-local/issues"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=26"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "aws-kinesis-local": "dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "model": "node scripts/fetch-model.ts",
+    "generate": "node scripts/generate.ts",
+    "prebuild": "npm run generate",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "prepack": "npm run build",
+    "pretypecheck": "npm run generate",
+    "typecheck": "tsc --noEmit",
+    "pretest": "npm run generate",
+    "test": "node --test --test-concurrency=1 --test-timeout=120000 'test/unit/**/*.test.ts' 'test/integration/**/*.test.ts'",
+    "pretest:endpoint": "npm run generate",
+    "test:endpoint": "node --test --test-timeout=120000 test/integration/sdk.test.ts",
+    "prestart": "npm run generate",
+    "start": "node src/cli.ts"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-kinesis": "3.1164.0",
+    "@smithy/eventstream-codec": "4.5.2",
+    "@smithy/node-http-handler": "4.14.2",
+    "@types/node": "26.6.6",
+    "cbor2": "2.4.1",
+    "typescript": "7.0.2"
+  }
+}

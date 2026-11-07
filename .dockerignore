@@ -1,3 +1,13 @@
 .git/*
+.github
 LICENSE.md
 README.md
+argocd
+charts
+deployment
+docs
+mkdocs.yml
+node_modules
+dist
+src/generated
+test

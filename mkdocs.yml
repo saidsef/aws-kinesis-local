@@ -22,4 +22,11 @@ nav:
   - Kubernetes: kubernetes.md
   - Supported Operations: supported-operations.md
   - Development: development.md
+  - Specifications:
+    - Architecture: specs/architecture.md
+    - Request validation: specs/validation.md
+    - Storage: specs/storage.md
+    - Enhanced fan-out: specs/enhanced-fan-out.md
+    - Upgrading from kinesalite: specs/upgrading.md
+    - Testing: specs/testing.md
   - Chart Values: https://github.com/saidsef/aws-kinesis-local/blob/main/charts/kinesis/README.md
