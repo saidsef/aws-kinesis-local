@@ -3,6 +3,42 @@ entries:
   kinesis:
   - annotations:
       artifacthub.io/changes: |
+        - kind: changed
+          description: The chart deploys aws-kinesis-local 1.0.2, which reports MillisBehindLatest while records remain unread
+      artifacthub.io/license: MIT
+      artifacthub.io/links: |
+        - name: README
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/README.md
+        - name: LICENSE
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/LICENSE.md
+        - name: CONTRIBUTING
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/CONTRIBUTING.md
+    apiVersion: v2
+    appVersion: 1.0.2
+    created: "2026-11-08T15:58:23.218844487Z"
+    description: A Kinesis Local Helm chart for Kubernetes
+    digest: c681cdcc5fdbf5cf4c9ad07bb3bda07fdaa2d41fb9150e9d73fc87fe612b0745
+    home: https://github.com/saidsef/aws-kinesis-local
+    icon: https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/main/dist/MediaServices/KinesisVideoStreams2.png
+    keywords:
+    - kinesis
+    - aws
+    - local
+    - kubernetes
+    kubeVersion: '>= 1.32.0'
+    maintainers:
+    - email: saidsef@gmail.com
+      name: Said Sef
+      url: https://saidsef.co.uk/
+    name: kinesis
+    sources:
+    - https://github.com/saidsef/aws-kinesis-local.git
+    type: application
+    urls:
+    - https://github.com/saidsef/aws-kinesis-local/releases/download/kinesis-0.10.1/kinesis-0.10.1.tgz
+    version: 0.10.1
+  - annotations:
+      artifacthub.io/changes: |
         - kind: fixed
           description: podSecurityContext defaults to fsGroup 65534 with fsGroupChangePolicy OnRootMismatch, so aws-kinesis-local can open its database on a persistent volume that root owns
         - kind: changed
@@ -239,4 +275,4 @@ entries:
     urls:
     - https://github.com/saidsef/aws-kinesis-local/releases/download/kinesis-0.7.3/kinesis-0.7.3.tgz
     version: 0.7.3
-generated: "2026-11-08T13:53:19.32889549Z"
+generated: "2026-11-08T15:58:23.218865201Z"
