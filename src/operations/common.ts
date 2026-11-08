@@ -14,7 +14,7 @@ export interface Context {
 export type Handler = (context: Context, data: Input) => unknown
 
 export const DEFAULT_MAX_RECORD_SIZE_KIB = 1024
-export const MAX_TAGS_PER_RESOURCE = 50
+const MAX_TAGS_PER_RESOURCE = 50
 export const MAX_RETENTION_HOURS = 8760
 export const MIN_RETENTION_HOURS = 24
 export const ON_DEMAND_SHARD_COUNT = 4
@@ -57,7 +57,7 @@ export function streamNameOf(data: Input): string {
   return (data.StreamName ?? fromArn) as string
 }
 
-export function notFound(context: Context, name: string) {
+function notFound(context: Context, name: string) {
   return resourceNotFound(`Stream ${name} under account ${account(context)} not found.`)
 }
 
@@ -102,7 +102,7 @@ export function nowSeconds() {
 
 const INVALID_TAG_CHARACTERS = /[^À-῿Ⰰ-퟿\w./\-=+_ @%]/
 
-export function checkTagCharacters(values: string[], action: string, resource: string, context: Context) {
+function checkTagCharacters(values: string[], action: string, resource: string, context: Context) {
   if (values.some(value => INVALID_TAG_CHARACTERS.test(value))) {
     throw invalidArgument('Some tags contain invalid characters. Valid characters: Unicode letters, digits, white space, _ . / = + - % @.')
   }

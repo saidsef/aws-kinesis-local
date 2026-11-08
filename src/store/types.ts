@@ -14,7 +14,7 @@ export interface ShardDoc {
   ShardId: string
 }
 
-export type StreamStatus = 'CREATING' | 'ACTIVE' | 'UPDATING' | 'DELETING'
+type StreamStatus = 'CREATING' | 'ACTIVE' | 'UPDATING' | 'DELETING'
 export type StreamMode = 'PROVISIONED' | 'ON_DEMAND'
 
 export interface Pending {
@@ -43,7 +43,7 @@ export interface StreamDoc {
   _pending?: Pending
 }
 
-export type ConsumerStatus = 'CREATING' | 'ACTIVE' | 'DELETING'
+type ConsumerStatus = 'CREATING' | 'ACTIVE' | 'DELETING'
 
 export interface ConsumerDoc {
   ConsumerName: string

@@ -1,6 +1,5 @@
 # stuff to ignore
 *.swp
-*.lit
 site
 node_modules
 dist
