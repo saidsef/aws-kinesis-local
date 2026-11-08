@@ -3,6 +3,46 @@ entries:
   kinesis:
   - annotations:
       artifacthub.io/changes: |
+        - kind: fixed
+          description: The default image is the aws-kinesis-local release that appVersion names, instead of the kinesalite image v2026.06
+        - kind: changed
+          description: image.tag defaults to empty, so the chart deploys the image tag that matches appVersion
+        - kind: changed
+          description: The env value descriptions cover aws-kinesis-local and its SQLite database instead of kinesalite and LevelDB
+      artifacthub.io/license: MIT
+      artifacthub.io/links: |
+        - name: README
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/README.md
+        - name: LICENSE
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/LICENSE.md
+        - name: CONTRIBUTING
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/CONTRIBUTING.md
+    apiVersion: v2
+    appVersion: 1.0.1
+    created: "2026-11-08T13:47:26.356869503Z"
+    description: A Kinesis Local Helm chart for Kubernetes
+    digest: 1f314c19a905235b75bcb883ea378e87620f25921d885f4112758b3a16cf93eb
+    home: https://github.com/saidsef/aws-kinesis-local
+    icon: https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/main/dist/MediaServices/KinesisVideoStreams2.png
+    keywords:
+    - kinesis
+    - aws
+    - local
+    - kubernetes
+    kubeVersion: '>= 1.32.0'
+    maintainers:
+    - email: saidsef@gmail.com
+      name: Said Sef
+      url: https://saidsef.co.uk/
+    name: kinesis
+    sources:
+    - https://github.com/saidsef/aws-kinesis-local.git
+    type: application
+    urls:
+    - https://github.com/saidsef/aws-kinesis-local/releases/download/kinesis-0.9.0/kinesis-0.9.0.tgz
+    version: 0.9.0
+  - annotations:
+      artifacthub.io/changes: |
         - kind: changed
           description: Generate the chart README from helm-docs comments in values.yaml
         - kind: fixed
@@ -153,4 +193,4 @@ entries:
     urls:
     - https://github.com/saidsef/aws-kinesis-local/releases/download/kinesis-0.7.3/kinesis-0.7.3.tgz
     version: 0.7.3
-generated: "2026-11-07T14:51:59.473086703Z"
+generated: "2026-11-08T13:47:26.356884156Z"
