@@ -127,17 +127,11 @@ export class Subscription {
       return
     }
     const now = Date.now()
-    const event: Record<string, unknown> = { Records: result.records, MillisBehindLatest: 0 }
-    if (result.records.length) {
-      this.continuation = result.records[result.records.length - 1]!.SequenceNumber as string
-      if (result.records.length === EVENT_RECORD_LIMIT) {
-        event.MillisBehindLatest = Math.max(0, now - Math.round((result.records[result.records.length - 1]!.ApproximateArrivalTimestamp as number) * 1000))
-      }
-    }
+    const event: Record<string, unknown> = { Records: result.records, MillisBehindLatest: result.millisBehindLatest }
+    if (result.records.length) this.continuation = result.records[result.records.length - 1]!.SequenceNumber as string
     this.position = result.nextSequence
     if (result.shardEnded) {
       event.ChildShards = childShards(stream, this.shardId)
-      event.MillisBehindLatest = 0
       this.send(event)
       this.stop()
       return
