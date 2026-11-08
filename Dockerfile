@@ -52,6 +52,6 @@ EXPOSE 4567
 
 VOLUME ["/data"]
 
-HEALTHCHECK --interval=60s --timeout=10s CMD nc -zvw3 127.0.0.1 "$PORT" || exit 1
+HEALTHCHECK --interval=60s --timeout=10s CMD wget -q -T 3 -O /dev/null "http://127.0.0.1:$PORT/healthz" || wget -q -T 3 --no-check-certificate -O /dev/null "https://127.0.0.1:$PORT/healthz" || exit 1
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

@@ -2,7 +2,7 @@
 
 The Helm chart and the Kustomize manifests each deploy aws-kinesis-local as a single StatefulSet behind a Service. The chart exposes every setting as a value. The Kustomize manifests fix their settings and suit a pinned deployment.
 
-Both deploy one replica by default. Replicas do not share streams, because each replica keeps its own database. A client can reach any replica through the Service, so with more than one replica it can miss a stream that it created over another connection.
+Both deploy one replica by default. Replicas do not share streams, because each replica keeps its own database. A client can reach any replica through the Service, so with more than one replica it can miss a stream that it created over another connection. Both probe the endpoints that [Health check](configuration.md#health-check) describes.
 
 ## Helm
 

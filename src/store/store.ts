@@ -39,6 +39,7 @@ export class Store {
   readonly policies = new Map<string, string>()
   readonly events = new EventEmitter()
   settings: AccountSettings = { MinimumThroughputBillingCommitment: { Status: 'DISABLED' } }
+  draining = false
   private readonly db: DatabaseSync
   private readonly transitions = new Map<string, Transition>()
   private readonly timers = new Map<string, NodeJS.Timeout>()
@@ -84,6 +85,7 @@ export class Store {
       oldestSequences: this.db.prepare('SELECT seq FROM records WHERE stream = ? AND shard = ? ORDER BY seq LIMIT ?'),
       deleteRecord: this.db.prepare('DELETE FROM records WHERE stream = ? AND shard = ? AND seq = ?'),
       deleteStreamRecords: this.db.prepare('DELETE FROM records WHERE stream = ?'),
+      schemaVersion: this.db.prepare("SELECT value FROM metadata WHERE key = 'schema'"),
     }
     this.load()
   }
@@ -308,11 +310,27 @@ export class Store {
     }
   }
 
+  healthy() {
+    if (this.closed) return false
+    try {
+      this.statements.schemaVersion!.get()
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  drain() {
+    if (this.draining) return
+    this.draining = true
+    this.events.emit('drain')
+  }
+
   close() {
     if (this.closed) return
+    this.drain()
     for (const timer of this.timers.values()) clearTimeout(timer)
     this.timers.clear()
-    this.events.emit('close')
     this.closed = true
     this.db.close()
   }

@@ -47,8 +47,15 @@ aws-kinesis-local does not read the LevelDB database that the kinesalite image s
 
 ## Shutdown
 
-aws-kinesis-local stops on `SIGTERM` and `SIGINT`, so `docker stop` returns at once. A stream, consumer or channel that is in a transitional state when it stops finishes that change on the next start.
+aws-kinesis-local stops on `SIGTERM` and `SIGINT`. It reports that it is not ready, stops accepting connections, ends every `SubscribeToShard` response and lets the requests in progress finish. It closes the database last. When requests are still running after the time limit, which the `shutdownMs` option of `start()` sets, it closes their connections. A stream, consumer or channel that is in a transitional state when it stops finishes that change on the next start.
 
 ## Health check
 
-The image health check opens a TCP connection to `PORT` every 60 seconds.
+aws-kinesis-local answers two health endpoints on `PORT`, and every other `GET` request returns a 403 error.
+
+| Path | 200 | 503 |
+| --- | --- | --- |
+| `/healthz` | The server can read its database | The server cannot read its database |
+| `/readyz` | The server can read its database and is not shutting down | The server cannot read its database, or shutdown has started |
+
+The image health check requests `/healthz` every 60 seconds. It tries HTTP first and then HTTPS, so it also works with `--ssl`. The Helm chart and the Kustomize manifests use `/healthz` for the startup and liveness probes and `/readyz` for the readiness probe.

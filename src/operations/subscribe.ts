@@ -61,7 +61,7 @@ export class Subscription {
   private readonly onRecords: (name: string, shardIx: number) => void
   private readonly onConsumerGone: (arn: string) => void
   private readonly onStreamDeleted: (name: string) => void
-  private readonly onClose: () => void
+  private readonly onDrain: () => void
 
   constructor(context: Context, consumerArn: string, streamName: string, shardIx: number, shardId: string, position: string) {
     this.context = context
@@ -81,7 +81,7 @@ export class Subscription {
     this.onStreamDeleted = name => {
       if (name === this.streamName) this.fail(resourceNotFound(`Stream ${name} under account ${account(this.context)} not found.`))
     }
-    this.onClose = () => this.stop()
+    this.onDrain = () => this.stop()
   }
 
   get protocol(): Protocol {
@@ -99,9 +99,10 @@ export class Subscription {
     events.on('consumer-deleting', this.onConsumerGone)
     events.on('consumer-removed', this.onConsumerGone)
     events.on('stream-deleted', this.onStreamDeleted)
-    events.on('close', this.onClose)
+    events.on('drain', this.onDrain)
     sink.onClose(() => this.stop())
     sink.write(encodeEvent({ ':event-type': 'initial-response', ':content-type': this.payloadType, ':message-type': 'event' }, encodeBody({}, this.protocol)))
+    if (this.context.store.draining) return this.stop()
     this.deadline = setTimeout(() => this.stop(), SUBSCRIPTION_MS)
     this.schedule(0)
   }
@@ -172,7 +173,7 @@ export class Subscription {
     events.off('consumer-deleting', this.onConsumerGone)
     events.off('consumer-removed', this.onConsumerGone)
     events.off('stream-deleted', this.onStreamDeleted)
-    events.off('close', this.onClose)
+    events.off('drain', this.onDrain)
     const { active } = stateOf(this.context.store)
     if (active.get(this.key) === this) active.delete(this.key)
     this.sink?.end()

@@ -1,4 +1,4 @@
-import { request } from 'node:http'
+import { request, type Agent } from 'node:http'
 import { decode as decodeCbor, encode as encodeCbor } from 'cbor2'
 
 export interface RawRequest {
@@ -6,6 +6,7 @@ export interface RawRequest {
   path?: string
   headers?: Record<string, string>
   body?: Buffer | string
+  agent?: Agent
 }
 
 export interface RawResponse {
@@ -25,7 +26,7 @@ export const AUTH = {
 export function send(endpoint: string, raw: RawRequest): Promise<RawResponse> {
   const url = new URL(raw.path ?? '/', endpoint)
   return new Promise((resolve, reject) => {
-    const req = request(url, { method: raw.method ?? 'POST', headers: raw.headers ?? {}, timeout: 15000 }, res => {
+    const req = request(url, { method: raw.method ?? 'POST', headers: raw.headers ?? {}, timeout: 15000, ...(raw.agent ? { agent: raw.agent } : {}) }, res => {
       const chunks: Buffer[] = []
       res.on('data', chunk => chunks.push(chunk))
       res.on('end', () => {

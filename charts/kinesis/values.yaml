@@ -85,9 +85,10 @@ resources:
     memory: 1Gi
 
 # -- Liveness probe spec.
-# @default -- `tcpSocket port=tcp, periodSeconds=10`
+# @default -- `httpGet path=/healthz port=tcp, periodSeconds=10`
 livenessProbe:
-  tcpSocket:
+  httpGet:
+    path: /healthz
     port: tcp
   initialDelaySeconds: 5
   periodSeconds: 10
@@ -95,9 +96,10 @@ livenessProbe:
   failureThreshold: 3
 
 # -- Readiness probe spec.
-# @default -- `tcpSocket port=tcp, periodSeconds=5`
+# @default -- `httpGet path=/readyz port=tcp, periodSeconds=5`
 readinessProbe:
-  tcpSocket:
+  httpGet:
+    path: /readyz
     port: tcp
   initialDelaySeconds: 5
   periodSeconds: 5
@@ -105,9 +107,10 @@ readinessProbe:
   failureThreshold: 3
 
 # -- Startup probe spec.
-# @default -- `tcpSocket port=tcp, failureThreshold=30`
+# @default -- `httpGet path=/healthz port=tcp, failureThreshold=30`
 startupProbe:
-  tcpSocket:
+  httpGet:
+    path: /healthz
     port: tcp
   initialDelaySeconds: 2
   periodSeconds: 2
