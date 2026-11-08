@@ -1,4 +1,4 @@
-# -- StatefulSet replica count.
+# -- StatefulSet replica count. Replicas do not share streams. Each replica keeps its own database, and the Service spreads connections across all replicas, so a request can reach a replica that does not hold the stream.
 replicaCount: 1
 
 image:
@@ -27,9 +27,10 @@ serviceAccount:
 # -- Pod annotations.
 podAnnotations: {}
 
-# -- Pod-level securityContext.
-podSecurityContext: {}
-  # fsGroup: 2000
+# -- Pod-level securityContext. `fsGroup` makes Kubernetes set the group of the data volume to 65534, the group that the container runs as, and make it writable by that group. aws-kinesis-local can then open its database on a volume that root owns. With `OnRootMismatch`, Kubernetes changes ownership and permissions only when those of the volume root do not already match.
+podSecurityContext:
+  fsGroup: 65534
+  fsGroupChangePolicy: OnRootMismatch
 
 # -- Container `securityContext`: non-root, read-only rootfs, all caps dropped, seccomp RuntimeDefault.
 # @default -- hardened defaults
@@ -51,7 +52,7 @@ service:
   type: ClusterIP
   # -- Service port.
   port: 80
-  # -- Set `clusterIP: None` for headless DNS.
+  # -- Set `clusterIP: None` for headless DNS. Clients then reach the pods on the container port, `env.PORT`, and not on `service.port`.
   headless: false
   # -- Region passed to the `helm test` aws-cli call.
   testRegion: eu-west-1
@@ -126,9 +127,11 @@ persistence:
 podDisruptionBudget:
   # -- Render a `policy/v1 PodDisruptionBudget`.
   enabled: false
-  # -- PDB `minAvailable`. Mutually exclusive with `maxUnavailable`.
-  minAvailable: 1
-  # maxUnavailable: ""
+  # -- PDB `maxUnavailable`. The default lets a node drain evict the pod when the chart runs one replica. The chart ignores this value when `minAvailable` is set.
+  maxUnavailable: 1
+  # -- (int) PDB `minAvailable`. When this value is set, it wins over `maxUnavailable`, and the PDB carries only `minAvailable`.
+  # @default -- unset
+  minAvailable:
 
 # Image used by the `helm test` hook to exercise the Kinesis API.
 testImage:

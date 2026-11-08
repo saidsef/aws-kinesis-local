@@ -1,6 +1,6 @@
 # kinesis
 
-![Version: 0.9.0](https://img.shields.io/badge/Version-0.9.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.1](https://img.shields.io/badge/AppVersion-1.0.1-informational?style=flat-square)
+![Version: 0.10.0](https://img.shields.io/badge/Version-0.10.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.1](https://img.shields.io/badge/AppVersion-1.0.1-informational?style=flat-square)
 
 A Kinesis Local Helm chart for Kubernetes
 
@@ -45,17 +45,18 @@ Kubernetes: `>= 1.32.0`
 | persistence.storageClass | string | `""` | StorageClass name. Empty uses the cluster default. |
 | podAnnotations | object | `{}` | Pod annotations. |
 | podDisruptionBudget.enabled | bool | `false` | Render a `policy/v1 PodDisruptionBudget`. |
-| podDisruptionBudget.minAvailable | int | `1` | PDB `minAvailable`. Mutually exclusive with `maxUnavailable`. |
-| podSecurityContext | object | `{}` | Pod-level securityContext. |
+| podDisruptionBudget.maxUnavailable | int | `1` | PDB `maxUnavailable`. The default lets a node drain evict the pod when the chart runs one replica. The chart ignores this value when `minAvailable` is set. |
+| podDisruptionBudget.minAvailable | int | unset | PDB `minAvailable`. When this value is set, it wins over `maxUnavailable`, and the PDB carries only `minAvailable`. |
+| podSecurityContext | object | `{"fsGroup":65534,"fsGroupChangePolicy":"OnRootMismatch"}` | Pod-level securityContext. `fsGroup` makes Kubernetes set the group of the data volume to 65534, the group that the container runs as, and make it writable by that group. aws-kinesis-local can then open its database on a volume that root owns. With `OnRootMismatch`, Kubernetes changes ownership and permissions only when those of the volume root do not already match. |
 | readinessProbe | object | `tcpSocket port=tcp, periodSeconds=5` | Readiness probe spec. |
-| replicaCount | int | `1` | StatefulSet replica count. |
+| replicaCount | int | `1` | StatefulSet replica count. Replicas do not share streams. Each replica keeps its own database, and the Service spreads connections across all replicas, so a request can reach a replica that does not hold the stream. |
 | resources.limits.cpu | string | `"200m"` | CPU limit. |
 | resources.limits.memory | string | `"1Gi"` | Memory limit. |
 | resources.requests.cpu | string | `"100m"` | CPU request. |
 | resources.requests.memory | string | `"512Mi"` | Memory request. |
 | revisionHistoryLimit | int | `5` | StatefulSet `revisionHistoryLimit`. |
 | securityContext | object | hardened defaults | Container `securityContext`: non-root, read-only rootfs, all caps dropped, seccomp RuntimeDefault. |
-| service.headless | bool | `false` | Set `clusterIP: None` for headless DNS. |
+| service.headless | bool | `false` | Set `clusterIP: None` for headless DNS. Clients then reach the pods on the container port, `env.PORT`, and not on `service.port`. |
 | service.port | int | `80` | Service port. |
 | service.testRegion | string | `"eu-west-1"` | Region passed to the `helm test` aws-cli call. |
 | service.type | string | `"ClusterIP"` | Service type. |
