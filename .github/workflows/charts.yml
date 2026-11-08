@@ -90,6 +90,14 @@ jobs:
         run: kind create cluster --wait 60s
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Load the image of a version that is not released yet
+        run: |
+          VERSION=$(awk -F'"' '/^appVersion:/ { print $2 }' charts/kinesis/Chart.yaml)
+          IMAGE="docker.io/saidsef/aws-kinesis-local:$VERSION"
+          if ! docker manifest inspect "$IMAGE" >/dev/null 2>&1; then
+            docker build --build-arg VERSION="$VERSION" -t "$IMAGE" .
+            kind load docker-image "$IMAGE"
+          fi
       - name: Install the chart
         run: helm install kinesis charts/kinesis --namespace kinesis --create-namespace --wait --timeout 5m
       - name: Test the chart
@@ -118,3 +126,21 @@ jobs:
           pull_number: context.issue.number,
           event: "APPROVE"
         })
+
+  auto-preview:
+    runs-on: ubuntu-latest
+    needs: [auto-approve]
+    if: ${{ github.event_name == 'pull_request' }}
+    permissions:
+      pull-requests: write
+    steps:
+    - name: Add Preview Label
+      uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      with:
+        script: |
+          github.rest.issues.addLabels({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: ['preview']
+          })
