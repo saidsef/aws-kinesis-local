@@ -2,7 +2,7 @@ apiVersion: v2
 name: kinesis
 description: A Kinesis Local Helm chart for Kubernetes
 type: application
-version: 0.9.0
+version: 0.10.0
 appVersion: "1.0.1"
 kubeVersion: ">= 1.32.0"
 home: https://github.com/saidsef/aws-kinesis-local
@@ -29,8 +29,14 @@ annotations:
       url: https://github.com/saidsef/aws-kinesis-local/blob/main/CONTRIBUTING.md
   artifacthub.io/changes: |
     - kind: fixed
-      description: The default image is the aws-kinesis-local release that appVersion names, instead of the kinesalite image v2026.06
+      description: podSecurityContext defaults to fsGroup 65534 with fsGroupChangePolicy OnRootMismatch, so aws-kinesis-local can open its database on a persistent volume that root owns
     - kind: changed
-      description: image.tag defaults to empty, so the chart deploys the image tag that matches appVersion
+      description: The PodDisruptionBudget defaults to maxUnavailable 1 instead of minAvailable 1, so it no longer blocks a node drain with a single replica
     - kind: changed
-      description: The env value descriptions cover aws-kinesis-local and its SQLite database instead of kinesalite and LevelDB
+      description: The PodDisruptionBudget carries only minAvailable when minAvailable is set, and maxUnavailable otherwise
+    - kind: fixed
+      description: With service.headless set, the helm test pod calls the container port, because only that port answers on the pod addresses
+    - kind: removed
+      description: The StatefulSet drops the npm cache volume at /.npm, which the image does not use
+    - kind: changed
+      description: The replicaCount description says that replicas do not share streams
