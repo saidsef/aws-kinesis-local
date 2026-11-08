@@ -18,7 +18,7 @@ aws-kinesis-local is a single Node.js process with no runtime npm dependencies. 
 | `src/operations/` | One module for each feature in [Supported operations](../supported-operations.md), and the registry in `index.ts` |
 | `src/store/` | SQLite store and document types |
 | `scripts/` | Model download and code generation |
-| `model/` | Kinesis Smithy model with its documentation removed |
+| `model/` | Kinesis Smithy model that the generator reads |
 
 ## Request pipeline
 

@@ -28,7 +28,6 @@ jobs:
     outputs:
       version: ${{ steps.version.outputs.version }}
       tagged: ${{ steps.version.outputs.tagged }}
-      exists: ${{ steps.version.outputs.exists }}
       published: ${{ steps.version.outputs.published }}
     steps:
       - name: Checkout source code
@@ -47,12 +46,6 @@ jobs:
             echo "tagged=true" >> "$GITHUB_OUTPUT"
           else
             echo "tagged=false" >> "$GITHUB_OUTPUT"
-          fi
-          if npm view "$NAME" name >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-            echo "::notice::$NAME is not on npm yet, so this run publishes with the NPM_TOKEN secret when it is set."
           fi
           if npm view "$NAME@$VERSION" version >/dev/null 2>&1; then
             echo "published=true" >> "$GITHUB_OUTPUT"
@@ -123,8 +116,6 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    env:
-      FIRST_PUBLISH_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - name: Checkout source code
         uses: actions/checkout@v7
@@ -136,13 +127,4 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Publish through the trusted publisher
-        if: ${{ needs.version.outputs.exists == 'true' }}
         run: npm publish
-      - name: Publish the first version with the NPM_TOKEN secret
-        if: ${{ needs.version.outputs.exists == 'false' && env.FIRST_PUBLISH_TOKEN != '' }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npm publish --provenance
-      - name: Report that the first version is waiting for a token
-        if: ${{ needs.version.outputs.exists == 'false' && env.FIRST_PUBLISH_TOKEN == '' }}
-        run: echo "::warning::The package is not on npm and the NPM_TOKEN secret is not set, so nothing was published."
