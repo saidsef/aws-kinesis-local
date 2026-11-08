@@ -78,7 +78,7 @@ docker run --rm -v "$PWD:/helm-docs" -u "$(id -u)" jnorwood/helm-docs:<version>
 
 The Charts workflow fails when the committed chart README differs from the generated one.
 
-chart-releaser publishes each chart version as a GitHub release named `kinesis-<version>`. Bump `version` in `Chart.yaml` with every chart change, and list the changes in its `artifacthub.io/changes` annotation.
+chart-releaser publishes each chart version as a GitHub release named `kinesis-<version>`. Bump `version` in `Chart.yaml` with every chart change, and list the changes in its `artifacthub.io/changes` annotation. On pull requests, the Charts workflow runs `ct lint` from [chart-testing](https://github.com/helm/chart-testing), which fails when the chart changes and its `version` does not increase.
 
 ## Documentation
 
@@ -88,9 +88,9 @@ Read the Docs builds this site from `mkdocs.yml` with MkDocs Material. To previe
 
 | Workflow | Trigger | What it does |
 | --- | --- | --- |
-| [CI](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/ci.yml) | Changes to the source, tests, model, package files, Dockerfile, entrypoint or the workflow | Typechecks and tests the source, installs the packed npm package and runs it, then builds the image and runs the SDK, AWS CLI and boto3 suites and a Trivy scan against it. On pull requests, when those pass, it builds the image for `linux/amd64` and `linux/arm64`, pushes it to Docker Hub under the branch name, and deploys the Kustomize manifests and the chart to a kind cluster. |
+| [CI](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/ci.yml) | Changes to the source, tests, model, package files, Dockerfile, entrypoint, Kustomize manifests or the workflow | Typechecks and tests the source, installs the packed npm package and runs it, then builds the image and runs the SDK, AWS CLI and boto3 suites and a Trivy scan against it. On pull requests, when those pass, it builds the image for `linux/amd64` and `linux/arm64` and pushes it to Docker Hub under the branch name. It then deploys that image to a kind cluster with the Kustomize manifests and the chart, waits for both to become ready and runs `helm test`. |
 | [Release](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/release.yml) | Changes on main to the source, model, package files or the workflow | Tests a new version, tags it, creates a GitHub release, publishes it to npm and pushes its image to Docker Hub, as [Releases](#releases) describes. |
-| [Charts](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/charts.yml) | Changes under `charts/` | Lints the chart and checks the chart README. On pull requests, it installs the chart in a kind cluster. On main, it publishes the chart. |
+| [Charts](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/charts.yml) | Changes under `charts/` | Lints the chart with `helm lint` and checks the chart README. On pull requests, it runs `ct lint`, installs the chart in a kind cluster, waits for it to become ready and runs `helm test`. On main, it publishes the chart. |
 | [Issues](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/issues.yml) | New or reopened issues | Posts a comment that thanks the reporter. |
 
 GitHub withholds repository secrets from pull requests opened from forks and by Dependabot, so the CI workflow fails at the Docker Hub login on those pull requests.
