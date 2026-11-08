@@ -4,6 +4,52 @@ entries:
   - annotations:
       artifacthub.io/changes: |
         - kind: fixed
+          description: podSecurityContext defaults to fsGroup 65534 with fsGroupChangePolicy OnRootMismatch, so aws-kinesis-local can open its database on a persistent volume that root owns
+        - kind: changed
+          description: The PodDisruptionBudget defaults to maxUnavailable 1 instead of minAvailable 1, so it no longer blocks a node drain with a single replica
+        - kind: changed
+          description: The PodDisruptionBudget carries only minAvailable when minAvailable is set, and maxUnavailable otherwise
+        - kind: fixed
+          description: With service.headless set, the helm test pod calls the container port, because only that port answers on the pod addresses
+        - kind: removed
+          description: The StatefulSet drops the npm cache volume at /.npm, which the image does not use
+        - kind: changed
+          description: The replicaCount description says that replicas do not share streams
+      artifacthub.io/license: MIT
+      artifacthub.io/links: |
+        - name: README
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/README.md
+        - name: LICENSE
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/LICENSE.md
+        - name: CONTRIBUTING
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/CONTRIBUTING.md
+    apiVersion: v2
+    appVersion: 1.0.1
+    created: "2026-11-08T13:53:19.328868439Z"
+    description: A Kinesis Local Helm chart for Kubernetes
+    digest: 1941f0dd8495219bf906b766be9c1f947faf8837925985f7059369cd6db8e827
+    home: https://github.com/saidsef/aws-kinesis-local
+    icon: https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/main/dist/MediaServices/KinesisVideoStreams2.png
+    keywords:
+    - kinesis
+    - aws
+    - local
+    - kubernetes
+    kubeVersion: '>= 1.32.0'
+    maintainers:
+    - email: saidsef@gmail.com
+      name: Said Sef
+      url: https://saidsef.co.uk/
+    name: kinesis
+    sources:
+    - https://github.com/saidsef/aws-kinesis-local.git
+    type: application
+    urls:
+    - https://github.com/saidsef/aws-kinesis-local/releases/download/kinesis-0.10.0/kinesis-0.10.0.tgz
+    version: 0.10.0
+  - annotations:
+      artifacthub.io/changes: |
+        - kind: fixed
           description: The default image is the aws-kinesis-local release that appVersion names, instead of the kinesalite image v2026.06
         - kind: changed
           description: image.tag defaults to empty, so the chart deploys the image tag that matches appVersion
@@ -193,4 +239,4 @@ entries:
     urls:
     - https://github.com/saidsef/aws-kinesis-local/releases/download/kinesis-0.7.3/kinesis-0.7.3.tgz
     version: 0.7.3
-generated: "2026-11-08T13:47:26.356884156Z"
+generated: "2026-11-08T13:53:19.32889549Z"
