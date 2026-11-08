@@ -35,7 +35,9 @@ The `aws-kinesis-local` command from npm takes the same flags. Without the entry
 
 ## Data storage
 
-aws-kinesis-local keeps streams, records, consumers, channels, policies and account settings in a SQLite database, `aws-kinesis-local.sqlite`, under `KPATH`. The image declares `KPATH` as a volume. Mount a named volume there to keep streams across container restarts:
+aws-kinesis-local keeps streams, records, consumers, channels, policies and account settings in a SQLite database, `aws-kinesis-local.sqlite`, under `KPATH`. The `nobody` user, with user and group ID 65534, needs write access to that directory. Without it, aws-kinesis-local exits at start-up with `Error: unable to open database file`.
+
+The image declares `KPATH` as a volume. Mount a named volume there to keep streams across container restarts:
 
 ```bash
 docker run -d -p 4567:4567 -v kinesis-data:/data docker.io/saidsef/aws-kinesis-local:latest

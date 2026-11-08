@@ -1,3 +1,7 @@
+{{- $port := .Values.service.port }}
+{{- if .Values.service.headless }}
+{{- $port = .Values.env.PORT | default "4567" | int }}
+{{- end }}
 apiVersion: v1
 kind: Pod
 metadata:
@@ -18,7 +22,7 @@ spec:
         - kinesis
         - list-streams
         - --endpoint-url
-        - "http://{{ include "kinesis.fullname" . }}:{{ .Values.service.port }}"
+        - "http://{{ include "kinesis.fullname" . }}:{{ $port }}"
         - --region
         - {{ .Values.service.testRegion | quote }}
       env:
