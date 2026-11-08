@@ -2,6 +2,8 @@
 
 aws-kinesis-local is a single Node.js process with no runtime npm dependencies. It uses only the Node.js modules for HTTP, HTTP/2, TLS, cryptography, SQLite and zlib, so the npm package and the image ship compiled JavaScript and nothing else.
 
+[![AWS clients connect over HTTP/1.1 or HTTP/2 on the same port. The listener passes each connection to the matching server. The request handler validates each request against the generated model and runs the operation, and the store keeps its data in SQLite.](architecture.svg)](architecture.svg)
+
 ## Source layout
 
 | Path | Responsibility |
@@ -37,7 +39,7 @@ aws-kinesis-local is a single Node.js process with no runtime npm dependencies. 
 
 Each request runs synchronously on the event loop between the end of its body and its response, and `node:sqlite` is synchronous. Requests never interleave as a result, and aws-kinesis-local needs none of the per-stream locks that kinesalite took around its asynchronous LevelDB calls.
 
-## HTTP/1.1 and HTTP/2 on one port
+## HTTP/1.1 and HTTP/2 on the same port
 
 The AWS SDK for JavaScript v3 and the AWS SDK for Java open cleartext HTTP/2 connections with prior knowledge, which starts every connection with a fixed 24-byte preface. The listener reads the first bytes of each connection and compares them with that preface. It passes the socket to the HTTP/2 server when they match and to the HTTP/1.1 server otherwise, after it puts the bytes back on the socket.
 

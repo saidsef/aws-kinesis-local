@@ -1,6 +1,6 @@
 # AWS Kinesis Local [![CI](https://github.com/saidsef/aws-kinesis-local/actions/workflows/ci.yml/badge.svg)](https://github.com/saidsef/aws-kinesis-local/actions/workflows/ci.yml) [![Release](https://github.com/saidsef/aws-kinesis-local/actions/workflows/release.yml/badge.svg)](https://github.com/saidsef/aws-kinesis-local/actions/workflows/release.yml) [![npm](https://img.shields.io/npm/v/@saidsef/aws-kinesis-local)](https://www.npmjs.com/package/@saidsef/aws-kinesis-local)
 
-aws-kinesis-local serves the Amazon Kinesis Data Streams API on your machine, for development and CI. It implements all 45 Kinesis operations, including enhanced fan-out, and serves JSON and CBOR over HTTP/1.1 and HTTP/2 on one port, so the AWS CLI and the AWS SDKs work with their default settings. It ships as an npm package, a Docker image and a Helm chart.
+aws-kinesis-local serves the Amazon Kinesis Data Streams API on your machine, for development and CI. It implements all 45 Kinesis operations, including enhanced fan-out, and serves JSON and CBOR over HTTP/1.1 and HTTP/2 on the same port, so the AWS CLI and the AWS SDKs work with their default settings. It ships as an npm package, a Docker image and a Helm chart.
 
 ## Quick start
 
