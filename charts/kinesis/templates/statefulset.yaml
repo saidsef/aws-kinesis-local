@@ -63,18 +63,14 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           volumeMounts:
-            - name: npm-cache
-              mountPath: /.npm
             - name: data
               mountPath: {{ .Values.env.KPATH | default "/data" | quote }}
+      {{- if not .Values.persistence.enabled }}
       volumes:
-        - name: npm-cache
-          emptyDir: {}
-        {{- if not .Values.persistence.enabled }}
         - name: data
           emptyDir:
             sizeLimit: {{ .Values.persistence.size }}
-        {{- end }}
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

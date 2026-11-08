@@ -2,6 +2,8 @@
 
 The Helm chart and the Kustomize manifests each deploy aws-kinesis-local as a single StatefulSet behind a Service. The chart exposes every setting as a value. The Kustomize manifests fix their settings and suit a pinned deployment.
 
+Both deploy one replica by default. Replicas do not share streams, because each replica keeps its own database. A client can reach any replica through the Service, so with more than one replica it can miss a stream that it created over another connection.
+
 ## Helm
 
 ```shell
@@ -12,7 +14,7 @@ helm upgrade --install kinesis kinesis/kinesis --namespace kinesis --create-name
 
 In `kinesis/kinesis`, the first `kinesis` is the repository added above and the second is the chart. The [chart README](https://github.com/saidsef/aws-kinesis-local/blob/main/charts/kinesis/README.md) lists every value and the Kubernetes versions that the chart supports. The chart deploys the release that its `appVersion` names, and `--set image.tag=<version>` deploys another one.
 
-Without persistence, the chart mounts an `emptyDir` at `/data`, so streams last only as long as the pod. With persistence, aws-kinesis-local keeps its SQLite database on the PersistentVolumeClaim. Common overrides:
+Without persistence, the chart mounts an `emptyDir` at `/data`, so streams last only as long as the pod. With persistence, aws-kinesis-local keeps its SQLite database on the PersistentVolumeClaim. The default `podSecurityContext` sets `fsGroup` to the group that the container runs as, so aws-kinesis-local can write to a volume whose top directory belongs to root. Common overrides:
 
 ```shell
 # Keep streams on a PersistentVolumeClaim

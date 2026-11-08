@@ -6,11 +6,12 @@ metadata:
   labels:
     {{- include "kinesis.labels" . | nindent 4 }}
 spec:
-  {{- with .Values.podDisruptionBudget.minAvailable }}
-  minAvailable: {{ . }}
-  {{- end }}
-  {{- with .Values.podDisruptionBudget.maxUnavailable }}
-  maxUnavailable: {{ . }}
+  {{- $min := .Values.podDisruptionBudget.minAvailable }}
+  {{- $max := .Values.podDisruptionBudget.maxUnavailable }}
+  {{- if not (or (kindIs "invalid" $min) (eq (toString $min) "")) }}
+  minAvailable: {{ $min }}
+  {{- else if not (or (kindIs "invalid" $max) (eq (toString $max) "")) }}
+  maxUnavailable: {{ $max }}
   {{- end }}
   selector:
     matchLabels:

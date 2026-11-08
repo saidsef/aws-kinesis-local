@@ -13,9 +13,6 @@ spec:
       app.kubernetes.io/name: kinesis
   template:
     metadata:
-      annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "4567"
       labels:
         app.kubernetes.io/name: kinesis
     spec:
@@ -75,11 +72,7 @@ spec:
               mountPath: /data
               subPath: data
               readOnly: false
-            - name: npm-cache
-              mountPath: /.npm
       volumes:
         - name: storage
           emptyDir:
             sizeLimit: 1Gi
-        - name: npm-cache
-          emptyDir: {}
