@@ -28,7 +28,7 @@ aws-kinesis-local is a single Node.js process with no runtime npm dependencies. 
 `src/handler.ts` handles each request in the same order as kinesalite 3.3.3, so the same faulty request fails with the same error.
 
 1. Add `x-amzn-RequestId` and `x-amz-id-2`, and answer CORS preflight requests.
-2. Reject methods other than `POST` with an XML `AccessDeniedException`.
+2. Answer `GET /healthz` and `GET /readyz`, and reject every other request that is not a `POST` with an XML `AccessDeniedException`.
 3. Read the content type and the `X-Amz-Target` header, and reject an empty body.
 4. Reject unsupported content types, and parse JSON or CBOR.
 5. Answer `application/json` requests with the Coral envelope that kinesalite returns.
@@ -55,6 +55,12 @@ aws-kinesis-local accepts `application/x-amz-json-1.1` and `application/x-amz-cb
 | CBOR | Epoch milliseconds as an integer | Byte strings |
 
 The AWS SDK for Java is the only AWS SDK that sends CBOR to Kinesis. It writes request timestamps as CBOR tag 1 with epoch milliseconds, and reads response timestamps as epoch milliseconds, in `AwsCborProtocolFactory`. The CBOR decoder treats a tag 1 value above 10<sup>11</sup> as milliseconds and a smaller value as seconds. It also reads the indefinite-length maps, arrays and strings that Jackson writes.
+
+## Health checks and shutdown
+
+`/healthz` runs a query against SQLite, so a 200 means that the event loop and the database both respond. `/readyz` also fails as soon as shutdown starts.
+
+`close()` sets the store to draining, which fails `/readyz` and ends every subscription. It then stops the listener, sends a `GOAWAY` frame to each HTTP/2 session and waits for the requests in progress. The server counts a request from its headers until its response closes. That count works the same for HTTP/1.1, HTTP/2 and TLS, where the sockets that the listener tracks are not the sockets that carry the requests. A request that arrives on an open HTTP/1.1 connection during shutdown still runs, and its response carries `Connection: close`. When the count reaches zero or `shutdownMs` passes, `close()` closes the store and destroys the remaining sockets.
 
 ## State transitions
 

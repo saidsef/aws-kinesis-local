@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
-import { createServer as createHttpServer } from 'node:http'
-import { createServer as createHttp2Server, createSecureServer } from 'node:http2'
+import { createServer as createHttpServer, type ServerResponse } from 'node:http'
+import { createServer as createHttp2Server, createSecureServer, type ServerHttp2Session } from 'node:http2'
 import { createServer as createNetServer, type AddressInfo, type Server, type Socket } from 'node:net'
 import { selfSignedCertificate } from './certificate.ts'
 import { createHandler } from './handler.ts'
@@ -21,6 +21,7 @@ export interface StartOptions {
   shardLimit: number
   accountId: string
   region: string
+  shutdownMs: number
 }
 
 export interface KinesisLocal {
@@ -43,6 +44,7 @@ export function defaultOptions(): StartOptions {
     shardLimit: 10,
     accountId: (process.env.AWS_ACCOUNT_ID || '0000-0000-0000').replace(/[^\d]/g, ''),
     region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1',
+    shutdownMs: 5000,
   }
 }
 
@@ -77,17 +79,37 @@ export async function start(overrides: Partial<StartOptions> = {}): Promise<Kine
   registerTransitions(store)
   store.startExpiry()
   store.resume()
-  const handler = createHandler(store)
+  const handle = createHandler(store)
   const sockets = new Set<Socket>()
+  const sessions = new Set<ServerHttp2Session>()
+  let inFlight = 0
+  let onIdle = () => {}
+  const handler: typeof handle = (req, res) => {
+    const response = res as ServerResponse
+    inFlight++
+    response.once('close', () => {
+      inFlight--
+      if (inFlight === 0) onIdle()
+    })
+    if (store.draining && req.httpVersionMajor < 2) response.setHeader('Connection', 'close')
+    handle(req, res)
+  }
+  const trackSession = (session: ServerHttp2Session) => {
+    sessions.add(session)
+    session.once('close', () => sessions.delete(session))
+  }
   let server: Server
   if (options.ssl) {
     const credentials = options.keyFile && options.certFile
       ? { key: readFileSync(options.keyFile), cert: readFileSync(options.certFile) }
       : selfSignedCertificate()
-    server = createSecureServer({ ...credentials, allowHTTP1: true }, handler) as unknown as Server
+    const secure = createSecureServer({ ...credentials, allowHTTP1: true }, handler)
+    secure.on('session', trackSession)
+    server = secure as unknown as Server
   } else {
     const http1 = createHttpServer(handler)
     const http2 = createHttp2Server(handler)
+    http2.on('session', trackSession)
     server = createNetServer(socket => {
       socket.on('error', () => socket.destroy())
       routeByProtocol(socket, http1, http2 as unknown as Server)
@@ -111,14 +133,27 @@ export async function start(overrides: Partial<StartOptions> = {}): Promise<Kine
   }
   const address = server.address() as AddressInfo
   const protocol = options.ssl ? 'https' : 'http'
+  const shutdown = async () => {
+    store.drain()
+    const stopped = new Promise<void>(resolve => server.close(() => resolve()))
+    for (const session of sessions) session.close()
+    await new Promise<void>(resolve => {
+      const timer = setTimeout(resolve, options.shutdownMs)
+      onIdle = () => {
+        clearTimeout(timer)
+        resolve()
+      }
+      if (inFlight === 0) onIdle()
+    })
+    store.close()
+    for (const socket of sockets) socket.destroy()
+    await stopped
+  }
+  let closing: Promise<void> | undefined
   return {
     endpoint: `${protocol}://${hostname(address)}:${address.port}`,
     address,
     protocol,
-    close: () => new Promise<void>(resolve => {
-      store.close()
-      for (const socket of sockets) socket.destroy()
-      server.close(() => resolve())
-    }),
+    close: () => closing ??= shutdown(),
   }
 }

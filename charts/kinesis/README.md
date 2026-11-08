@@ -1,6 +1,6 @@
 # kinesis
 
-![Version: 0.10.2](https://img.shields.io/badge/Version-0.10.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.3](https://img.shields.io/badge/AppVersion-1.0.3-informational?style=flat-square)
+![Version: 0.11.0](https://img.shields.io/badge/Version-0.11.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.1.0](https://img.shields.io/badge/AppVersion-1.1.0-informational?style=flat-square)
 
 A Kinesis Local Helm chart for Kubernetes
 
@@ -36,7 +36,7 @@ Kubernetes: `>= 1.32.0`
 | image.repository | string | `"docker.io/saidsef/aws-kinesis-local"` | Image repository. |
 | image.tag | string | `""` | Image tag. Empty uses the chart `appVersion`, which matches the npm package version. |
 | imagePullSecrets | list | `[]` | Pull secrets for private registries. |
-| livenessProbe | object | `tcpSocket port=tcp, periodSeconds=10` | Liveness probe spec. |
+| livenessProbe | object | `httpGet path=/healthz port=tcp, periodSeconds=10` | Liveness probe spec. |
 | nameOverride | string | `""` | Override the chart name. |
 | nodeSelector | object | `{}` | Node selector. |
 | persistence.accessModes | list | `["ReadWriteOnce"]` | PVC access modes when persistence is enabled. |
@@ -48,7 +48,7 @@ Kubernetes: `>= 1.32.0`
 | podDisruptionBudget.maxUnavailable | int | `1` | PDB `maxUnavailable`. The default lets a node drain evict the pod when the chart runs one replica. The chart ignores this value when `minAvailable` is set. |
 | podDisruptionBudget.minAvailable | int | unset | PDB `minAvailable`. When this value is set, it wins over `maxUnavailable`, and the PDB carries only `minAvailable`. |
 | podSecurityContext | object | `{"fsGroup":65534,"fsGroupChangePolicy":"OnRootMismatch"}` | Pod-level securityContext. `fsGroup` makes Kubernetes set the group of the data volume to 65534, the group that the container runs as, and make it writable by that group. aws-kinesis-local can then open its database on a volume that root owns. With `OnRootMismatch`, Kubernetes changes ownership and permissions only when those of the volume root do not already match. |
-| readinessProbe | object | `tcpSocket port=tcp, periodSeconds=5` | Readiness probe spec. |
+| readinessProbe | object | `httpGet path=/readyz port=tcp, periodSeconds=5` | Readiness probe spec. |
 | replicaCount | int | `1` | StatefulSet replica count. Replicas do not share streams. Each replica keeps its own database, and the Service spreads connections across all replicas, so a request can reach a replica that does not hold the stream. |
 | resources.limits.cpu | string | `"200m"` | CPU limit. |
 | resources.limits.memory | string | `"1Gi"` | Memory limit. |
@@ -63,7 +63,7 @@ Kubernetes: `>= 1.32.0`
 | serviceAccount.annotations | object | `{}` | ServiceAccount annotations. |
 | serviceAccount.create | bool | `true` | Whether to create a ServiceAccount. |
 | serviceAccount.name | string | `""` | If empty, defaults to the fullname. |
-| startupProbe | object | `tcpSocket port=tcp, failureThreshold=30` | Startup probe spec. |
+| startupProbe | object | `httpGet path=/healthz port=tcp, failureThreshold=30` | Startup probe spec. |
 | terminationGracePeriodSeconds | int | `60` | Pod terminationGracePeriodSeconds. |
 | testImage.pullPolicy | string | `"IfNotPresent"` | Pull policy for the helm-test image. |
 | testImage.repository | string | `"amazon/aws-cli"` | helm-test image repo. |

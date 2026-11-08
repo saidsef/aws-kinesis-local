@@ -35,20 +35,23 @@ spec:
               memory: 512Mi
               cpu: 100m
           startupProbe:
-            tcpSocket:
+            httpGet:
+              path: /healthz
               port: tcp
             initialDelaySeconds: 2
             periodSeconds: 2
             failureThreshold: 30
           livenessProbe:
-            tcpSocket:
+            httpGet:
+              path: /healthz
               port: tcp
             initialDelaySeconds: 5
             periodSeconds: 10
             timeoutSeconds: 2
             failureThreshold: 3
           readinessProbe:
-            tcpSocket:
+            httpGet:
+              path: /readyz
               port: tcp
             initialDelaySeconds: 5
             periodSeconds: 5
