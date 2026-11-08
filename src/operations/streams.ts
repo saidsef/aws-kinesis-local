@@ -10,7 +10,7 @@ import {
 
 const SEQ_ADJUST_MS = 2000
 
-export function uniformShards(count: number, createTime: number, firstIndex = 0): ShardDoc[] {
+function uniformShards(count: number, createTime: number, firstIndex = 0): ShardDoc[] {
   const width = POW_2_128 / BigInt(count)
   const shards: ShardDoc[] = []
   for (let i = 0; i < count; i++) {
@@ -108,7 +108,7 @@ export function deleteStream(context: Context, data: Input) {
   store.schedule('stream', name, 'deleteStream', store.options.deleteStreamMs)
 }
 
-export function describeStreamView(stream: StreamDoc, shards: ShardDoc[], hasMoreShards: boolean) {
+function describeStreamView(stream: StreamDoc, shards: ShardDoc[], hasMoreShards: boolean) {
   const view: Record<string, unknown> = publicView(stream)
   view.Shards = shards
   view.HasMoreShards = hasMoreShards

@@ -8,9 +8,10 @@ The AWS CLI and the AWS SDKs work with aws-kinesis-local once they point at its 
 | --- | --- |
 | `npx @saidsef/aws-kinesis-local` or `docker run -p 4567:4567` | `http://localhost:4567` |
 | Helm chart, from inside the cluster | `http://<service>.<namespace>.svc` |
-| Kustomize manifests, from inside the cluster | `http://kinesis.<namespace>.svc` |
+| Helm chart with `service.headless=true`, from inside the cluster | `http://<service>.<namespace>.svc:4567` |
+| Kustomize manifests, from inside the cluster | `http://kinesis.<namespace>.svc:4567` |
 
-The chart's Service takes the release name when that name contains `kinesis`, and is called `<release>-kinesis` otherwise. Both Services listen on port 80 by default.
+The chart's Service takes the release name when that name contains `kinesis`, and is called `<release>-kinesis` otherwise. It listens on port 80 by default. The Kustomize Service is headless, and so is the chart's Service with `service.headless=true`. A headless Service has no cluster IP, so cluster DNS returns the pod addresses and clients connect to the container port, 4567.
 
 ## Credentials and region
 

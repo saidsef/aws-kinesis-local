@@ -7,7 +7,7 @@ import { account, getStream, type Context, type Input } from './common.ts'
 import { consumerNotFound } from './consumers.ts'
 import { childShards, dryRun, readShard, startingSequence } from './records.ts'
 
-export const SUBSCRIPTION_MS = 300000
+const SUBSCRIPTION_MS = 300000
 const RESUBSCRIBE_WINDOW_MS = 5000
 const HEARTBEAT_MS = 5000
 const POLL_MS = 1000

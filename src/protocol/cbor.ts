@@ -1,6 +1,6 @@
 const MILLISECOND_THRESHOLD = 1e11
 
-export class CborError extends Error {}
+class CborError extends Error {}
 
 class Reader {
   readonly buffer: Buffer

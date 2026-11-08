@@ -141,7 +141,7 @@ export function putRecords(context: Context, data: Input) {
   return result
 }
 
-export function latestSequence(stream: StreamDoc, shardIx: number, now = Date.now()) {
+function latestSequence(stream: StreamDoc, shardIx: number, now = Date.now()) {
   const shard = stream.Shards[shardIx]!
   const start = parseSequence(shard.SequenceNumberRange.StartingSequenceNumber)
   return stringifySequence({

@@ -11,7 +11,7 @@ import { AMZ_CBOR, AMZ_JSON, encodeBody, serializeShape, type Protocol } from '.
 import type { Store } from './store/store.ts'
 import { coerceStructure, decodeBlobs, validateStructure, type ValidationContext } from './validation/validate.ts'
 
-export const MAX_REQUEST_BYTES = 16 * 1024 * 1024
+const MAX_REQUEST_BYTES = 16 * 1024 * 1024
 const EVENT_STREAM = 'application/vnd.amazon.eventstream'
 const EXPOSED_HEADERS = 'x-amzn-RequestId,x-amzn-ErrorType,x-amz-request-id,x-amz-id-2,x-amzn-ErrorMessage,Date'
 

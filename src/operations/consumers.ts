@@ -25,7 +25,7 @@ export function consumerNotFound(context: Context, description: string) {
   return resourceNotFound(`Consumer ${description} under account ${account(context)} not found.`)
 }
 
-export function findConsumer(context: Context, data: Input): ConsumerDoc {
+function findConsumer(context: Context, data: Input): ConsumerDoc {
   if (data.ConsumerARN != null) {
     const consumer = context.store.consumers.get(data.ConsumerARN)
     if (!consumer) throw consumerNotFound(context, data.ConsumerARN)

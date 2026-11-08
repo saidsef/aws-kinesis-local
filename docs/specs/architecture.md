@@ -6,10 +6,11 @@ aws-kinesis-local is a single Node.js process with no runtime npm dependencies. 
 
 | Path | Responsibility |
 | --- | --- |
-| `src/index.ts` | The package's public API, `start()` and its option types |
+| `src/index.ts` | The package's public API: `start()`, `defaultOptions()`, and the `StartOptions` and `KinesisLocal` types |
 | `src/cli.ts`, `src/arguments.ts` | Command-line flags, start-up and shutdown |
 | `src/server.ts` | Defaults, listeners, protocol detection and store start-up |
 | `src/handler.ts` | Request pipeline from headers to response |
+| `src/errors.ts` | `KinesisError`, which carries the type, status code and message of an error response, and a helper for each common error type |
 | `src/certificate.ts` | Self-signed certificate for `--ssl` |
 | `src/model.ts`, `src/generated/model.ts` | Shape types and the shapes generated from the Smithy model |
 | `src/validation/` | Type checks, constraint checks and the Coral member order |

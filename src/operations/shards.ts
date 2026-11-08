@@ -102,7 +102,7 @@ function newShardSequence(stream: StreamDoc, now: number) {
   return stringifySequence({ shardCreateTime: now + 1000, shardIx: stream.Shards.length })
 }
 
-export function applySplit(stream: StreamDoc, shardIx: number, hashKey: bigint, now: number) {
+function applySplit(stream: StreamDoc, shardIx: number, hashKey: bigint, now: number) {
   const shard = stream.Shards[shardIx]!
   closeShard(shard, shardIx, now)
   stream.Shards.push({
@@ -119,7 +119,7 @@ export function applySplit(stream: StreamDoc, shardIx: number, hashKey: bigint, 
   })
 }
 
-export function applyMerge(stream: StreamDoc, shardIx: number, adjacentShardIx: number, now: number) {
+function applyMerge(stream: StreamDoc, shardIx: number, adjacentShardIx: number, now: number) {
   const shard = stream.Shards[shardIx]!
   const adjacent = stream.Shards[adjacentShardIx]!
   closeShard(shard, shardIx, now)
@@ -184,7 +184,7 @@ export function mergeShards(context: Context, data: Input) {
   context.store.schedule('stream', name, 'mergeShards', context.store.options.updateStreamMs, { shardIxs: [first.shardIx, second.shardIx] })
 }
 
-export function reshard(stream: StreamDoc, target: number, now: number) {
+function reshard(stream: StreamDoc, target: number, now: number) {
   const width = POW_2_128 / BigInt(target)
   const starts = Array.from({ length: target }, (_, i) => width * BigInt(i))
   for (const boundary of starts.slice(1)) {
