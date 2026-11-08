@@ -16,6 +16,7 @@ on:
       - "package-lock.json"
       - "tsconfig.json"
       - "tsconfig.build.json"
+      - "deployment/**"
       - ".github/workflows/ci.yml"
   pull_request:
     branches:
@@ -32,6 +33,7 @@ on:
       - "package-lock.json"
       - "tsconfig.json"
       - "tsconfig.build.json"
+      - "deployment/**"
       - ".github/workflows/ci.yml"
   workflow_dispatch:
 
@@ -128,17 +130,25 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test, image]
     if: ${{ github.ref != 'refs/heads/main' }}
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
     steps:
     - name: Checkout source code
       uses: actions/checkout@v7
     - name: Set Tag Name
+      id: tag
+      env:
+        RAW_REF: ${{ github.head_ref || github.ref_name }}
       run: |
-        RAW_REF="${{ github.head_ref || github.ref_name }}"
         # Docker image tags cannot contain '/', so replace with '-'.
-        echo "TAG=${RAW_REF//\//-}" >> $GITHUB_ENV
-        echo "REPO_NAME=${PWD##*/}" >> $GITHUB_ENV
-        echo "VERSION=$(jq -r .version package.json)" >> "$GITHUB_ENV"
-        echo "CREATED=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
+        TAG="${RAW_REF//\//-}"
+        echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+        {
+          echo "TAG=$TAG"
+          echo "REPO_NAME=${PWD##*/}"
+          echo "VERSION=$(jq -r .version package.json)"
+          echo "CREATED=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+        } >> "$GITHUB_ENV"
     - name: Login to DockerHub
       uses: docker/login-action@v4
       if: success()
@@ -190,6 +200,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build]
     if: ${{ ! contains(github.ref, 'main') }}
+    env:
+      TAG: ${{ needs.build.outputs.tag }}
     steps:
       - name: Set up Go
         uses: actions/setup-go@v7
@@ -202,20 +214,33 @@ jobs:
         run: kind create cluster --wait 60s
       - name: Checkout
         uses: actions/checkout@v7
-      - name: Run K8s test
+      - name: Check the image tag
         run: |
-          kubectl version
-          export NS=`cat deployment/kustomization.yml  | grep namespace | awk '{ print $2 }'`
-          if [ -z "$NS" ]; then
-            export NS='data'
+          # GitHub drops a job output that contains a secret, such as the Docker Hub username.
+          if [ -z "$TAG" ]; then
+            echo "::error::The build job did not return the image tag."
+            exit 1
           fi
-          kubectl create namespace $NS
-          kubectl apply -n $NS -k deployment/
-
-          helm install kinesis charts/kinesis --namespace kinesis --create-namespace
-
-          kubectl get all -A
-          helm list -A
+      - name: Deploy the Kustomize manifests
+        env:
+          NAMESPACE: kustomize
+        run: |
+          cp -R deployment "$RUNNER_TEMP/deployment"
+          cd "$RUNNER_TEMP/deployment"
+          kustomize edit set image "docker.io/saidsef/aws-kinesis-local:$TAG"
+          kubectl create namespace "$NAMESPACE"
+          kubectl apply --namespace "$NAMESPACE" -k .
+          kubectl rollout status statefulset/kinesis --namespace "$NAMESPACE" --timeout 5m
+      - name: Install the chart
+        run: helm install kinesis charts/kinesis --namespace kinesis --create-namespace --set-string image.tag="$TAG" --wait --timeout 5m
+      - name: Test the chart
+        run: helm test kinesis --namespace kinesis --timeout 5m
+      - name: Show the cluster state
+        if: failure()
+        run: |
+          kubectl get all --all-namespaces
+          kubectl describe pods --all-namespaces --selector app.kubernetes.io/name=kinesis
+          helm list --all-namespaces
 
   auto-approve:
     runs-on: ubuntu-latest
