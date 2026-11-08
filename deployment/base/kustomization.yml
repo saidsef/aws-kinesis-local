@@ -7,6 +7,5 @@ resources:
   - service.yml
 
 images:
-  - name: kinesis
-    newName: docker.io/saidsef/aws-kinesis-local
-    newTag: v2026.06
+  - name: docker.io/saidsef/aws-kinesis-local
+    newTag: "1.0.1"

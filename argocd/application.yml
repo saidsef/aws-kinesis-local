@@ -6,8 +6,9 @@ metadata:
   namespace: argocd
   annotations:
     argocd-image-updater.argoproj.io/image-list: kinesis=docker.io/saidsef/aws-kinesis-local
+    argocd-image-updater.argoproj.io/kinesis.allow-tags: 'regexp:^[0-9]+\.[0-9]+\.[0-9]+$'
     argocd-image-updater.argoproj.io/kinesis.force-update: "true"
-    argocd-image-updater.argoproj.io/kinesis.update-strategy: latest
+    argocd-image-updater.argoproj.io/kinesis.update-strategy: semver
     argocd-image-updater.argoproj.io/write-back-method: argocd
   finalizers:
     - resources-finalizer.argocd.argoproj.io

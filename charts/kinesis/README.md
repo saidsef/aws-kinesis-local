@@ -1,6 +1,6 @@
 # kinesis
 
-![Version: 0.8.1](https://img.shields.io/badge/Version-0.8.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.3.3](https://img.shields.io/badge/AppVersion-3.3.3-informational?style=flat-square)
+![Version: 0.9.0](https://img.shields.io/badge/Version-0.9.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.0.1](https://img.shields.io/badge/AppVersion-1.0.1-informational?style=flat-square)
 
 A Kinesis Local Helm chart for Kubernetes
 
@@ -25,16 +25,16 @@ Kubernetes: `>= 1.32.0`
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Pod affinity rules. |
-| env.CREATESTREAMMS | string | `"50"` | kinesalite `--createStreamMs`. |
-| env.DELETESTREAMMS | string | `"50"` | kinesalite `--deleteStreamMs`. |
-| env.KPATH | string | `"/data"` | kinesalite `--path` (LevelDB directory). Mounted into the container. |
-| env.PORT | string | `"4567"` | kinesalite `--port`. Also drives the container port. |
-| env.SHARDLIMIT | string | `"50"` | kinesalite `--shardLimit`. |
-| env.UPDATESTREAMMS | string | `"50"` | kinesalite `--updateStreamMs`. |
+| env.CREATESTREAMMS | string | `"50"` | `--createStreamMs`, how long in milliseconds a new stream, consumer or channel stays in `CREATING`. |
+| env.DELETESTREAMMS | string | `"50"` | `--deleteStreamMs`, how long in milliseconds a deleted stream, consumer or channel stays in `DELETING`. |
+| env.KPATH | string | `"/data"` | `--path`, the directory that holds the SQLite database. The chart mounts the data volume here. |
+| env.PORT | string | `"4567"` | `--port`, the port that aws-kinesis-local listens on for HTTP/1.1 and HTTP/2. Also sets the container port. |
+| env.SHARDLIMIT | string | `"50"` | `--shardLimit`, the maximum number of open shards across all provisioned streams. |
+| env.UPDATESTREAMMS | string | `"50"` | `--updateStreamMs`, how long in milliseconds a stream or channel stays in `UPDATING`. |
 | fullnameOverride | string | `""` | Override the fully qualified app name. |
 | image.pullPolicy | string | `"IfNotPresent"` | Image pull policy. |
 | image.repository | string | `"docker.io/saidsef/aws-kinesis-local"` | Image repository. |
-| image.tag | string | `"v2026.06"` | Date-style image tag (`vYYYY.MM`) that the CI workflow publishes from main. Empty falls back to `.Chart.AppVersion`. |
+| image.tag | string | `""` | Image tag. Empty uses the chart `appVersion`, which matches the npm package version. |
 | imagePullSecrets | list | `[]` | Pull secrets for private registries. |
 | livenessProbe | object | `tcpSocket port=tcp, periodSeconds=10` | Liveness probe spec. |
 | nameOverride | string | `""` | Override the chart name. |

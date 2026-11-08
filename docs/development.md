@@ -49,7 +49,9 @@ The Kinesis Client Library suite starts its own containers and needs only Docker
 
 ## Releases
 
-The version in `package.json` drives each release. Bump it in a pull request, and the [Release](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/release.yml) workflow does the rest when the pull request merges. It runs only on pushes to `main`, so no other branch and no manual run can publish:
+The version in `package.json` drives each release. Bump it in a pull request, and set `appVersion` in `charts/kinesis/Chart.yaml` and `newTag` in `deployment/base/kustomization.yml` to the same version, so that the chart and the Kustomize manifests deploy the new release. The chart change also needs a new chart `version`, as [Chart](#chart) describes. The CI and Charts workflows run `node scripts/check-versions.ts`, which fails when the three versions differ.
+
+The [Release](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/release.yml) workflow does the rest when the pull request merges. It runs only on pushes to `main`, so no other branch and no manual run can publish:
 
 1. It skips steps 2 to 4 when the tag `v<version>` exists and npm already has that version.
 2. It runs the typecheck, the tests and the Kinesis Client Library suite against a fresh image.
@@ -97,6 +99,8 @@ GitHub withholds repository secrets from pull requests opened from forks and by 
 
 The release workflow pushes each release under its version, such as `1.0.1`, and never overwrites a version tag that is already on Docker Hub. Every time it runs on `main`, it points `latest` and the minor and major tags, such as `1.0` and `1`, at the image of the version in `package.json`. It moves them by digest, without building the image again. A pre-release version, such as `1.1.0-rc.1`, gets only its own tag and does not move the others.
 
-The CI workflow pushes an image for each pull request, tagged with the branch name, with `/` replaced by `-`. Older images also have month tags, such as `v2026.11`. Docker Hub keeps them, but no workflow pushes month tags any more. The chart and the Kustomize manifests still reference a `vYYYY.MM` tag.
+The chart and the Kustomize manifests reference the release version. The chart uses its `appVersion` when `image.tag` is empty, and the Kustomize manifests take the tag from `newTag`.
+
+The CI workflow pushes an image for each pull request, tagged with the branch name, with `/` replaced by `-`. Older images also have month tags, such as `v2026.11`. Docker Hub keeps them, but no workflow pushes month tags any more.
 
 The image carries the standard OCI labels. CI sets `org.opencontainers.image.version` from `package.json`, and adds `org.opencontainers.image.created` and `org.opencontainers.image.revision` for each build. A local build reports the version as `dev`.
