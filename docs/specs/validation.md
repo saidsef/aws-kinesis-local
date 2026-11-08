@@ -1,6 +1,6 @@
 # Request validation
 
-aws-kinesis-local checks every request against the Smithy model that AWS publishes for Kinesis. It reports failures in the format and order of kinesalite 3.3.3, which copied the messages of the Coral framework behind Kinesis.
+aws-kinesis-local checks every request against the Smithy model that AWS publishes for Kinesis. It reports failures in the format and order of the Coral framework behind Kinesis.
 
 ## Model
 
@@ -18,7 +18,7 @@ aws-kinesis-local checks every request against the Smithy model that AWS publish
 
 ## Type checks
 
-Before it checks any constraint, aws-kinesis-local walks the input shape and converts each member, in the same way as kinesalite.
+Before it checks any constraint, aws-kinesis-local walks the input shape and converts each member.
 
 - It drops members that the shape does not define, and members whose value is null.
 - It truncates integers towards negative infinity and caps them at 2147483647.
@@ -46,7 +46,7 @@ Failures show the value as Coral prints it. A blob appears as `java.nio.HeapByte
 
 ## Coral member order
 
-Coral reported members in the order of an internal hash map, not in model order, and kinesalite copied that order for its 17 operations. `src/validation/member-order.ts` lists that order for each of those input shapes and for `PutRecordsRequestEntry`, and aws-kinesis-local checks any other members afterwards in model order. The same table keeps kinesalite's order of the `ShardIteratorType` values in enum messages and the label that Coral prints for `PutRecordsRequestEntry` list members.
+Coral reports members in the order of an internal hash map, not in model order. `src/validation/member-order.ts` lists that order for the input shapes it names and for `PutRecordsRequestEntry`, and aws-kinesis-local checks any other members afterwards in model order. The same table keeps the order of the `ShardIteratorType` values in enum messages and the label that Coral prints for `PutRecordsRequestEntry` list members.
 
 ## Rules the model cannot express
 
@@ -56,16 +56,3 @@ Coral reported members in the order of an internal hash map, not in model order,
 | `ShardCount` in `CreateStream` | Required unless `StreamModeDetails` asks for `ON_DEMAND`. |
 | `PartitionKey` | Required unless the target stream uses the `AUTO` record distribution strategy. |
 | `Data` | Limited to the `MaxRecordSizeInKiB` of the target stream, which is 1 MiB unless `UpdateMaxRecordSize` changed it. |
-
-## Limits that changed since kinesalite
-
-The model reflects the current Kinesis limits, so a few requests that kinesalite rejected now pass validation. [Upgrading from kinesalite](upgrading.md) lists the effect of each one.
-
-| Member | kinesalite 3.3.3 | Smithy model |
-| --- | --- | --- |
-| `ShardCount` | 1 to 100000 | At least 1, within the shard limit |
-| `RetentionPeriodHours` | 1 to 168 | No range, and the operation allows 24 to 8760 |
-| `Tags` in `AddTagsToStream` | 1 to 10 | 1 to 200, and the operation allows 50 tags for each stream |
-| `TagKeys` in `RemoveTagsFromStream` | 1 to 10 | 1 to 50 |
-| `Limit` in `ListTagsForStream` | 1 to 10 | 1 to 50 |
-| `Data` | Up to 1 MiB | Up to 10 MiB, within the stream's maximum record size |

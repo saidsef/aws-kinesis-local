@@ -14,7 +14,7 @@ aws-kinesis-local loads every document into memory at start-up and writes each c
 
 ## Documents
 
-Stream documents keep the field names that kinesalite used for its stream records, including the hidden `_seqIx` counters and `_tags`. Newer fields, such as `StreamModeDetails` and `MaxRecordSizeInKiB`, sit beside them. Fields that start with an underscore never appear in responses.
+Stream documents include the hidden `_seqIx` counters and `_tags`. Fields such as `StreamModeDetails` and `MaxRecordSizeInKiB` sit beside them. Fields that start with an underscore never appear in responses.
 
 ## Records
 
@@ -25,7 +25,3 @@ A background job deletes the records that no read reaches, so a stream that nobo
 The job takes each shard in turn and reads one batch of sequence numbers from the oldest end of the `records_position` index. The index holds the sequence numbers, so the job never loads record data. Sequence numbers rise with time within a shard, and the job stops at the first record that is still inside the retention period. It applies the rule that `GetRecords` applies, which compares the record time in the sequence number with the retention period.
 
 Requests and the job share one thread. Each batch commits in its own transaction, and the job then yields to the event loop, so a request waits for one batch at most. SQLite reuses the pages that the job frees, so the database file stops growing but does not shrink.
-
-## kinesalite data
-
-aws-kinesis-local does not read the LevelDB database that kinesalite kept under `--path`. The two stores use different file names, so the LevelDB files stay untouched beside the SQLite database. [Upgrading from kinesalite](upgrading.md) describes the upgrade.
