@@ -1,6 +1,6 @@
 # Configuration
 
-The Docker image runs aws-kinesis-local on the Node.js Alpine image as the `nobody` user. Its entrypoint, `docker-entrypoint.sh`, turns the environment variables below into command-line flags. The variables, flags and defaults are the same as in the kinesalite image that aws-kinesis-local replaces.
+The Docker image runs aws-kinesis-local on the Node.js Alpine image as the `nobody` user. Its entrypoint, `docker-entrypoint.sh`, turns the environment variables below into command-line flags.
 
 ## Environment variables
 
@@ -42,8 +42,6 @@ The image declares `KPATH` as a volume. Mount a named volume there to keep strea
 ```bash
 docker run -d -p 4567:4567 -v kinesis-data:/data docker.io/saidsef/aws-kinesis-local:latest
 ```
-
-aws-kinesis-local does not read the LevelDB database that the kinesalite image saved under `/data`, and it leaves those files in place. [Upgrading from kinesalite](specs/upgrading.md) describes the upgrade.
 
 ## Shutdown
 

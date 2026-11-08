@@ -34,9 +34,7 @@ aws-kinesis-local keeps state for every operation, but it does not run the AWS s
 | Resource policies | aws-kinesis-local stores policies and returns them, but it does not enforce them. |
 | Channels | aws-kinesis-local records the channel configuration and its status, but it does not deliver records to Amazon S3 or Amazon S3 Tables. |
 | Account settings | `UpdateAccountSettings` enables and disables the minimum throughput billing commitment immediately, without a minimum commitment window. |
-| Error messages | Messages for the 17 operations that kinesalite implemented match kinesalite 3.3.3. aws-kinesis-local writes its own messages for the other operations, so their wording can differ from AWS. |
-
-[Upgrading from kinesalite](specs/upgrading.md) lists every response that differs from the kinesalite image.
+| Error messages | The wording of some error messages can differ from AWS. |
 
 ## Kinesis Client Library
 

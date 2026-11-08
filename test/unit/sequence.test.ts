@@ -6,7 +6,7 @@ import {
   stringifySequence,
 } from '../../src/kinesis/sequence.ts'
 
-const KINESALITE_SEQUENCES = [
+const KNOWN_SEQUENCES = [
   '49680000635013247049592121295397200375299077975780098050',
   '49680000635013247049592121295398409301118692948552187906',
   '49680000635013247049592121295406871781855995490214084610',
@@ -18,8 +18,8 @@ const KINESALITE_SEQUENCES = [
 ]
 
 describe('sequence numbers', () => {
-  it('round-trips sequence numbers in the kinesalite format', () => {
-    for (const sequence of KINESALITE_SEQUENCES) {
+  it('round-trips known version 2 sequence numbers', () => {
+    for (const sequence of KNOWN_SEQUENCES) {
       const parts = parseSequence(sequence)
       assert.equal(parts.version, 2)
       assert.equal(stringifySequence(parts), sequence)
@@ -74,7 +74,7 @@ describe('sequence numbers', () => {
 })
 
 describe('shard identifiers', () => {
-  it('formats shard indexes as kinesalite does', () => {
+  it('formats shard indexes', () => {
     assert.equal(shardIdName(0), 'shardId-000000000000')
     assert.equal(shardIdName(1234), 'shardId-000000001234')
     assert.equal(shardIxToHex(255), '000000ff')
@@ -104,7 +104,7 @@ describe('shard iterators', () => {
     })
   })
 
-  it('grows with the stream name like kinesalite iterators', () => {
+  it('grows with the stream name', () => {
     const length = (name: string) => Buffer.from(createShardIterator(name, 'shardId-000000000000', '1'), 'base64').length
     assert.equal(length('a'), length('ab'))
     assert.ok(length('a'.repeat(128)) > length('a'))

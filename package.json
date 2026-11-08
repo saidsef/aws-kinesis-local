@@ -10,8 +10,7 @@
     "mock",
     "testing",
     "kcl",
-    "enhanced-fan-out",
-    "kinesalite"
+    "enhanced-fan-out"
   ],
   "author": "Said Sef <saidsef@gmail.com>",
   "license": "MIT",

@@ -25,19 +25,19 @@ aws-kinesis-local is a single Node.js process with no runtime npm dependencies. 
 
 ## Request pipeline
 
-`src/handler.ts` handles each request in the same order as kinesalite 3.3.3, so the same faulty request fails with the same error.
+`src/handler.ts` handles each request in the order below, so the same faulty request always fails with the same error.
 
 1. Add `x-amzn-RequestId` and `x-amz-id-2`, and answer CORS preflight requests.
 2. Answer `GET /healthz` and `GET /readyz`, and reject every other request that is not a `POST` with an XML `AccessDeniedException`.
 3. Read the content type and the `X-Amz-Target` header, and reject an empty body.
 4. Reject unsupported content types, and parse JSON or CBOR.
-5. Answer `application/json` requests with the Coral envelope that kinesalite returns.
+5. Answer `application/json` requests with the Coral envelope.
 6. Reject unknown services and operations.
 7. Check that the request carries an `Authorization` header or the SigV4 query parameters.
 8. Check member types, then member constraints, as [Request validation](validation.md) describes.
 9. Decode blobs, run the operation and serialise its result for the request's protocol.
 
-Each request runs synchronously on the event loop between the end of its body and its response, and `node:sqlite` is synchronous. Requests never interleave as a result, and aws-kinesis-local needs none of the per-stream locks that kinesalite took around its asynchronous LevelDB calls.
+Each request runs synchronously on the event loop between the end of its body and its response, and `node:sqlite` is synchronous. Requests never interleave as a result, and aws-kinesis-local needs no per-stream locks.
 
 ## HTTP/1.1 and HTTP/2 on the same port
 
@@ -76,7 +76,7 @@ The store saves each pending transition in the document it changes, with its due
 
 ## Sequence numbers and shard iterators
 
-`src/kinesis/sequence.ts` keeps the kinesalite format, so clients that stored kinesalite sequence numbers can still parse and compare them.
+`src/kinesis/sequence.ts` builds and parses sequence numbers in the format below.
 
 | Hex digits | Content of a version 2 sequence number |
 | --- | --- |
@@ -89,10 +89,10 @@ The store saves each pending transition in the document it changes, with its due
 | 39 to 46 | Shard index |
 | 47 | Version marker `2` |
 
-`PutRecords` assigns counters in the same shard order as kinesalite, so the same batch gets the same counters on both. Shard iterators keep kinesalite's AES-256-CBC layout and key, so their length and their validation match kinesalite. They expire after 5 minutes.
+`PutRecords` assigns counters in a fixed shard order that depends on the number of shards. Shard iterators are encrypted with AES-256-CBC and a fixed key, so the server can validate them after a restart. They expire after 5 minutes.
 
 ## Resharding
 
-`SplitShard` and `MergeShards` close the parent shards and create child shards that start one second later, as kinesalite does. `UpdateShardCount` splits the open shards at the uniform hash key boundaries of the target count, and then merges the pieces inside each target range. Kinesis also creates short-lived shards when it scales, and this approach gives every shard at most two parents, so the Kinesis Client Library can follow the lineage.
+`SplitShard` and `MergeShards` close the parent shards and create child shards that start one second later. `UpdateShardCount` splits the open shards at the uniform hash key boundaries of the target count, and then merges the pieces inside each target range. Kinesis also creates short-lived shards when it scales, and this approach gives every shard at most two parents, so the Kinesis Client Library can follow the lineage.
 
 `ListShards` derives the start time of a shard from its starting sequence number and the end time from its ending sequence number. Its `ShardFilter` types use those times and the retention period, and clamp a time before the oldest shard to the creation of the stream.
