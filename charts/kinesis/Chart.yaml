@@ -2,8 +2,8 @@ apiVersion: v2
 name: kinesis
 description: A Kinesis Local Helm chart for Kubernetes
 type: application
-version: 0.8.1
-appVersion: "3.3.3"
+version: 0.9.0
+appVersion: "1.0.1"
 kubeVersion: ">= 1.32.0"
 home: https://github.com/saidsef/aws-kinesis-local
 icon: https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/main/dist/MediaServices/KinesisVideoStreams2.png
@@ -28,7 +28,9 @@ annotations:
     - name: CONTRIBUTING
       url: https://github.com/saidsef/aws-kinesis-local/blob/main/CONTRIBUTING.md
   artifacthub.io/changes: |
-    - kind: changed
-      description: Generate the chart README from helm-docs comments in values.yaml
     - kind: fixed
-      description: Chart README states the Kubernetes version that kubeVersion requires
+      description: The default image is the aws-kinesis-local release that appVersion names, instead of the kinesalite image v2026.06
+    - kind: changed
+      description: image.tag defaults to empty, so the chart deploys the image tag that matches appVersion
+    - kind: changed
+      description: The env value descriptions cover aws-kinesis-local and its SQLite database instead of kinesalite and LevelDB

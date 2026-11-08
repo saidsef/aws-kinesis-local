@@ -6,8 +6,8 @@ image:
   repository: docker.io/saidsef/aws-kinesis-local
   # -- Image pull policy.
   pullPolicy: IfNotPresent
-  # -- Date-style image tag (`vYYYY.MM`) that the CI workflow publishes from main. Empty falls back to `.Chart.AppVersion`.
-  tag: "v2026.06"
+  # -- Image tag. Empty uses the chart `appVersion`, which matches the npm package version.
+  tag: ""
 
 # -- Pull secrets for private registries.
 imagePullSecrets: []
@@ -56,19 +56,19 @@ service:
   # -- Region passed to the `helm test` aws-cli call.
   testRegion: eu-west-1
 
-# kinesalite tuning, surfaced as container env vars.
+# aws-kinesis-local settings. The image entrypoint passes each variable to aws-kinesis-local as a flag.
 env:
-  # -- kinesalite `--port`. Also drives the container port.
+  # -- `--port`, the port that aws-kinesis-local listens on for HTTP/1.1 and HTTP/2. Also sets the container port.
   PORT: "4567"
-  # -- kinesalite `--path` (LevelDB directory). Mounted into the container.
+  # -- `--path`, the directory that holds the SQLite database. The chart mounts the data volume here.
   KPATH: "/data"
-  # -- kinesalite `--shardLimit`.
+  # -- `--shardLimit`, the maximum number of open shards across all provisioned streams.
   SHARDLIMIT: "50"
-  # -- kinesalite `--createStreamMs`.
+  # -- `--createStreamMs`, how long in milliseconds a new stream, consumer or channel stays in `CREATING`.
   CREATESTREAMMS: "50"
-  # -- kinesalite `--deleteStreamMs`.
+  # -- `--deleteStreamMs`, how long in milliseconds a deleted stream, consumer or channel stays in `DELETING`.
   DELETESTREAMMS: "50"
-  # -- kinesalite `--updateStreamMs`.
+  # -- `--updateStreamMs`, how long in milliseconds a stream or channel stays in `UPDATING`.
   UPDATESTREAMMS: "50"
 
 resources:

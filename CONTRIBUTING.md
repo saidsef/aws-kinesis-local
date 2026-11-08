@@ -9,7 +9,7 @@ Please note we have a code of conduct, please follow it in all your interactions
 1. Ensure any install or build dependencies are removed before the end of the layer when doing a build.
 2. Update the documentation under `docs/` with any change to the interface, such as new environment variables, exposed ports, file locations or container parameters.
 3. Run `npm run typecheck` and `npm test` for any change under `src/`, and record design decisions under `docs/specs/` rather than in code comments. Bump `version` in `package.json` when a change should reach npm.
-4. Bump `version` in `charts/kinesis/Chart.yaml` with every chart change. The CI workflow (`ci.yml`) tags each image, and the Charts workflow (`charts.yml`) publishes each new chart version. See [Development](docs/development.md).
+4. Bump `version` in `charts/kinesis/Chart.yaml` with every chart change. When `version` in `package.json` changes, set `appVersion` in `charts/kinesis/Chart.yaml` and `newTag` in `deployment/base/kustomization.yml` to the same version. The Release workflow (`release.yml`) tags each release image, and the Charts workflow (`charts.yml`) publishes each new chart version. See [Development](docs/development.md).
 5. You may merge the Pull Request in once you have the sign-off from the project team, or if you do not have permission to do that, you may request a reviewer to merge it for you.
 
 ## Code of Conduct

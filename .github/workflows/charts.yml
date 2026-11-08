@@ -28,6 +28,8 @@ jobs:
           version: v3.16.3
       - name: Helm lint
         run: helm lint charts/kinesis
+      - name: Check that the chart and Kustomize versions match package.json
+        run: node scripts/check-versions.ts
       - name: Check chart README
         run: |
           docker run --rm --volume "$PWD:/helm-docs" -u "$(id -u)" jnorwood/helm-docs:v1.14.2

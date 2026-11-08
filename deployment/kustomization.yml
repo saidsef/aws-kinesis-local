@@ -10,8 +10,3 @@ labels:
     pairs:
       app.kubernetes.io/component: stream
       app.kubernetes.io/managed-by: kustomize
-
-images:
-  - name: kinesis
-    newName: docker.io/saidsef/aws-kinesis-local
-    newTag: v2026.06
