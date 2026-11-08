@@ -142,25 +142,20 @@ jobs:
   image:
     runs-on: ubuntu-latest
     needs: [version, verify, release]
-    if: ${{ !cancelled() && needs.verify.result != 'failure' && needs.release.result != 'failure' && needs.version.outputs.pushed == 'false' }}
+    if: ${{ !cancelled() && needs.version.result == 'success' && needs.verify.result != 'failure' && needs.release.result != 'failure' }}
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
     steps:
       - name: Checkout the release tag
+        if: ${{ needs.version.outputs.pushed == 'false' }}
         uses: actions/checkout@v7
         with:
           ref: v${{ needs.version.outputs.version }}
       - name: Read the commit and the build time
+        if: ${{ needs.version.outputs.pushed == 'false' }}
         run: |
           echo "REVISION=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
           echo "CREATED=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_ENV"
-      - name: Work out the image tags
-        id: meta
-        uses: docker/metadata-action@v6
-        with:
-          images: ${{ env.IMAGE }}
-          tags: |
-            type=semver,pattern={{version}},value=${{ needs.version.outputs.version }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ needs.version.outputs.version }}
-            type=semver,pattern={{major}},value=${{ needs.version.outputs.version }}
       - name: Log in to Docker Hub
         uses: docker/login-action@v4
         with:
@@ -168,12 +163,14 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Set up QEMU
+        if: ${{ needs.version.outputs.pushed == 'false' }}
         uses: docker/setup-qemu-action@v4
         with:
           platforms: arm64
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
-      - name: Build and push the image
+      - name: Build and push the version tag
+        if: ${{ needs.version.outputs.pushed == 'false' }}
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -184,4 +181,16 @@ jobs:
           platforms: linux/amd64,linux/arm64
           pull: true
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ env.IMAGE }}:${{ needs.version.outputs.version }}
+      - name: Point latest and the minor and major tags at the version
+        if: ${{ !contains(needs.version.outputs.version, '-') }}
+        run: |
+          DIGEST=$(docker buildx imagetools inspect "$IMAGE:$VERSION" --format '{{json .Manifest}}' | jq -r .digest)
+          for TAG in latest "${VERSION%.*}" "${VERSION%%.*}"; do
+            CURRENT=$(docker buildx imagetools inspect "$IMAGE:$TAG" --format '{{json .Manifest}}' 2>/dev/null | jq -r .digest) || CURRENT=""
+            if [ "$CURRENT" = "$DIGEST" ]; then
+              echo "$TAG already points at $DIGEST."
+            else
+              docker buildx imagetools create --tag "$IMAGE:$TAG" "$IMAGE@$DIGEST"
+            fi
+          done

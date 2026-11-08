@@ -51,11 +51,11 @@ The Kinesis Client Library suite starts its own containers and needs only Docker
 
 The version in `package.json` drives each release. Bump it in a pull request, and the [Release](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/release.yml) workflow does the rest when the pull request merges. It runs only on pushes to `main`, so no other branch and no manual run can publish:
 
-1. It does nothing when the tag `v<version>` exists, npm already has that version and Docker Hub already has an image with that tag.
+1. It skips steps 2 to 4 when the tag `v<version>` exists and npm already has that version.
 2. It runs the typecheck, the tests and the Kinesis Client Library suite against a fresh image.
 3. It tags the commit `v<version>` and creates a GitHub release with generated notes. It never moves an existing tag.
 4. It publishes `@saidsef/aws-kinesis-local` to npm through [trusted publishing](https://docs.npmjs.com/trusted-publishers), so the workflow needs no npm token and npm records provenance for the package.
-5. It builds the image from the tag `v<version>` for `linux/amd64` and `linux/arm64`, and pushes it to Docker Hub with the tags that [Image tags](#image-tags) describes.
+5. It builds the image from the tag `v<version>` for `linux/amd64` and `linux/arm64`, unless Docker Hub already has it, and moves the tags that [Image tags](#image-tags) describes.
 
 The trusted publisher on npmjs.com names the user `saidsef`, the repository `aws-kinesis-local` and the workflow `release.yml`, and allows `npm publish`. Renaming the workflow file or moving the repository breaks publishing until the trusted publisher matches again. If a publish fails, use "Re-run jobs" on that workflow run.
 
@@ -95,7 +95,7 @@ GitHub withholds repository secrets from pull requests opened from forks and by 
 
 ## Image tags
 
-The release workflow pushes each release under its version, such as `1.0.1`, and also as `1.0`, `1` and `latest`, so those three tags always point at the newest release. A pre-release version, such as `1.1.0-rc.1`, gets only its own tag. The workflow never overwrites a version tag that is already on Docker Hub.
+The release workflow pushes each release under its version, such as `1.0.1`, and never overwrites a version tag that is already on Docker Hub. Every time it runs on `main`, it points `latest` and the minor and major tags, such as `1.0` and `1`, at the image of the version in `package.json`. It moves them by digest, without building the image again. A pre-release version, such as `1.1.0-rc.1`, gets only its own tag and does not move the others.
 
 The CI workflow pushes an image for each pull request, tagged with the branch name, with `/` replaced by `-`. Older images also have month tags, such as `v2026.11`. Docker Hub keeps them, but no workflow pushes month tags any more. The chart and the Kustomize manifests still reference a `vYYYY.MM` tag.
 
