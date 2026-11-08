@@ -22,6 +22,7 @@
 | Delivery after `PutRecord` or `PutRecords` | Immediate, because each write notifies the subscriptions on its shard |
 | Check for new records without a notification | Every second |
 | Event without records, to report the position | At least every 5 seconds |
+| `MillisBehindLatest` in an event | The value that `GetRecords` reports: the milliseconds since the last record of the read arrived while unread records remain, with a minimum of 1, and 0 otherwise |
 | Length of a subscription | 5 minutes, after which aws-kinesis-local ends the response |
 | Repeat subscription for the same consumer and shard | `ResourceInUseException` within 5 seconds of the last successful call. A later call takes over and ends the older subscription with a `ResourceInUseException` event. |
 

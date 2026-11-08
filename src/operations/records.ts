@@ -275,15 +275,16 @@ export function readShard(context: Context, stream: StreamDoc, shardIx: number, 
   const defaultTime = sequence.seqTime > now ? sequence.seqTime : now
   const nextSequence = incrementSequence(last ?? sequence, last ? undefined : defaultTime)
   let shardEnded = false
-  let millisBehindLatest = 0
   const shard: ShardDoc = stream.Shards[shardIx]!
   if (!records.length && shard.SequenceNumberRange.EndingSequenceNumber) {
     const end = parseSequence(shard.SequenceNumberRange.EndingSequenceNumber)
-    if (sequence.seqTime >= end.seqTime) {
-      shardEnded = true
-      millisBehindLatest = Math.max(0, now - end.seqTime)
-    }
+    if (sequence.seqTime >= end.seqTime) shardEnded = true
   }
+  const lastRow = rows.at(-1)
+  const newest = store.lastRecord(stream.StreamName, shardIx)
+  const millisBehindLatest = lastRow && newest && newest.seq > lastRow.SequenceNumber
+    ? Math.max(1, now - Math.round(lastRow.ApproximateArrivalTimestamp * 1000))
+    : 0
   if (expired.length) setImmediate(() => store.deleteRecords(stream.StreamName, shardIx, expired))
   return { records, nextSequence, shardEnded, millisBehindLatest }
 }

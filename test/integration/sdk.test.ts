@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { setTimeout as sleep } from 'node:timers/promises'
 import { after, before, describe, it } from 'node:test'
 import {
   AddTagsToStreamCommand, CreateChannelCommand, CreateStreamCommand, DecreaseStreamRetentionPeriodCommand, DeleteChannelCommand,
@@ -180,6 +181,55 @@ for (const transport of ['http2', 'http1'] as const) {
   })
 }
 
+describe('MillisBehindLatest', () => {
+  it('reports the lag of a read that leaves records unread and 0 at the newest record', async () => {
+    const name = unique('behind')
+    await activeStream(name)
+    await client.send(new PutRecordsCommand({
+      StreamName: name,
+      Records: ['one', 'two', 'three'].map(value => ({ PartitionKey: 'p', Data: Buffer.from(value) })),
+    }))
+    await sleep(100)
+    const { ShardIterator } = await client.send(new GetShardIteratorCommand({ StreamName: name, ShardId: 'shardId-000000000000', ShardIteratorType: 'TRIM_HORIZON' }))
+    const first = await client.send(new GetRecordsCommand({ ShardIterator, Limit: 1 }))
+    assert.equal(first.Records?.length, 1)
+    assert.ok(first.MillisBehindLatest! >= 50, `MillisBehindLatest was ${first.MillisBehindLatest}`)
+    const rest = await client.send(new GetRecordsCommand({ ShardIterator: first.NextShardIterator }))
+    assert.equal(rest.Records?.length, 2)
+    assert.equal(rest.MillisBehindLatest, 0)
+  })
+
+  it('follows the same rule in SubscribeToShard events', async () => {
+    const name = unique('behind-events')
+    const { StreamARN } = await activeStream(name)
+    for (let i = 0; i < 4; i++) {
+      await client.send(new PutRecordsCommand({
+        StreamName: name,
+        Records: Array.from({ length: 500 }, () => ({ PartitionKey: 'p', Data: Buffer.from('x') })),
+      }))
+    }
+    const { Consumer } = await client.send(new RegisterStreamConsumerCommand({ StreamARN, ConsumerName: 'lag' }))
+    await waitFor(
+      () => client.send(new DescribeStreamConsumerCommand({ StreamARN, ConsumerName: 'lag' })),
+      result => result.ConsumerDescription?.ConsumerStatus === 'ACTIVE',
+    )
+    const subscription = await client.send(new SubscribeToShardCommand({
+      ConsumerARN: Consumer!.ConsumerARN,
+      ShardId: 'shardId-000000000000',
+      StartingPosition: { Type: 'TRIM_HORIZON' },
+    }))
+    const events: { records: number, millisBehindLatest: number }[] = []
+    for await (const event of subscription.EventStream!) {
+      const records = event.SubscribeToShardEvent?.Records?.length ?? 0
+      if (records) events.push({ records, millisBehindLatest: event.SubscribeToShardEvent!.MillisBehindLatest! })
+      if (events.reduce((total, seen) => total + seen.records, 0) >= 2000) break
+    }
+    assert.deepEqual(events.map(event => event.records), [1000, 1000])
+    assert.ok(events[0]!.millisBehindLatest > 0, `MillisBehindLatest was ${events[0]!.millisBehindLatest}`)
+    assert.equal(events[1]!.millisBehindLatest, 0)
+  })
+})
+
 describe('shards', () => {
   it('splits and merges shards and reports child shards at the end of a parent', async () => {
     const name = unique('reshard')
@@ -194,12 +244,15 @@ describe('shards', () => {
     const { ShardIterator } = await client.send(new GetShardIteratorCommand({ StreamName: name, ShardId: 'shardId-000000000000', ShardIteratorType: 'TRIM_HORIZON' }))
     let iterator = ShardIterator
     let childShards
+    let millisBehindLatest
     for (let i = 0; i < 5 && iterator; i++) {
       const page = await client.send(new GetRecordsCommand({ ShardIterator: iterator }))
       iterator = page.NextShardIterator
       childShards = page.ChildShards
+      millisBehindLatest = page.MillisBehindLatest
     }
     assert.equal(iterator, undefined)
+    assert.equal(millisBehindLatest, 0)
     assert.deepEqual(childShards?.map(child => child.ShardId), ['shardId-000000000002', 'shardId-000000000003'])
     assert.deepEqual(childShards?.[0]?.ParentShards, ['shardId-000000000000'])
     await rejects(client.send(new SplitShardCommand({ StreamName: name, ShardToSplit: 'shardId-000000000000', NewStartingHashKey: '100' })), 'InvalidArgumentException', /already been merged or split/)

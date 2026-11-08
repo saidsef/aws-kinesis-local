@@ -1,6 +1,6 @@
 {
   "name": "@saidsef/aws-kinesis-local",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Local Amazon Kinesis Data Streams server for development and CI, with all 45 operations, enhanced fan-out, JSON and CBOR over HTTP/1.1 and HTTP/2",
   "keywords": [
     "aws",
