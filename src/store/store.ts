@@ -2,15 +2,18 @@ import { EventEmitter } from 'node:events'
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { DatabaseSync, type StatementSync } from 'node:sqlite'
+import { parseSequence } from '../kinesis/sequence.ts'
 import type { AccountSettings, ChannelDoc, ConsumerDoc, NewRecord, Pending, StoredRecord, StreamDoc } from './types.ts'
 
 export const DATABASE_FILE = 'aws-kinesis-local.sqlite'
+const EXPIRY_BATCH_SIZE = 500
 
 export interface StoreOptions {
   path?: string | undefined
   createStreamMs: number
   deleteStreamMs: number
   updateStreamMs: number
+  expiryIntervalMs: number
   shardLimit: number
   accountId: string
   region: string
@@ -78,6 +81,7 @@ export class Store {
       readRecords: this.db.prepare('SELECT seq, partition_key, data, arrival, encryption FROM records WHERE stream = ? AND shard = ? AND seq >= ? ORDER BY seq LIMIT ?'),
       firstAtOrAfter: this.db.prepare('SELECT seq FROM records WHERE stream = ? AND shard = ? AND arrival >= ? ORDER BY seq LIMIT 1'),
       lastRecord: this.db.prepare('SELECT seq, arrival FROM records WHERE stream = ? AND shard = ? ORDER BY seq DESC LIMIT 1'),
+      oldestSequences: this.db.prepare('SELECT seq FROM records WHERE stream = ? AND shard = ? ORDER BY seq LIMIT ?'),
       deleteRecord: this.db.prepare('DELETE FROM records WHERE stream = ? AND shard = ? AND seq = ?'),
       deleteStreamRecords: this.db.prepare('DELETE FROM records WHERE stream = ?'),
     }
@@ -205,6 +209,46 @@ export class Store {
   deleteStreamRecords(stream: string) {
     if (this.closed) return
     this.statements.deleteStreamRecords!.run(stream)
+  }
+
+  startExpiry() {
+    this.scheduleExpiry(0, this.expiryBatches())
+  }
+
+  private scheduleExpiry(delayMs: number, batches: Generator<void>) {
+    this.timers.set('expiry', setTimeout(() => this.expireBatch(batches), delayMs))
+  }
+
+  private expireBatch(batches: Generator<void>) {
+    let done: boolean | undefined = true
+    try {
+      done = batches.next().done
+    } catch (error) {
+      console.error(error instanceof Error ? error.stack : error)
+    }
+    if (done) this.scheduleExpiry(this.options.expiryIntervalMs, this.expiryBatches())
+    else this.scheduleExpiry(0, batches)
+  }
+
+  private *expiryBatches(): Generator<void> {
+    for (const stream of [...this.streams.values()]) {
+      for (let shardIx = 0; shardIx < stream.Shards.length; shardIx++) {
+        while (this.expireOldest(stream, shardIx) === EXPIRY_BATCH_SIZE) yield
+        yield
+      }
+    }
+  }
+
+  private expireOldest(stream: StreamDoc, shardIx: number) {
+    const cutoff = Date.now() - stream.RetentionPeriodHours * 60 * 60 * 1000
+    const oldest = this.statements.oldestSequences!.all(stream.StreamName, shardIx, EXPIRY_BATCH_SIZE) as { seq: string }[]
+    const expired: string[] = []
+    for (const { seq } of oldest) {
+      if (parseSequence(seq).seqTime >= cutoff) break
+      expired.push(seq)
+    }
+    if (expired.length) this.transaction(() => this.deleteRecords(stream.StreamName, shardIx, expired))
+    return expired.length
   }
 
   registerTransition(action: string, transition: Transition) {

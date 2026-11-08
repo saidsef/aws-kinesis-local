@@ -17,6 +17,7 @@ export interface StartOptions {
   createStreamMs: number
   deleteStreamMs: number
   updateStreamMs: number
+  expiryIntervalMs: number
   shardLimit: number
   accountId: string
   region: string
@@ -38,6 +39,7 @@ export function defaultOptions(): StartOptions {
     createStreamMs: 500,
     deleteStreamMs: 500,
     updateStreamMs: 500,
+    expiryIntervalMs: 60000,
     shardLimit: 10,
     accountId: (process.env.AWS_ACCOUNT_ID || '0000-0000-0000').replace(/[^\d]/g, ''),
     region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1',
@@ -73,6 +75,7 @@ export async function start(overrides: Partial<StartOptions> = {}): Promise<Kine
   const options = { ...defaultOptions(), ...overrides }
   const store = new Store(options)
   registerTransitions(store)
+  store.startExpiry()
   store.resume()
   const handler = createHandler(store)
   const sockets = new Set<Socket>()
