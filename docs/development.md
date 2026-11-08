@@ -49,7 +49,9 @@ The Kinesis Client Library suite starts its own containers and needs only Docker
 
 ## Releases
 
-The version in `package.json` drives each release. Bump it in a pull request, and the [Release](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/release.yml) workflow does the rest when the pull request merges. It runs only on pushes to `main`, so no other branch and no manual run can publish:
+The version in `package.json` drives each release. Bump it in a pull request, and set `appVersion` in `charts/kinesis/Chart.yaml` and `newTag` in `deployment/base/kustomization.yml` to the same version, so that the chart and the Kustomize manifests deploy the new release. The chart change also needs a new chart `version`, as [Chart](#chart) describes. The CI and Charts workflows run `node scripts/check-versions.ts`, which fails when the three versions differ.
+
+The [Release](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/release.yml) workflow does the rest when the pull request merges. It runs only on pushes to `main`, so no other branch and no manual run can publish:
 
 1. It skips steps 2 to 4 when the tag `v<version>` exists and npm already has that version.
 2. It runs the typecheck, the tests and the Kinesis Client Library suite against a fresh image.
@@ -76,7 +78,7 @@ docker run --rm -v "$PWD:/helm-docs" -u "$(id -u)" jnorwood/helm-docs:<version>
 
 The Charts workflow fails when the committed chart README differs from the generated one.
 
-chart-releaser publishes each chart version as a GitHub release named `kinesis-<version>`. Bump `version` in `Chart.yaml` with every chart change, and list the changes in its `artifacthub.io/changes` annotation.
+chart-releaser publishes each chart version as a GitHub release named `kinesis-<version>`. Bump `version` in `Chart.yaml` with every chart change, and list the changes in its `artifacthub.io/changes` annotation. On pull requests, the Charts workflow runs `ct lint` from [chart-testing](https://github.com/helm/chart-testing), which fails when the chart changes and its `version` does not increase.
 
 ## Documentation
 
@@ -86,10 +88,12 @@ Read the Docs builds this site from `mkdocs.yml` with MkDocs Material. To previe
 
 | Workflow | Trigger | What it does |
 | --- | --- | --- |
-| [CI](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/ci.yml) | Changes to the source, tests, model, package files, Dockerfile, entrypoint or the workflow | Typechecks and tests the source, installs the packed npm package and runs it, then builds the image and runs the SDK, AWS CLI and boto3 suites and a Trivy scan against it. On pull requests, when those pass, it builds the image for `linux/amd64` and `linux/arm64`, pushes it to Docker Hub under the branch name, and deploys the Kustomize manifests and the chart to a kind cluster. |
+| [CI](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/ci.yml) | Changes to the source, tests, model, package files, Dockerfile, entrypoint, Kustomize manifests or the workflow | Typechecks and tests the source, installs the packed npm package and runs it, then builds the image and runs the SDK, AWS CLI and boto3 suites against it. Trivy scans the image, uploads its report to GitHub code scanning and fails the workflow on high or critical findings. On pull requests, when those pass, it builds the image for `linux/amd64` and `linux/arm64` and pushes it to Docker Hub under the branch name. It then deploys that image to a kind cluster with the Kustomize manifests and the chart, waits for both to become ready and runs `helm test`. When that passes, it approves the pull request and adds the `preview` label. |
 | [Release](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/release.yml) | Changes on main to the source, model, package files or the workflow | Tests a new version, tags it, creates a GitHub release, publishes it to npm and pushes its image to Docker Hub, as [Releases](#releases) describes. |
-| [Charts](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/charts.yml) | Changes under `charts/` | Lints the chart and checks the chart README. On pull requests, it installs the chart in a kind cluster. On main, it publishes the chart. |
-| [Issues](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/issues.yml) | New or reopened issues | Posts a comment that thanks the reporter. |
+| [Charts](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/charts.yml) | Changes under `charts/` | Lints the chart with `helm lint` and checks the chart README. On pull requests, it runs `ct lint`, installs the chart in a kind cluster, waits for it to become ready, runs `helm test` and approves the pull request. On main, a separate job publishes the chart. |
+| [Issues](https://github.com/saidsef/aws-kinesis-local/blob/main/.github/workflows/issues.yml) | New or reopened issues | Posts a comment that thanks the reporter and adds the `triage` label. |
+
+Every workflow pins each action to a full commit SHA, with its release in a comment, such as `# v1.2.3`, and Dependabot updates the pins. The Charts workflow pins the helm-docs and chart-testing images by digest. Each workflow gives the `GITHUB_TOKEN` read access to the repository contents only. A job gets write access only when it uploads the scan report, approves or labels a pull request, labels an issue or publishes a release.
 
 GitHub withholds repository secrets from pull requests opened from forks and by Dependabot, so the CI workflow fails at the Docker Hub login on those pull requests.
 
@@ -97,6 +101,8 @@ GitHub withholds repository secrets from pull requests opened from forks and by 
 
 The release workflow pushes each release under its version, such as `1.0.1`, and never overwrites a version tag that is already on Docker Hub. Every time it runs on `main`, it points `latest` and the minor and major tags, such as `1.0` and `1`, at the image of the version in `package.json`. It moves them by digest, without building the image again. A pre-release version, such as `1.1.0-rc.1`, gets only its own tag and does not move the others.
 
-The CI workflow pushes an image for each pull request, tagged with the branch name, with `/` replaced by `-`. Older images also have month tags, such as `v2026.11`. Docker Hub keeps them, but no workflow pushes month tags any more. The chart and the Kustomize manifests still reference a `vYYYY.MM` tag.
+The chart and the Kustomize manifests reference the release version. The chart uses its `appVersion` when `image.tag` is empty, and the Kustomize manifests take the tag from `newTag`.
+
+The CI workflow pushes an image for each pull request, tagged with the branch name, with `/` replaced by `-`. Older images also have month tags, such as `v2026.11`. Docker Hub keeps them, but no workflow pushes month tags any more.
 
 The image carries the standard OCI labels. CI sets `org.opencontainers.image.version` from `package.json`, and adds `org.opencontainers.image.created` and `org.opencontainers.image.revision` for each build. A local build reports the version as `dev`.
