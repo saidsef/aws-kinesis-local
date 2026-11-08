@@ -11,7 +11,7 @@ The CI workflow runs the suites below on each pull request that changes a file u
 | AWS CLI | `test/clients/aws-cli.sh` | The image | Streams, records, ARNs, tags, consumers, resharding, waiters and limits through the AWS CLI |
 | boto3 | `test/clients/test_boto3.py` | The image | Records, paginators, errors, resharding, `subscribe_to_shard` over HTTP/1.1 and account operations |
 | Kinesis Client Library | `test/kcl/` | The image, with DynamoDB local | A KCL 3 consumer in polling mode and in enhanced fan-out mode that must process every record exactly once. It runs in the release workflow only. |
-| Vulnerability scan | CI workflow | The image | Trivy fails the workflow on any vulnerability or secret of high or critical severity |
+| Vulnerability scan | CI workflow | The image, before any push | Trivy uploads a report of every vulnerability and secret it finds to GitHub code scanning, and fails the workflow on any of high or critical severity |
 | Kustomize manifests | CI workflow | The image in a kind cluster | Deploys `deployment/` with the image tag that the run pushed, and fails when the StatefulSet does not become ready |
 | Helm chart | CI and Charts workflows | The image in a kind cluster | Installs the chart, waits for the StatefulSet to become ready and runs `helm test`, which lists streams through the Service with the AWS CLI. The CI workflow deploys the image tag that the run pushed, and the Charts workflow deploys the release that `appVersion` names. |
 
