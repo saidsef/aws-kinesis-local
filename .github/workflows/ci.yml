@@ -189,10 +189,15 @@ jobs:
     needs: [build]
     if: ${{ ! contains(github.ref, 'main') }}
     steps:
-      - name: Create k8s Kind Cluster
-        uses: helm/kind-action@v1.15.2
+      - name: Set up Go
+        uses: actions/setup-go@v7
         with:
-          verbosity: "10"
+          go-version: "1.26"
+          cache: false
+      - name: Install kind
+        run: go install sigs.k8s.io/kind@v0.33.0
+      - name: Create k8s Kind Cluster
+        run: kind create cluster --wait 60s
       - name: Checkout
         uses: actions/checkout@v7
       - name: Run K8s test
