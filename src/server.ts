@@ -32,6 +32,7 @@ export interface KinesisLocal {
 }
 
 const HTTP2_PREFACE = Buffer.from('PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n', 'latin1')
+const TLS_HANDSHAKE = 0x16
 
 export function defaultOptions(): StartOptions {
   return {
@@ -48,20 +49,29 @@ export function defaultOptions(): StartOptions {
   }
 }
 
-function routeByProtocol(socket: Socket, http1: Server, http2: Server) {
+interface Servers {
+  http1: Server
+  http2: Server
+  tls: Server
+}
+
+function routeByProtocol(socket: Socket, servers: Servers) {
   let buffered = Buffer.alloc(0)
   const onData = (chunk: Buffer) => {
     buffered = Buffer.concat([buffered, chunk])
+    const isTls = buffered[0] === TLS_HANDSHAKE
     const length = Math.min(buffered.length, HTTP2_PREFACE.length)
-    const isHttp2 = buffered.subarray(0, length).equals(HTTP2_PREFACE.subarray(0, length))
+    const isHttp2 = !isTls && buffered.subarray(0, length).equals(HTTP2_PREFACE.subarray(0, length))
     if (isHttp2 && buffered.length < HTTP2_PREFACE.length) return
     socket.off('data', onData)
     socket.pause()
     socket.unshift(buffered)
-    if (isHttp2) {
-      http2.emit('connection', socket)
+    if (isTls) {
+      servers.tls.emit('connection', socket)
+    } else if (isHttp2) {
+      servers.http2.emit('connection', socket)
     } else {
-      http1.emit('connection', socket)
+      servers.http1.emit('connection', socket)
       socket.resume()
     }
   }
@@ -75,6 +85,9 @@ function hostname(address: AddressInfo) {
 
 export async function start(overrides: Partial<StartOptions> = {}): Promise<KinesisLocal> {
   const options = { ...defaultOptions(), ...overrides }
+  const credentials = options.keyFile && options.certFile
+    ? { key: readFileSync(options.keyFile), cert: readFileSync(options.certFile) }
+    : selfSignedCertificate()
   const store = new Store(options)
   registerTransitions(store)
   store.startExpiry()
@@ -98,21 +111,18 @@ export async function start(overrides: Partial<StartOptions> = {}): Promise<Kine
     sessions.add(session)
     session.once('close', () => sessions.delete(session))
   }
+  const secure = createSecureServer({ ...credentials, allowHTTP1: true }, handler)
+  secure.on('session', trackSession)
   let server: Server
   if (options.ssl) {
-    const credentials = options.keyFile && options.certFile
-      ? { key: readFileSync(options.keyFile), cert: readFileSync(options.certFile) }
-      : selfSignedCertificate()
-    const secure = createSecureServer({ ...credentials, allowHTTP1: true }, handler)
-    secure.on('session', trackSession)
     server = secure as unknown as Server
   } else {
-    const http1 = createHttpServer(handler)
     const http2 = createHttp2Server(handler)
     http2.on('session', trackSession)
+    const servers = { http1: createHttpServer(handler), http2: http2 as unknown as Server, tls: secure as unknown as Server }
     server = createNetServer(socket => {
       socket.on('error', () => socket.destroy())
-      routeByProtocol(socket, http1, http2 as unknown as Server)
+      routeByProtocol(socket, servers)
     })
   }
   server.on('connection', (socket: Socket) => {

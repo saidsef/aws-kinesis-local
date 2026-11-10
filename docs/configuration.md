@@ -17,21 +17,28 @@ The Docker image runs aws-kinesis-local on the Node.js Alpine image as the `nobo
 
 ## Flags
 
-The entrypoint passes any arguments after the image name to aws-kinesis-local. For example, `--ssl` serves HTTPS with a self-signed certificate that aws-kinesis-local generates at start-up:
-
-```bash
-docker run -d -p 4567:4567 docker.io/saidsef/aws-kinesis-local:latest --ssl
-aws --endpoint-url https://localhost:4567 --no-verify-ssl kinesis list-streams
-```
+The entrypoint passes any arguments after the image name to aws-kinesis-local.
 
 | Flag | Purpose |
 | --- | --- |
-| `--ssl` | Serves HTTPS, with HTTP/2 and HTTP/1.1 negotiated through ALPN. |
-| `--key <file>` | PEM private key to use with `--ssl` instead of the generated one. |
-| `--cert <file>` | PEM certificate to use with `--ssl` instead of the generated one. |
+| `--ssl` | Accepts TLS connections only, and closes plain HTTP connections. |
+| `--key <file>` | PEM private key for TLS connections, instead of the generated one. |
+| `--cert <file>` | PEM certificate for TLS connections, instead of the generated one. |
 | `--help` | Prints every flag and its default, then exits. |
 
 The `aws-kinesis-local` command from npm takes the same flags. Without the entrypoint, it uses port 4567, an in-memory store, a shard limit of 10 and 500 milliseconds for each state change.
+
+## TLS
+
+aws-kinesis-local accepts TLS and plain HTTP connections on the same port, and a TLS client negotiates HTTP/2 or HTTP/1.1 through ALPN. The Kinesis Producer Library, which always connects with TLS, can share one server with clients that use plain HTTP:
+
+```bash
+docker run -d -p 4567:4567 docker.io/saidsef/aws-kinesis-local:latest
+aws --endpoint-url http://localhost:4567 kinesis list-streams
+aws --endpoint-url https://localhost:4567 --no-verify-ssl kinesis list-streams
+```
+
+aws-kinesis-local generates a self-signed certificate for `localhost`, `127.0.0.1` and `::1` at start-up. `--key` and `--cert` replace it with a key and certificate from PEM files. `--ssl` closes every connection that does not open with a TLS handshake.
 
 ## Data storage
 

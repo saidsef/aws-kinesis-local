@@ -2,7 +2,7 @@
 
 aws-kinesis-local is a single Node.js process with no runtime npm dependencies. It uses only the Node.js modules for HTTP, HTTP/2, TLS, cryptography, SQLite and zlib, so the npm package and the image ship compiled JavaScript and nothing else.
 
-[![AWS clients connect over HTTP/1.1 or HTTP/2 on the same port. The listener passes each connection to the matching server. The request handler validates each request against the generated model and runs the operation, and the store keeps its data in SQLite.](architecture.svg)](architecture.svg)
+[![AWS clients connect over HTTP/1.1 or HTTP/2, with or without TLS, on the same port. The listener passes each connection to the matching server. The request handler validates each request against the generated model and runs the operation, and the store keeps its data in SQLite.](architecture.svg)](architecture.svg)
 
 ## Source layout
 
@@ -13,7 +13,7 @@ aws-kinesis-local is a single Node.js process with no runtime npm dependencies. 
 | `src/server.ts` | Defaults, listeners, protocol detection and store start-up |
 | `src/handler.ts` | Request pipeline from headers to response |
 | `src/errors.ts` | `KinesisError`, which carries the type, status code and message of an error response, and a helper for each common error type |
-| `src/certificate.ts` | Self-signed certificate for `--ssl` |
+| `src/certificate.ts` | Self-signed certificate for TLS connections |
 | `src/model.ts`, `src/generated/model.ts` | Shape types and the shapes generated from the Smithy model |
 | `src/validation/` | Type checks, constraint checks and the Coral member order |
 | `src/protocol/` | CBOR codec, event stream encoder and the serialiser for responses |
@@ -39,11 +39,11 @@ aws-kinesis-local is a single Node.js process with no runtime npm dependencies. 
 
 Each request runs synchronously on the event loop between the end of its body and its response, and `node:sqlite` is synchronous. Requests never interleave as a result, and aws-kinesis-local needs no per-stream locks.
 
-## HTTP/1.1 and HTTP/2 on the same port
+## HTTP/1.1, HTTP/2 and TLS on the same port
 
-The AWS SDK for JavaScript v3 and the AWS SDK for Java open cleartext HTTP/2 connections with prior knowledge, which starts every connection with a fixed 24-byte preface. The listener reads the first bytes of each connection and compares them with that preface. It passes the socket to the HTTP/2 server when they match and to the HTTP/1.1 server otherwise, after it puts the bytes back on the socket.
+The AWS SDK for JavaScript v3 and the AWS SDK for Java open cleartext HTTP/2 connections with prior knowledge, which starts every connection with a fixed 24-byte preface. A TLS connection starts with a handshake record, whose first byte is 22, as [RFC 8446, section 5.1](https://www.rfc-editor.org/rfc/rfc8446#section-5.1) defines. The listener reads the first bytes of each connection and puts them back on the socket. It then passes a TLS connection to the TLS server, a connection that starts with the HTTP/2 preface to the HTTP/2 server, and any other connection to the HTTP/1.1 server.
 
-The two servers read those bytes differently. The HTTP/2 server reads them from the paused socket on the next tick, so the listener leaves the socket paused. The HTTP/1.1 parser reads from the socket stream, so the listener resumes it. With `--ssl`, TLS negotiates the protocol through ALPN instead.
+The servers read those bytes differently. The HTTP/2 and TLS servers read them from the paused socket on the next tick, so the listener leaves the socket paused. The HTTP/1.1 parser reads from the socket stream, so the listener resumes it. The TLS server negotiates HTTP/2 or HTTP/1.1 through ALPN and passes each request to the same handler. With `--ssl`, the TLS server listens on the port itself, and a connection that does not open with a TLS handshake fails.
 
 ## Protocols
 
