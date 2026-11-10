@@ -28,7 +28,7 @@ aws-kinesis-local is a single Node.js process with no runtime npm dependencies. 
 `src/handler.ts` handles each request in the order below, so the same faulty request always fails with the same error.
 
 1. Add `x-amzn-RequestId` and `x-amz-id-2`, and answer CORS preflight requests.
-2. Answer `GET /healthz` and `GET /readyz`, and reject every other request that is not a `POST` with an XML `AccessDeniedException`.
+2. Answer `GET /healthz`, `GET /readyz` and `POST /_control/reset`, and reject every other request that is not a `POST` with an XML `AccessDeniedException`.
 3. Read the content type and the `X-Amz-Target` header, and reject an empty body.
 4. Reject unsupported content types, and parse JSON or CBOR.
 5. Answer `application/json` requests with the Coral envelope.
@@ -73,6 +73,8 @@ Kinesis completes some changes asynchronously, and aws-kinesis-local models each
 | Reshard, change capacity mode or warm throughput, start or stop encryption, update a channel | `UPDATING` to `ACTIVE` | `--updateStreamMs` |
 
 The store saves each pending transition in the document it changes, with its due time and the data it needs, such as the new shards of a stream. A transition that is due when aws-kinesis-local starts runs at once, and a later one runs at its due time. A stopped container never leaves a stream stuck in a transitional state.
+
+A reset skips the `DELETING` state. It cancels the pending transitions of the documents it deletes and removes them in one SQLite transaction. A reset of one stream also removes the channels attached to it, because `DeleteStream` refuses a stream that has channels. The store reports each stream as deleted before it removes the consumers, and an open `SubscribeToShard` response ends with `ResourceNotFoundException` for the stream. A consumer ARN ends with its creation time in seconds, and a test that registers a consumer again after a reset can get the same ARN. Removing a consumer clears its last `SubscribeToShard` call, and the 5-second wait between subscriptions does not apply to the new consumer.
 
 ## Sequence numbers and shard iterators
 

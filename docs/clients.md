@@ -40,6 +40,17 @@ await server.close();
 
 `start()` takes the same settings as the command-line flags, such as `path`, `shardLimit`, `createStreamMs` and `ssl`, and the package includes TypeScript declarations for them.
 
+## Clearing streams
+
+`POST /_control/reset` deletes every stream with its records, consumers, channels and policies, and returns the account settings to their defaults. A body of `{"stream": "orders"}` deletes only that stream, with its records, consumers and policies and the channels attached to it. The streams go at once, without the `DELETING` state, and an open `SubscribeToShard` response for a deleted stream ends with `ResourceNotFoundException`. The endpoint does not need a signature, and it answers with the names of the streams that it deleted:
+
+```bash
+curl -X POST http://localhost:4567/_control/reset -d '{"stream": "orders"}'
+{"streams":["orders"]}
+```
+
+The object that `start()` returns offers the same operation as `reset()`, and `reset('orders')` clears one stream. Both return the names of the streams that they deleted.
+
 ## AWS CLI
 
 ```bash
