@@ -14,6 +14,7 @@ import { coerceStructure, decodeBlobs, validateStructure, type ValidationContext
 const MAX_REQUEST_BYTES = 16 * 1024 * 1024
 const EVENT_STREAM = 'application/vnd.amazon.eventstream'
 const HEALTH_PATHS = ['/healthz', '/readyz']
+const RESET_PATH = '/_control/reset'
 const EXPOSED_HEADERS = 'x-amzn-RequestId,x-amzn-ErrorType,x-amz-request-id,x-amz-id-2,x-amzn-ErrorMessage,Date'
 
 type Request = IncomingMessage | Http2ServerRequest
@@ -58,6 +59,21 @@ function sendHealth(store: Store, exchange: Exchange, path: string) {
   const healthy = store.healthy() && (path === '/healthz' || !store.draining)
   exchange.res.setHeader('Content-Type', 'text/plain')
   sendRaw(exchange, healthy ? 'ok\n' : 'unavailable\n', healthy ? 200 : 503)
+}
+
+function sendReset(store: Store, exchange: Exchange, body: Buffer | undefined) {
+  let input: unknown = {}
+  try {
+    if (body) input = JSON.parse(body.toString('utf8'))
+  } catch {
+    input = undefined
+  }
+  const stream = (input as { stream?: unknown } | null | undefined)?.stream
+  exchange.contentType = 'application/json'
+  if (typeof input !== 'object' || input === null || Array.isArray(input) || (stream !== undefined && typeof stream !== 'string')) {
+    return sendResponse(exchange, { message: 'The body must be empty or a JSON object whose stream member is a string.' }, 400)
+  }
+  sendResponse(exchange, { streams: store.reset(stream) })
 }
 
 function validationContext(store: Store, data: Record<string, unknown>): ValidationContext {
@@ -161,6 +177,7 @@ function respond(store: Store, exchange: Exchange, body: Buffer | undefined) {
   }
   const path = req.url?.split('?')[0] ?? ''
   if (req.method === 'GET' && HEALTH_PATHS.includes(path)) return sendHealth(store, exchange, path)
+  if (req.method === 'POST' && path === RESET_PATH) return sendReset(store, exchange, body)
   if (req.method !== 'POST') {
     return sendError(exchange, false, 'AccessDeniedException', 'Unable to determine service/operation name to be authorized')
   }

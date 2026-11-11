@@ -28,6 +28,7 @@ export interface KinesisLocal {
   endpoint: string
   address: AddressInfo
   protocol: 'http' | 'https'
+  reset(stream?: string): string[]
   close(): Promise<void>
 }
 
@@ -164,6 +165,7 @@ export async function start(overrides: Partial<StartOptions> = {}): Promise<Kine
     endpoint: `${protocol}://${hostname(address)}:${address.port}`,
     address,
     protocol,
+    reset: stream => store.reset(stream),
     close: () => closing ??= shutdown(),
   }
 }

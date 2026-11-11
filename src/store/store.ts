@@ -8,6 +8,8 @@ import type { AccountSettings, ChannelDoc, ConsumerDoc, NewRecord, Pending, Stor
 export const DATABASE_FILE = 'aws-kinesis-local.sqlite'
 const EXPIRY_BATCH_SIZE = 500
 
+const defaultSettings = (): AccountSettings => ({ MinimumThroughputBillingCommitment: { Status: 'DISABLED' } })
+
 export interface StoreOptions {
   path?: string | undefined
   createStreamMs: number
@@ -38,7 +40,7 @@ export class Store {
   readonly channels = new Map<string, ChannelDoc>()
   readonly policies = new Map<string, string>()
   readonly events = new EventEmitter()
-  settings: AccountSettings = { MinimumThroughputBillingCommitment: { Status: 'DISABLED' } }
+  settings: AccountSettings = defaultSettings()
   draining = false
   private readonly db: DatabaseSync
   private readonly transitions = new Map<string, Transition>()
@@ -177,6 +179,29 @@ export class Store {
   saveSettings(settings: AccountSettings) {
     this.settings = settings
     this.write('settings', 'account', settings)
+  }
+
+  reset(name?: string) {
+    const names = name === undefined ? [...this.streams.keys()].sort() : this.streams.has(name) ? [name] : []
+    const arns = new Set(names.map(stream => this.streams.get(stream)!.StreamARN))
+    const consumers = [...this.consumers.values()].filter(consumer => names.includes(consumer.StreamName))
+    const channels = [...this.channels.values()].filter(channel =>
+      name === undefined || channel.StreamConfigurationList.some(entry => arns.has(entry.StreamARN as string)))
+    this.transaction(() => {
+      for (const stream of names) {
+        this.events.emit('stream-deleted', stream)
+        this.removePolicy(this.streams.get(stream)!.StreamARN)
+        this.removeStream(stream)
+      }
+      for (const consumer of consumers) this.removeConsumer(consumer.ConsumerARN)
+      for (const channel of channels) this.removeChannel(channel.ChannelARN)
+      if (name === undefined) {
+        for (const arn of [...this.policies.keys()]) this.removePolicy(arn)
+        this.settings = defaultSettings()
+        this.erase('settings', 'account')
+      }
+    })
+    return names
   }
 
   insertRecords(stream: string, records: NewRecord[]) {

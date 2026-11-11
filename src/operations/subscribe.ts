@@ -29,7 +29,11 @@ const states = new WeakMap<Store, SubscriptionState>()
 function stateOf(store: Store) {
   let state = states.get(store)
   if (!state) {
-    state = { lastSubscribed: new Map(), active: new Map() }
+    const lastSubscribed = new Map<string, number>()
+    store.events.on('consumer-removed', (arn: string) => {
+      for (const key of lastSubscribed.keys()) if (key.startsWith(`${arn}|`)) lastSubscribed.delete(key)
+    })
+    state = { lastSubscribed, active: new Map() }
     states.set(store, state)
   }
   return state
