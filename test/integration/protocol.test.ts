@@ -4,6 +4,7 @@ import { request as httpsRequest } from 'node:https'
 import { connect } from 'node:http2'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import type { TLSSocket } from 'node:tls'
 import { after, before, describe, it } from 'node:test'
 import { EventStreamCodec } from '@smithy/eventstream-codec'
 import { decode, encode, Tag } from 'cbor2'
@@ -153,63 +154,98 @@ describe('request limits', () => {
   })
 })
 
+function http1OverTls(endpoint: string, method = 'POST') {
+  return new Promise<{ status: number, version: string, subject: string }>((resolve, reject) => {
+    const req = httpsRequest(endpoint, {
+      method,
+      agent: false,
+      rejectUnauthorized: false,
+      headers: { 'content-type': 'application/x-amz-json-1.1', 'x-amz-target': 'Kinesis_20131202.ListStreams', ...AUTH },
+    }, res => {
+      const subject = (res.socket as TLSSocket).getPeerCertificate().subject.CN as string
+      res.resume()
+      res.on('end', () => resolve({ status: res.statusCode ?? 0, version: res.httpVersion, subject }))
+    })
+    req.on('error', reject)
+    req.end(method === 'POST' ? '{}' : undefined)
+  })
+}
+
+async function http2OverTls(endpoint: string) {
+  const session = connect(endpoint, { rejectUnauthorized: false })
+  try {
+    const status = await new Promise<number>((resolve, reject) => {
+      const stream = session.request({ ':method': 'POST', ':path': '/', 'content-type': 'application/x-amz-json-1.1', 'x-amz-target': 'Kinesis_20131202.ListStreams', ...AUTH })
+      let status = 0
+      stream.on('response', headers => { status = Number(headers[':status']) })
+      stream.on('end', () => resolve(status))
+      stream.on('error', reject)
+      stream.resume()
+      stream.end('{}')
+    })
+    return { status, alpn: session.alpnProtocol }
+  } finally {
+    await new Promise(resolve => session.close(() => resolve(undefined)))
+  }
+}
+
+function writeCertificate(name: string) {
+  const directory = mkdtempSync(join(tmpdir(), 'kinesis-tls-'))
+  const { key, cert } = selfSignedCertificate(name)
+  writeFileSync(join(directory, 'key.pem'), key)
+  writeFileSync(join(directory, 'cert.pem'), cert)
+  return { keyFile: join(directory, 'key.pem'), certFile: join(directory, 'cert.pem') }
+}
+
 describe('TLS', () => {
-  it('serves HTTP/2 and HTTP/1.1 over TLS with a generated certificate', async () => {
+  it('serves TLS and plain HTTP on the same port', async () => {
+    const secureEndpoint = target.endpoint.replace(/^http:/, 'https:')
+    assert.deepEqual(await http2OverTls(secureEndpoint), { status: 200, alpn: 'h2' })
+    const http1 = await http1OverTls(secureEndpoint)
+    assert.equal(http1.status, 200)
+    assert.equal(http1.version, '1.1')
+    assert.equal(http1.subject, 'localhost')
+    assert.equal((await json('ListStreams', {})).status, 200)
+  })
+
+  it('serves HTTP/2 and HTTP/1.1 over TLS only with --ssl', async () => {
     const secure = await startTarget({ ssl: true })
     try {
-      const response = await new Promise<number>((resolve, reject) => {
-        const req = httpsRequest(secure.endpoint, {
-          method: 'POST',
-          agent: false,
-          rejectUnauthorized: false,
-          headers: { 'content-type': 'application/x-amz-json-1.1', 'x-amz-target': 'Kinesis_20131202.ListStreams', ...AUTH },
-        }, res => {
-          res.resume()
-          res.on('end', () => resolve(res.statusCode ?? 0))
-        })
-        req.on('error', reject)
-        req.end('{}')
-      })
-      assert.equal(response, 200)
-      const session = connect(secure.endpoint, { rejectUnauthorized: false })
-      try {
-        const status = await new Promise<number>((resolve, reject) => {
-          const stream = session.request({ ':method': 'POST', ':path': '/', 'content-type': 'application/x-amz-json-1.1', 'x-amz-target': 'Kinesis_20131202.ListStreams', ...AUTH })
-          let status = 0
-          stream.on('response', headers => { status = Number(headers[':status']) })
-          stream.on('end', () => resolve(status))
-          stream.on('error', reject)
-          stream.resume()
-          stream.end('{}')
-        })
-        assert.equal(status, 200)
-      } finally {
-        await new Promise(resolve => session.close(() => resolve(undefined)))
-      }
+      assert.match(secure.endpoint, /^https:/)
+      assert.deepEqual(await http2OverTls(secure.endpoint), { status: 200, alpn: 'h2' })
+      assert.equal((await http1OverTls(secure.endpoint)).status, 200)
+      await assert.rejects(call(secure.endpoint.replace(/^https:/, 'http:'), 'ListStreams', {}))
     } finally {
       await secure.close()
     }
   })
 
-  it('uses the key and certificate files given on the command line', async () => {
-    const directory = mkdtempSync(join(tmpdir(), 'kinesis-tls-'))
-    const { key, cert } = selfSignedCertificate('kinesis.test')
-    writeFileSync(join(directory, 'key.pem'), key)
-    writeFileSync(join(directory, 'cert.pem'), cert)
-    const secure = await startTarget({ ssl: true, keyFile: join(directory, 'key.pem'), certFile: join(directory, 'cert.pem') })
-    try {
-      const subject = await new Promise<string>((resolve, reject) => {
-        const req = httpsRequest(secure.endpoint, { method: 'GET', agent: false, rejectUnauthorized: false }, res => {
-          const certificate = (res.socket as import('node:tls').TLSSocket).getPeerCertificate()
-          res.resume()
-          res.on('end', () => resolve(certificate.subject.CN as string))
-        })
-        req.on('error', reject)
-        req.end()
-      })
-      assert.equal(subject, 'kinesis.test')
-    } finally {
-      await secure.close()
-    }
+  for (const ssl of [false, true]) {
+    it(`uses the key and certificate files given on the command line${ssl ? ' with --ssl' : ''}`, async () => {
+      const files = writeCertificate('kinesis.test')
+      const secure = await startTarget({ ssl, ...files })
+      try {
+        const { subject } = await http1OverTls(secure.endpoint.replace(/^http:/, 'https:'), 'GET')
+        assert.equal(subject, 'kinesis.test')
+      } finally {
+        await secure.close()
+      }
+    })
+  }
+
+  it('closes a TLS connection that is still open at shutdown', async () => {
+    const own = await startTarget()
+    const session = connect(own.endpoint.replace(/^http:/, 'https:'), { rejectUnauthorized: false })
+    const closed = new Promise(resolve => session.once('close', resolve))
+    session.on('error', () => {})
+    await new Promise<void>((resolve, reject) => {
+      const stream = session.request({ ':method': 'GET', ':path': '/healthz' })
+      stream.on('end', () => resolve())
+      stream.on('error', reject)
+      stream.resume()
+      stream.end()
+    })
+    await own.close()
+    await closed
   })
 })
