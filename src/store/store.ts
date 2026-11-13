@@ -3,6 +3,7 @@ import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { DatabaseSync, type StatementSync } from 'node:sqlite'
 import { parseSequence } from '../kinesis/sequence.ts'
+import type { Logger } from '../logger.ts'
 import type { AccountSettings, ChannelDoc, ConsumerDoc, NewRecord, Pending, StoredRecord, StreamDoc } from './types.ts'
 
 export const DATABASE_FILE = 'aws-kinesis-local.sqlite'
@@ -35,6 +36,7 @@ interface RecordRow {
 
 export class Store {
   readonly options: StoreOptions
+  private readonly logger: Logger
   readonly streams = new Map<string, StreamDoc>()
   readonly consumers = new Map<string, ConsumerDoc>()
   readonly channels = new Map<string, ChannelDoc>()
@@ -48,8 +50,9 @@ export class Store {
   private readonly statements: Record<string, StatementSync>
   private closed = false
 
-  constructor(options: StoreOptions) {
+  constructor(options: StoreOptions, logger: Logger) {
     this.options = options
+    this.logger = logger
     this.events.setMaxListeners(0)
     let file = ':memory:'
     if (options.path) {
@@ -251,7 +254,7 @@ export class Store {
     try {
       done = batches.next().done
     } catch (error) {
-      console.error(error instanceof Error ? error.stack : error)
+      this.logger.log('error', { message: 'Record expiry failed', error: error instanceof Error ? error.stack : error })
     }
     if (done) this.scheduleExpiry(this.options.expiryIntervalMs, this.expiryBatches())
     else this.scheduleExpiry(0, batches)

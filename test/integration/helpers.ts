@@ -22,6 +22,7 @@ export async function startTarget(options: Partial<StartOptions> = {}): Promise<
     shardLimit: 200,
     accountId: '000000000000',
     region: 'eu-west-1',
+    logLevel: 'error',
     ...options,
   })
   return {

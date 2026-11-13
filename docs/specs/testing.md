@@ -4,8 +4,8 @@ The CI workflow runs the suites below on each pull request that changes a file u
 
 | Suite | Location | Target | What it covers |
 | --- | --- | --- | --- |
-| Unit | `test/unit/` | Source modules | Sequence numbers, shard iterators, CBOR against the `cbor2` package, event stream messages against the AWS SDK codec, validation messages, flags and the generated certificate |
-| Integration | `test/integration/` | A server in the test process | All 45 operations through the AWS SDK for JavaScript v3 over HTTP/2 and HTTP/1.1, CBOR requests in the style of the AWS SDK for Java, `SubscribeToShard` in JSON and CBOR, TLS, the request size limit, restarts, resets and pending transitions |
+| Unit | `test/unit/` | Source modules | Sequence numbers, shard iterators, CBOR against the `cbor2` package, event stream messages against the AWS SDK codec, validation messages, flags, log lines and the generated certificate |
+| Integration | `test/integration/` | A server in the test process, or the command-line server in a child process for logging tests | All 45 operations through the AWS SDK for JavaScript v3 over HTTP/2 and HTTP/1.1, CBOR requests as the AWS SDK for Java writes them, `SubscribeToShard` in JSON and CBOR, TLS, request size limit, restarts, resets, pending transitions and request logs at each level |
 | npm package | CI workflow | The packed package | Installs the tarball that `npm pack` builds, runs `aws-kinesis-local --help`, and answers a request through `start()` |
 | SDK against the image | `test/integration/sdk.test.ts` | The image | The integration tests for every operation, through `KINESIS_ENDPOINT` |
 | AWS CLI | `test/clients/aws-cli.sh` | The image | Streams, records, ARNs, tags, consumers, resharding, waiters and limits through the AWS CLI |
