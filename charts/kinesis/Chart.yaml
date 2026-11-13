@@ -2,8 +2,8 @@ apiVersion: v2
 name: kinesis
 description: A Kinesis Local Helm chart for Kubernetes
 type: application
-version: 0.14.0
-appVersion: "1.4.0"
+version: 0.15.0
+appVersion: "1.5.0"
 kubeVersion: ">= 1.32.0"
 home: https://github.com/saidsef/aws-kinesis-local
 icon: https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/main/dist/MediaServices/KinesisVideoStreams2.png
@@ -28,5 +28,5 @@ annotations:
     - name: CONTRIBUTING
       url: https://github.com/saidsef/aws-kinesis-local/blob/main/CONTRIBUTING.md
   artifacthub.io/changes: |
-    - kind: changed
-      description: The chart deploys aws-kinesis-local 1.4.0, which clears streams through POST /_control/reset
+    - kind: added
+      description: The chart deploys aws-kinesis-local 1.5.0, which logs each request, and sets the log level through env.LOGLEVEL

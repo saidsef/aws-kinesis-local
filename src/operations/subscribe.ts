@@ -15,6 +15,7 @@ const EVENT_RECORD_LIMIT = 1000
 
 export interface EventSink {
   write(chunk: Buffer): void
+  fail(error: KinesisError): void
   end(): void
   onClose(listener: () => void): void
 }
@@ -160,6 +161,7 @@ export class Subscription {
 
   fail(error: KinesisError) {
     if (this.finished || !this.sink) return
+    this.sink.fail(error)
     this.sink.write(encodeEvent(
       { ':exception-type': error.type, ':content-type': this.payloadType, ':message-type': 'exception' },
       encodeBody({ message: error.message }, this.protocol),

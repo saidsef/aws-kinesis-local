@@ -38,7 +38,7 @@ kinesis.destroy();
 await server.close();
 ```
 
-`start()` takes the same settings as the command-line flags, such as `path`, `shardLimit`, `createStreamMs` and `ssl`, and the package includes TypeScript declarations for them.
+`start()` takes the same settings as the command-line flags, such as `path`, `shardLimit`, `createStreamMs`, `ssl` and `logLevel`, and the package includes TypeScript declarations for them. The server writes its [logs](configuration.md#logs) to the standard output of the test process, and `logLevel: 'error'` limits them to unexpected failures.
 
 ## Clearing streams
 

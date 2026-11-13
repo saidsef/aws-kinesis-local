@@ -12,6 +12,7 @@ The Docker image runs aws-kinesis-local on the Node.js Alpine image as the `nobo
 | `CREATESTREAMMS` | `--createStreamMs` | `50` | Milliseconds that a new stream, consumer or channel stays in `CREATING`. |
 | `DELETESTREAMMS` | `--deleteStreamMs` | `50` | Milliseconds that a deleted stream, consumer or channel stays in `DELETING`. |
 | `UPDATESTREAMMS` | `--updateStreamMs` | `50` | Milliseconds that a stream or channel stays in `UPDATING`. |
+| `LOGLEVEL` | `--logLevel` | `warn` | Least severe level that aws-kinesis-local logs, as [Logs](#logs) describes. |
 | `AWS_DEFAULT_REGION` | None | `eu-west-1` | Region in the ARNs that aws-kinesis-local returns. `AWS_REGION` overrides it. |
 | `AWS_ACCOUNT_ID` | None | `000000000000` | Account ID in the ARNs and error messages that aws-kinesis-local returns. |
 
@@ -64,3 +65,34 @@ aws-kinesis-local answers two health endpoints on `PORT`, and every other `GET` 
 | `/readyz` | The server can read its database and is not shutting down | The server cannot read its database, or shutdown has started |
 
 The image health check requests `/healthz` every 60 seconds. It tries HTTP first and then HTTPS, so it also works with `--ssl`. The Helm chart and the Kustomize manifests use `/healthz` for the startup and liveness probes and `/readyz` for the readiness probe.
+
+## Logs
+
+aws-kinesis-local writes one JSON line to standard output for each request, and `docker logs` and `kubectl logs` show them. The start-up line, `Listening at`, is plain text. `LOGLEVEL` sets the least severe level that it writes, and each level also writes the levels above it in the table.
+
+| Level | What it adds |
+| --- | --- |
+| `error` | Requests that fail with a 5xx status, and failures of the background record expiry, with the stack trace |
+| `warn` | Rejected requests, and `SubscribeToShard` responses that end with an exception |
+| `info` | Every other API request, and every `POST /_control/reset` call |
+| `debug` | Health checks and CORS preflight requests |
+| `trace` | The request body and the response body on every line |
+
+A rejected `DescribeStream` request produces the line below:
+
+```json
+{"time":"2026-11-13T12:56:09.883Z","level":"warn","requestId":"9be13d3b-a82f-49d2-9702-4e288b46befa","method":"POST","path":"/","operation":"DescribeStream","stream":"nope","status":400,"errorType":"ResourceNotFoundException","errorMessage":"Stream nope under account 000000000000 not found.","durationMs":0.602}
+```
+
+| Field | Content |
+| --- | --- |
+| `requestId` | The `x-amzn-RequestId` response header, which the AWS SDKs and the AWS CLI report with each error |
+| `method`, `path` | HTTP method and path, without the query string |
+| `operation` | Operation in the `X-Amz-Target` header |
+| `stream` | Stream that the request names in `StreamName`, `StreamARN`, `ConsumerARN` or `ResourceARN` |
+| `status` | HTTP status code of the response |
+| `errorType`, `errorMessage` | Error that the client received |
+| `durationMs` | Milliseconds from the request headers to the end of the response. A `SubscribeToShard` line appears when its event stream ends. |
+| `aborted` | `true` when the connection closed before the response ended |
+| `error` | Stack trace of an unexpected failure |
+| `request`, `response` | Decoded bodies, at the `trace` level only, with blobs as base64 text |

@@ -30,6 +30,7 @@ ENV AWS_DEFAULT_REGION=eu-west-1 \
     CREATESTREAMMS=50 \
     DELETESTREAMMS=50 \
     KPATH=/data \
+    LOGLEVEL=warn \
     NODE_ENV=production \
     PORT=4567 \
     SHARDLIMIT=50 \

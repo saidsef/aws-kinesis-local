@@ -4,6 +4,7 @@ import { createServer as createHttp2Server, createSecureServer, type ServerHttp2
 import { createServer as createNetServer, type AddressInfo, type Server, type Socket } from 'node:net'
 import { selfSignedCertificate } from './certificate.ts'
 import { createHandler } from './handler.ts'
+import { Logger, type LogLevel } from './logger.ts'
 import { registerTransitions } from './operations/index.ts'
 import { Store } from './store/store.ts'
 
@@ -22,6 +23,7 @@ export interface StartOptions {
   accountId: string
   region: string
   shutdownMs: number
+  logLevel: LogLevel
 }
 
 export interface KinesisLocal {
@@ -47,6 +49,7 @@ export function defaultOptions(): StartOptions {
     accountId: (process.env.AWS_ACCOUNT_ID || '0000-0000-0000').replace(/[^\d]/g, ''),
     region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1',
     shutdownMs: 5000,
+    logLevel: 'warn',
   }
 }
 
@@ -86,14 +89,15 @@ function hostname(address: AddressInfo) {
 
 export async function start(overrides: Partial<StartOptions> = {}): Promise<KinesisLocal> {
   const options = { ...defaultOptions(), ...overrides }
+  const logger = new Logger(options.logLevel)
   const credentials = options.keyFile && options.certFile
     ? { key: readFileSync(options.keyFile), cert: readFileSync(options.certFile) }
     : selfSignedCertificate()
-  const store = new Store(options)
+  const store = new Store(options, logger)
   registerTransitions(store)
   store.startExpiry()
   store.resume()
-  const handle = createHandler(store)
+  const handle = createHandler(store, logger)
   const sockets = new Set<Socket>()
   const sessions = new Set<ServerHttp2Session>()
   let inFlight = 0

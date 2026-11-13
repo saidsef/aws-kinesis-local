@@ -3,8 +3,9 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Http2ServerRequest, Http2ServerResponse } from 'node:http2'
 import { KinesisError } from './errors.ts'
 import { operations, serviceTarget } from './generated/model.ts'
+import type { Logger, LogLevel } from './logger.ts'
 import { handlers } from './operations/index.ts'
-import { DEFAULT_MAX_RECORD_SIZE_KIB, streamNameFromArn, type Context } from './operations/common.ts'
+import { DEFAULT_MAX_RECORD_SIZE_KIB, parseConsumerArn, streamNameFromArn, type Context } from './operations/common.ts'
 import { Subscription } from './operations/subscribe.ts'
 import { decodeCbor } from './protocol/cbor.ts'
 import { AMZ_CBOR, AMZ_JSON, encodeBody, serializeShape, type Protocol } from './protocol/serialize.ts'
@@ -24,6 +25,15 @@ interface Exchange {
   req: Request
   res: ServerResponse
   contentType: string
+  requestId: string
+  level: LogLevel
+  operation?: string
+  stream?: string
+  errorType?: string
+  errorMessage?: string
+  error?: unknown
+  input?: unknown
+  output?: unknown
 }
 
 function header(req: Request, name: string) {
@@ -35,6 +45,7 @@ function sendRaw(exchange: Exchange, body: Buffer | string | null, statusCode = 
   const { req, res } = exchange
   req.removeAllListeners('data')
   res.statusCode = statusCode
+  if (typeof body === 'string') exchange.output = body
   if (body === null) return res.end()
   res.setHeader('Content-Length', Buffer.byteLength(body))
   res.end(body)
@@ -44,19 +55,30 @@ function protocolOf(exchange: Exchange): Protocol {
   return exchange.contentType === AMZ_CBOR ? 'cbor' : 'json'
 }
 
+function noteError(exchange: Exchange, data: unknown) {
+  const body = ((data as { Output?: unknown } | undefined)?.Output ?? data ?? {}) as Record<string, unknown>
+  exchange.errorType = body.__type as string | undefined
+  exchange.errorMessage = (body.message ?? body.Message) as string | undefined
+}
+
 function sendResponse(exchange: Exchange, data: unknown, statusCode = 200) {
+  exchange.output = data
+  if (statusCode >= 400) noteError(exchange, data)
   exchange.res.setHeader('Content-Type', exchange.contentType)
   sendRaw(exchange, encodeBody(data, protocolOf(exchange)), statusCode)
 }
 
 function sendError(exchange: Exchange, contentValid: boolean, type: string, message: string | number) {
   if (contentValid) return sendResponse(exchange, { __type: type, message }, 400)
+  exchange.errorType = type
   if (typeof message === 'number') return sendRaw(exchange, `<${type}/>\n`, message)
+  exchange.errorMessage = message
   return sendRaw(exchange, `<${type}>\n  <Message>${message}</Message>\n</${type}>\n`, 403)
 }
 
 function sendHealth(store: Store, exchange: Exchange, path: string) {
   const healthy = store.healthy() && (path === '/healthz' || !store.draining)
+  exchange.level = 'debug'
   exchange.res.setHeader('Content-Type', 'text/plain')
   sendRaw(exchange, healthy ? 'ok\n' : 'unavailable\n', healthy ? 200 : 503)
 }
@@ -70,6 +92,8 @@ function sendReset(store: Store, exchange: Exchange, body: Buffer | undefined) {
   }
   const stream = (input as { stream?: unknown } | null | undefined)?.stream
   exchange.contentType = 'application/json'
+  exchange.input = input
+  if (typeof stream === 'string') exchange.stream = stream
   if (typeof input !== 'object' || input === null || Array.isArray(input) || (stream !== undefined && typeof stream !== 'string')) {
     return sendResponse(exchange, { message: 'The body must be empty or a JSON object whose stream member is a string.' }, 400)
   }
@@ -84,6 +108,17 @@ function validationContext(store: Store, data: Record<string, unknown>): Validat
     partitionKeyRequired: stream?.RecordDistributionStrategy !== 'AUTO',
     maxRecordBytes: (stream?.MaxRecordSizeInKiB ?? DEFAULT_MAX_RECORD_SIZE_KIB) * 1024,
   }
+}
+
+function streamOf(data: Record<string, unknown>) {
+  if (typeof data.StreamName === 'string') return data.StreamName
+  for (const member of ['StreamARN', 'ConsumerARN', 'ResourceARN']) {
+    const arn = data[member]
+    if (typeof arn !== 'string') continue
+    const name = parseConsumerArn(arn)?.streamName ?? streamNameFromArn(arn)
+    if (name !== undefined) return name
+  }
+  return undefined
 }
 
 function checkAuthentication(exchange: Exchange) {
@@ -136,6 +171,10 @@ function streamEvents(exchange: Exchange, subscription: Subscription) {
     write: chunk => {
       if (!ended) res.write(chunk)
     },
+    fail: error => {
+      exchange.errorType = error.type
+      exchange.errorMessage = error.message
+    },
     end: () => {
       if (!ended) {
         ended = true
@@ -161,7 +200,6 @@ function dispatch(store: Store, exchange: Exchange, operation: string, input: Re
 
 function respond(store: Store, exchange: Exchange, body: Buffer | undefined) {
   const { req, res } = exchange
-  res.setHeader('x-amzn-RequestId', randomUUID())
   if (req.method !== 'OPTIONS' || !req.headers.origin) res.setHeader('x-amz-id-2', randomBytes(72).toString('base64'))
   if (req.headers.origin) {
     res.setHeader('Access-Control-Allow-Origin', '*')
@@ -171,6 +209,7 @@ function respond(store: Store, exchange: Exchange, body: Buffer | undefined) {
       if (requestHeaders) res.setHeader('Access-Control-Allow-Headers', requestHeaders)
       if (requestMethod) res.setHeader('Access-Control-Allow-Methods', requestMethod)
       res.setHeader('Access-Control-Max-Age', 172800)
+      exchange.level = 'debug'
       return sendRaw(exchange, '')
     }
     res.setHeader('Access-Control-Expose-Headers', EXPOSED_HEADERS)
@@ -184,6 +223,7 @@ function respond(store: Store, exchange: Exchange, body: Buffer | undefined) {
   const contentType = header(req, 'content-type').split(';')[0]!.trim()
   const contentValid = [AMZ_JSON, AMZ_CBOR, 'application/json'].includes(contentType)
   const [service, operation] = header(req, 'x-amz-target').split('.')
+  if (operation) exchange.operation = operation
   const serviceValid = !!service && service === serviceTarget
   const operationValid = !!operation && Object.hasOwn(handlers, operation)
   if (!body) {
@@ -209,6 +249,8 @@ function respond(store: Store, exchange: Exchange, body: Buffer | undefined) {
     }
     return sendResponse(exchange, { __type: 'SerializationException' }, 400)
   }
+  exchange.input = data
+  exchange.stream = streamOf(data as Record<string, unknown>)
   if (contentType === 'application/json') {
     return sendResponse(exchange, { Output: { __type: 'com.amazon.coral.service#UnknownOperationException' }, Version: '1.0' }, 404)
   }
@@ -219,17 +261,44 @@ function respond(store: Store, exchange: Exchange, body: Buffer | undefined) {
     dispatch(store, exchange, operation!, data as Record<string, unknown>)
   } catch (error) {
     if (error instanceof KinesisError) return sendResponse(exchange, error.body, error.statusCode)
-    console.error(error instanceof Error ? error.stack : error)
+    exchange.error = error
     return sendResponse(exchange, { __type: 'InternalFailure' }, 500)
   }
 }
 
-export function createHandler(store: Store) {
+function logRequest(logger: Logger, exchange: Exchange, started: number, body: Buffer | undefined) {
+  const { req, res } = exchange
+  const status = res.statusCode
+  const level = status >= 500 ? 'error' : status >= 400 || exchange.errorType ? 'warn' : exchange.level
+  if (!logger.enabled(level)) return
+  const trace = logger.enabled('trace')
+  logger.log(level, {
+    requestId: exchange.requestId,
+    method: req.method,
+    path: req.url?.split('?')[0],
+    operation: exchange.operation,
+    stream: exchange.stream,
+    status,
+    errorType: exchange.errorType,
+    errorMessage: exchange.errorMessage,
+    durationMs: Math.round((performance.now() - started) * 1000) / 1000,
+    aborted: res.writableEnded ? undefined : true,
+    error: exchange.error instanceof Error ? exchange.error.stack : exchange.error,
+    request: trace ? exchange.input ?? body?.toString('utf8') : undefined,
+    response: trace ? exchange.output : undefined,
+  })
+}
+
+export function createHandler(store: Store, logger: Logger) {
   return (req: Request, res: Response) => {
-    const exchange: Exchange = { req, res: res as ServerResponse, contentType: AMZ_JSON }
+    const started = performance.now()
+    const exchange: Exchange = { req, res: res as ServerResponse, contentType: AMZ_JSON, requestId: randomUUID(), level: 'info' }
     const chunks: Buffer[] = []
     let size = 0
     let rejected = false
+    let body: Buffer | undefined
+    exchange.res.setHeader('x-amzn-RequestId', exchange.requestId)
+    exchange.res.once('close', () => logRequest(logger, exchange, started, body))
     req.on('error', () => res.destroy())
     req.on('data', (chunk: Buffer) => {
       if (rejected) return
@@ -244,7 +313,8 @@ export function createHandler(store: Store) {
     })
     req.on('end', () => {
       if (rejected) return
-      respond(store, exchange, size ? Buffer.concat(chunks, size) : undefined)
+      body = size ? Buffer.concat(chunks, size) : undefined
+      respond(store, exchange, body)
     })
   }
 }
