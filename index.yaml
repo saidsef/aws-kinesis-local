@@ -4,6 +4,42 @@ entries:
   - annotations:
       artifacthub.io/changes: |
         - kind: added
+          description: The chart deploys aws-kinesis-local 1.6.0, which adds a signed S3 client for channel delivery
+      artifacthub.io/license: MIT
+      artifacthub.io/links: |
+        - name: README
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/README.md
+        - name: LICENSE
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/LICENSE.md
+        - name: CONTRIBUTING
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/CONTRIBUTING.md
+    apiVersion: v2
+    appVersion: 1.6.0
+    created: "2026-11-17T00:38:18.867669879Z"
+    description: A Kinesis Local Helm chart for Kubernetes
+    digest: d2ad877806929d73c0a0ad2814c60f02d9cce43772171449f9abc76d6644b9a0
+    home: https://github.com/saidsef/aws-kinesis-local
+    icon: https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/main/dist/MediaServices/KinesisVideoStreams2.png
+    keywords:
+    - kinesis
+    - aws
+    - local
+    - kubernetes
+    kubeVersion: '>= 1.32.0'
+    maintainers:
+    - email: saidsef@gmail.com
+      name: Said Sef
+      url: https://saidsef.co.uk/
+    name: kinesis
+    sources:
+    - https://github.com/saidsef/aws-kinesis-local.git
+    type: application
+    urls:
+    - https://github.com/saidsef/aws-kinesis-local/releases/download/kinesis-0.16.0/kinesis-0.16.0.tgz
+    version: 0.16.0
+  - annotations:
+      artifacthub.io/changes: |
+        - kind: added
           description: The chart deploys aws-kinesis-local 1.5.0, which logs each request, and sets the log level through env.LOGLEVEL
       artifacthub.io/license: MIT
       artifacthub.io/links: |
@@ -493,4 +529,4 @@ entries:
     urls:
     - https://github.com/saidsef/aws-kinesis-local/releases/download/kinesis-0.7.3/kinesis-0.7.3.tgz
     version: 0.7.3
-generated: "2026-11-17T00:02:03.020916625Z"
+generated: "2026-11-17T00:38:18.867791747Z"
