@@ -21,6 +21,7 @@ aws-kinesis-local is a single Node.js process with no runtime npm dependencies. 
 | `src/kinesis/` | Sequence numbers, shard IDs and shard iterators |
 | `src/operations/` | One module for each feature in [Supported operations](../supported-operations.md), and the registry in `index.ts` |
 | `src/store/` | SQLite store and document types |
+| `src/delivery/` | Signed S3 client for channel delivery |
 | `scripts/` | Model download and code generation |
 | `model/` | Kinesis Smithy model that the generator reads |
 
@@ -107,3 +108,9 @@ A reset skips the `DELETING` state. It cancels the pending transitions of the do
 `SplitShard` and `MergeShards` close the parent shards and create child shards that start one second later. `UpdateShardCount` splits the open shards at the uniform hash key boundaries of the target count, and then merges the pieces inside each target range. Kinesis also creates short-lived shards when it scales, and this approach gives every shard at most two parents, so the Kinesis Client Library can follow the lineage.
 
 `ListShards` derives the start time of a shard from its starting sequence number and the end time from its ending sequence number. Its `ShardFilter` types use those times and the retention period, and clamp a time before the oldest shard to the creation of the stream.
+
+## S3 client
+
+`src/delivery/s3.ts` uploads objects with `node:http`, `node:https` and `node:crypto`. It signs each `PutObject` request with Signature Version 4, as [Signature calculations for the Authorization header](https://docs.aws.amazon.com/AmazonS3/latest/developerguide/sig-v4-header-based-auth.html) describes, and signs every header that it sends. It puts the bucket name in the path, as in `/<bucket>/<key>`, and not in the host name. A bucket on a local server then does not need a DNS name of its own. A path in the endpoint, such as `/storage`, goes in front of the bucket name.
+
+A failed upload rejects with `S3Error`, which carries the status code and the `Code` element of the S3 error response. A response without an S3 error body, such as a 502 from a proxy, leaves the code empty.
