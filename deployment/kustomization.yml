@@ -4,6 +4,14 @@ kind: Kustomization
 
 resources:
   - ./base
+  - ./test
+
+patches:
+  - path: test/kinesis-delivery.yml
+
+images:
+  - name: docker.io/saidsef/aws-kinesis-local
+    newTag: feat-channel-delivery
 
 labels:
   - includeSelectors: false

@@ -1,0 +1,56 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: delivery-test
+  labels:
+    app.kubernetes.io/name: delivery-test
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: delivery-test
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      containers:
+        - name: test
+          image: docker.io/saidsef/aws-kinesis-local
+          command: ["node", "/test/delivery.mjs"]
+          env:
+            - name: KINESIS_ENDPOINT
+              value: http://kinesis:4567
+            - name: S3_ENDPOINT
+              value: http://s3:8333
+          resources:
+            limits:
+              memory: 256Mi
+              cpu: 200m
+            requests:
+              memory: 64Mi
+              cpu: 50m
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsGroup: 65534
+            runAsUser: 65534
+            seccompProfile:
+              type: RuntimeDefault
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: script
+              mountPath: /test
+              readOnly: true
+      volumes:
+        - name: script
+          configMap:
+            name: delivery-test
