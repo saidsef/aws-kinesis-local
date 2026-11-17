@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { X509Certificate, createPrivateKey } from 'node:crypto'
 import { describe, it } from 'node:test'
+import { createSecureContext } from 'node:tls'
 import { numberOption, parseArguments, stringOption } from '../../src/arguments.ts'
 import { selfSignedCertificate } from '../../src/certificate.ts'
 
@@ -33,5 +34,14 @@ describe('self-signed certificate', () => {
     assert.equal(certificate.checkHost('localhost'), 'localhost')
     assert.equal(certificate.checkIP('127.0.0.1'), '127.0.0.1')
     assert.ok(new Date(certificate.validTo) > new Date(Date.now() + 365 * 24 * 60 * 60 * 1000))
+  })
+
+  // About 1 in 256 serial numbers used to start with a zero byte, which OpenSSL rejects as illegal padding.
+  it('gives every certificate a serial number that OpenSSL accepts', () => {
+    for (let i = 0; i < 2000; i++) {
+      const { key, cert } = selfSignedCertificate()
+      assert.doesNotThrow(() => createSecureContext({ key, cert }), `certificate ${i}`)
+      assert.match(new X509Certificate(cert).serialNumber, /^[4-7][0-9A-F]{31}$/)
+    }
   })
 })

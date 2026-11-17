@@ -54,7 +54,8 @@ export function selfSignedCertificate(hostname = 'localhost') {
   const notBefore = new Date(Date.now() - 24 * 60 * 60 * 1000)
   const notAfter = new Date(Date.now() + 10 * 365 * 24 * 60 * 60 * 1000)
   const serial = randomBytes(16)
-  serial[0] = serial[0]! & 0x7f
+  // DER rejects a leading zero byte, and a first byte at or above 0x80 makes the serial negative.
+  serial[0] = (serial[0]! & 0x3f) | 0x40
   const name = commonName(hostname)
   const loopback6 = Buffer.alloc(16)
   loopback6[15] = 1

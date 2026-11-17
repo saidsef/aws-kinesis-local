@@ -2,8 +2,8 @@ apiVersion: v2
 name: kinesis
 description: A Kinesis Local Helm chart for Kubernetes
 type: application
-version: 0.18.0
-appVersion: "1.8.0"
+version: 0.18.1
+appVersion: "1.8.1"
 kubeVersion: ">= 1.32.0"
 home: https://github.com/saidsef/aws-kinesis-local
 icon: https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/main/dist/MediaServices/KinesisVideoStreams2.png
@@ -28,7 +28,5 @@ annotations:
     - name: CONTRIBUTING
       url: https://github.com/saidsef/aws-kinesis-local/blob/main/CONTRIBUTING.md
   artifacthub.io/changes: |
-    - kind: added
-      description: The chart deploys aws-kinesis-local 1.8.0, which delivers the records of each channel to an S3 endpoint
-    - kind: added
-      description: The S3ENDPOINT, S3REGION and DELIVERYINTERVALMS values and s3.existingSecret configure channel delivery
+    - kind: fixed
+      description: The chart deploys aws-kinesis-local 1.8.1, which always generates a TLS certificate that OpenSSL accepts
