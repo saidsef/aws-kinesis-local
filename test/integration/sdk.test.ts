@@ -224,6 +224,7 @@ describe('MillisBehindLatest', () => {
       if (records) events.push({ records, millisBehindLatest: event.SubscribeToShardEvent!.MillisBehindLatest! })
       if (events.reduce((total, seen) => total + seen.records, 0) >= 2000) break
     }
+    await client.send(new DeregisterStreamConsumerCommand({ ConsumerARN: Consumer!.ConsumerARN }))
     assert.deepEqual(events.map(event => event.records), [1000, 1000])
     assert.ok(events[0]!.millisBehindLatest > 0, `MillisBehindLatest was ${events[0]!.millisBehindLatest}`)
     assert.equal(events[1]!.millisBehindLatest, 0)
