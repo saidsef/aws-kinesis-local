@@ -495,8 +495,9 @@ describe('channels', () => {
     assert.deepEqual(listed.ChannelSummaries?.map(channel => [channel.ChannelName, channel.ChannelDestinationType]), [[channelName, 'S3']])
     const summary = await client.send(new DescribeStreamSummaryCommand({ StreamARN }))
     assert.equal(summary.StreamDescriptionSummary?.ChannelCount, 1)
-    const updated = await client.send(new UpdateChannelCommand({ ChannelARN: channelARN, S3DestinationConfiguration: { DataFreshnessInSeconds: 60 } }))
-    assert.equal(updated.ChannelDescription?.S3DestinationConfiguration?.DataFreshnessInSeconds, 60)
+    await rejects(client.send(new UpdateChannelCommand({ ChannelARN: channelARN, S3DestinationConfiguration: { DataFreshnessInSeconds: 60 } })), 'InvalidArgumentException', /DataFreshnessInSeconds 60/)
+    const updated = await client.send(new UpdateChannelCommand({ ChannelARN: channelARN, S3DestinationConfiguration: { DataFreshnessInSeconds: 600 } }))
+    assert.equal(updated.ChannelDescription?.S3DestinationConfiguration?.DataFreshnessInSeconds, 600)
     await rejects(client.send(new DeleteStreamCommand({ StreamARN })), 'ResourceInUseException', /channels/)
     await waitFor(
       () => client.send(new DescribeChannelCommand({ ChannelARN: channelARN })),
@@ -507,6 +508,66 @@ describe('channels', () => {
       () => client.send(new DescribeChannelCommand({ ChannelARN: channelARN })).then(() => 'present', error => error.name),
       outcome => outcome === 'ResourceNotFoundException',
     )
+    await client.send(new DeleteStreamCommand({ StreamARN }))
+  })
+
+  it('checks key templates, record formats and data freshness intervals against the AWS rules', async () => {
+    const { StreamARN } = await onDemandStream(unique('channel-rules'))
+    const request = (template: string | undefined, compression: 'NONE' | 'GZIP' | 'ZSTD' = 'GZIP', extra: Record<string, unknown> = {}) => ({
+      ChannelName: unique('channel-rules'),
+      ServiceExecutionRoleARN: 'arn:aws:iam::000000000000:role/channel',
+      StreamConfigurationList: [{ StreamARN, RecordConfiguration: { RecordFormatType: 'JSON' as const } }],
+      S3DestinationConfiguration: {
+        StorageConfiguration: { BucketARN: 'arn:aws:s3:::example-bucket', ExpectedBucketOwner: '000000000000', CompressionType: compression, OutputKeyTemplate: template },
+        ...extra,
+      },
+    })
+    const invalid: [string, 'NONE' | 'GZIP' | 'ZSTD', RegExp][] = [
+      ['/data/!{channel-name}!{extension}', 'GZIP', /forward slash/],
+      ['data/../!{channel-name}!{extension}', 'GZIP', /path traversal/],
+      ['data//!{channel-name}!{extension}', 'GZIP', /consecutive slashes/],
+      ['!{channel-name}!{extension}/!{yyyy}', 'GZIP', /end with its extension placeholder/],
+      ['data/!{partition-id}!{extension}', 'GZIP', /unsupported variable !\{partition-id\}/],
+      ['data/!{channel-name}', 'GZIP', /extension placeholder when CompressionType is GZIP/],
+      ['data/!{channel-name}', 'ZSTD', /extension placeholder when CompressionType is ZSTD/],
+      ['data/!{channel-name}/!{yyyy', 'GZIP', /without a closing brace/],
+    ]
+    for (const [template, compression, message] of invalid) {
+      await rejects(client.send(new CreateChannelCommand(request(template, compression))), 'InvalidArgumentException', message)
+    }
+    for (const seconds of [299, 901]) {
+      await rejects(client.send(new CreateChannelCommand(request(undefined, 'GZIP', { DataFreshnessInSeconds: seconds }))), 'InvalidArgumentException', /DataFreshnessInSeconds/)
+    }
+    const gsr = { ...request(undefined), StreamConfigurationList: [{ StreamARN, RecordConfiguration: { RecordFormatType: 'GSR_JSON' as const } }] }
+    await rejects(client.send(new CreateChannelCommand(gsr)), 'InvalidArgumentException', /GSR_JSON/)
+    await rejects(client.send(new CreateChannelCommand({
+      ChannelName: unique('channel-rules'),
+      ServiceExecutionRoleARN: 'arn:aws:iam::000000000000:role/channel',
+      StreamConfigurationList: [{ StreamARN, RecordConfiguration: { RecordFormatType: 'GSR_JSON' } }],
+      S3TablesDestinationConfiguration: {
+        DataFreshnessInSeconds: 1000,
+        DeadLetterQueueS3Configuration: { BucketARN: 'arn:aws:s3:::example-dlq', ExpectedBucketOwner: '000000000000' },
+        S3TablesConfigurationList: [{ TableBucketARN: 'arn:aws:s3tables:us-east-1:000000000000:bucket/example', Namespace: 'example', TableName: 'records', CompressionType: 'ZSTD' }],
+      },
+    })), 'InvalidArgumentException', /DataFreshnessInSeconds 1000/)
+    const valid: [string, 'NONE' | 'GZIP' | 'ZSTD'][] = [
+      ['!{channel-name}/!{yyyy}/!{MM}/!{dd}/!{HH}/records!{extension}', 'GZIP'],
+      ['data/stream=!{stream-name}/!{yyyy}-!{MM}-!{dd}/!{HH}!{mm}!{extension:.json}', 'GZIP'],
+      ['!{channel-name}/!{channel-id}', 'NONE'],
+    ]
+    const channelARNs: string[] = []
+    for (const [template, compression] of valid) {
+      const created = await client.send(new CreateChannelCommand(request(template, compression, { DataFreshnessInSeconds: 900 })))
+      assert.equal(created.ChannelDescription?.S3DestinationConfiguration?.StorageConfiguration?.OutputKeyTemplate, template)
+      channelARNs.push(created.ChannelDescription!.ChannelARN!)
+    }
+    for (const ChannelARN of channelARNs) {
+      await client.send(new DeleteChannelCommand({ ChannelARN }))
+      await waitFor(
+        () => client.send(new DescribeChannelCommand({ ChannelARN })).then(() => 'present', error => error.name),
+        outcome => outcome === 'ResourceNotFoundException',
+      )
+    }
     await client.send(new DeleteStreamCommand({ StreamARN }))
   })
 })
