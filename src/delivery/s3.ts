@@ -11,6 +11,7 @@ export interface S3Client {
   endpoint: string
   region: string
   credentials: Credentials
+  timeoutMs?: number
 }
 
 export interface S3Object {
@@ -137,6 +138,9 @@ export function putObject(client: S3Client, object: S3Object) {
       })
     })
     req.on('error', reject)
+    if (client.timeoutMs) {
+      req.setTimeout(client.timeoutMs, () => req.destroy(new Error(`PutObject ${object.bucket}/${object.key} got no response within ${client.timeoutMs} ms`)))
+    }
     req.end(body)
   })
 }

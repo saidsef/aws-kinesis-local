@@ -21,7 +21,7 @@ aws-kinesis-local is a single Node.js process with no runtime npm dependencies. 
 | `src/kinesis/` | Sequence numbers, shard IDs and shard iterators |
 | `src/operations/` | One module for each feature in [Supported operations](../supported-operations.md), and the registry in `index.ts` |
 | `src/store/` | SQLite store and document types |
-| `src/delivery/` | Signed S3 client and object keys for channel delivery |
+| `src/delivery/` | Signed S3 client, object keys and the delivery loop for channels |
 | `scripts/` | Model download and code generation |
 | `model/` | Kinesis Smithy model that the generator reads |
 
@@ -120,3 +120,13 @@ A failed upload rejects with `S3Error`, which carries the status code and the `C
 `src/delivery/key-template.ts` checks output key templates and builds object keys from them, as [S3 output key template for Amazon S3 delivery](https://docs.aws.amazon.com/streams/latest/dev/data-delivery-s3-key-template.html) describes. `CreateChannel` rejects a template that breaks a rule on that page. Its length check expands the template with the channel name, the channel ID and the longest stream name of the channel.
 
 A channel without a template uses the default template from that page. The date and time variables expand in UTC. Each key carries a unique suffix of 37 characters, which is a hyphen and a random UUID. The AWS documentation limits the suffix to 38 characters and does not say where it goes. aws-kinesis-local puts it in front of the extension, and every key then ends with the extension that its template sets.
+
+## Channel delivery
+
+`src/delivery/channel.ts` runs only when `start()` receives an S3 endpoint. It keeps one timer for each channel that is `ACTIVE` or `UPDATING` and has an S3 destination. The store announces each activation and each removal of a channel, so the delivery loop needs no polling. A timer fires after the delivery interval, delivers each stream of the channel in turn and then starts the next interval. One channel therefore never runs two deliveries at once.
+
+The records table is the buffer. The `activateChannel` transition saves the time when a channel first becomes active, and a shard without a saved position starts at the first record that arrived after that time. A delivery reads the shards of a stream in index order, from the saved position of each. Resharding appends child shards after their parents, so this order reads every parent before its children.
+
+A delivery reads rows in pages and ends an object at a size limit, so a backlog after an outage becomes several objects. An upload that gets no response fails after a timeout. The store saves the new positions in one transaction only after the S3 server accepts the object. The next interval reads the records of a failed upload again.
+
+A reset can replace a channel with a new one under the same ARN. Each timer therefore holds the channel document that it started with, and stops when the store no longer holds that document. Positions belong to the channel ID, and removing a channel deletes them. Shutdown stops the timers and waits for the uploads in progress, within `shutdownMs`, before it closes the store.

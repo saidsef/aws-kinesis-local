@@ -73,6 +73,20 @@ env:
   UPDATESTREAMMS: "50"
   # -- `--logLevel`, the least severe level that aws-kinesis-local logs: `error`, `warn`, `info`, `debug` or `trace`.
   LOGLEVEL: "warn"
+  # -- `--s3Endpoint`, the S3 endpoint that channels deliver records to. Empty turns delivery off. Delivery also needs `s3.existingSecret`.
+  S3ENDPOINT: ""
+  # -- `--s3Region`, the region in the signature of each S3 request. Empty uses the region in ARNs.
+  S3REGION: ""
+  # -- `--deliveryIntervalMs`, how long in milliseconds a channel buffers records before it writes an object. Empty uses the data freshness interval of each channel.
+  DELIVERYINTERVALMS: ""
+
+s3:
+  # -- Existing Secret that holds the S3 credentials for channel delivery. The chart sets `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` from it. Empty sets neither.
+  existingSecret: ""
+  # -- Key in `s3.existingSecret` that holds the access key ID.
+  accessKeyIdKey: S3_ACCESS_KEY_ID
+  # -- Key in `s3.existingSecret` that holds the secret access key.
+  secretAccessKeyKey: S3_SECRET_ACCESS_KEY
 
 resources:
   requests:

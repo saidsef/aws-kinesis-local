@@ -196,7 +196,9 @@ export function registerChannelTransitions(store: Store) {
     const channel = current.channels.get(arn)
     if (!channel) return
     channel.ChannelStatus = 'ACTIVE'
+    channel._activatedAt ??= Date.now()
     current.saveChannel(channel)
+    current.events.emit('channel-active', arn)
   })
   store.registerTransition('deleteChannel', (current, arn) => {
     current.removeChannel(arn)

@@ -13,6 +13,11 @@ The Docker image runs aws-kinesis-local on the Node.js Alpine image as the `nobo
 | `DELETESTREAMMS` | `--deleteStreamMs` | `50` | Milliseconds that a deleted stream, consumer or channel stays in `DELETING`. |
 | `UPDATESTREAMMS` | `--updateStreamMs` | `50` | Milliseconds that a stream or channel stays in `UPDATING`. |
 | `LOGLEVEL` | `--logLevel` | `warn` | Least severe level that aws-kinesis-local logs, as [Logs](#logs) describes. |
+| `S3ENDPOINT` | `--s3Endpoint` | None | S3 endpoint that channels deliver records to, as [Channel delivery](#channel-delivery) describes. Without it, channels do not deliver. |
+| `S3REGION` | `--s3Region` | Region in ARNs | Region in the signature of each S3 request. |
+| `DELIVERYINTERVALMS` | `--deliveryIntervalMs` | None | Milliseconds that a channel buffers records before it writes an object. Without it, each channel uses its data freshness interval. |
+| `S3_ACCESS_KEY_ID` | None | None | Access key ID that signs each S3 request. |
+| `S3_SECRET_ACCESS_KEY` | None | None | Secret access key that signs each S3 request. |
 | `AWS_DEFAULT_REGION` | None | `eu-west-1` | Region in the ARNs that aws-kinesis-local returns. `AWS_REGION` overrides it. |
 | `AWS_ACCOUNT_ID` | None | `000000000000` | Account ID in the ARNs and error messages that aws-kinesis-local returns. |
 
@@ -51,9 +56,31 @@ The image declares `KPATH` as a volume. Mount a named volume there to keep strea
 docker run -d -p 4567:4567 -v kinesis-data:/data docker.io/saidsef/aws-kinesis-local:latest
 ```
 
+## Channel delivery
+
+With `S3ENDPOINT` set, aws-kinesis-local writes the records of each channel with an S3 destination to the bucket that its `BucketARN` names. The endpoint can be Amazon S3 or an S3-compatible server, and the bucket must already exist. aws-kinesis-local signs each request with `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY`, and it does not start when either is missing. It reads both only from the environment, which keeps them out of the process list.
+
+A channel delivers the records that arrive after it becomes active. It buffers them for its data freshness interval, or for `DELIVERYINTERVALMS` when set. It then writes one object for each stream that has new records, under a key from its output key template and with its compression type.
+
+| Record format | Object content |
+| --- | --- |
+| `JSON`, `STRING` | Each record on a line of its own |
+| `BYTE_ARRAY` | The data of each record, unchanged, one after another |
+
+The database keeps the position of each channel in each shard. The position moves only after the S3 server accepts an object, so a failed upload keeps its records for the next attempt. aws-kinesis-local logs each failed upload at the `error` level. After a restart, each channel carries on from its saved position. After a reshard, a channel reads the child shards once it has delivered every record of their parents. Deleting a channel stops its delivery, and so does a reset that removes it.
+
+The example below delivers each record within about a second of its arrival:
+
+```bash
+docker run -d -p 4567:4567 \
+  -e S3ENDPOINT=http://s3.example.internal:9000 -e DELIVERYINTERVALMS=1000 \
+  -e S3_ACCESS_KEY_ID -e S3_SECRET_ACCESS_KEY \
+  docker.io/saidsef/aws-kinesis-local:latest
+```
+
 ## Shutdown
 
-aws-kinesis-local stops on `SIGTERM` and `SIGINT`. It reports that it is not ready, stops accepting connections, ends every `SubscribeToShard` response and lets the requests in progress finish. It closes the database last. When requests are still running after the time limit, which the `shutdownMs` option of `start()` sets, it closes their connections. A stream, consumer or channel that is in a transitional state when it stops finishes that change on the next start.
+aws-kinesis-local stops on `SIGTERM` and `SIGINT`. It reports that it is not ready, stops accepting connections, ends every `SubscribeToShard` response and lets the requests and channel uploads in progress finish. It closes the database last. When requests are still running after the time limit, which the `shutdownMs` option of `start()` sets, it closes their connections. A stream, consumer or channel that is in a transitional state when it stops finishes that change on the next start.
 
 ## Health check
 
@@ -72,9 +99,9 @@ aws-kinesis-local writes one JSON line to standard output for each request, and 
 
 | Level | What it adds |
 | --- | --- |
-| `error` | Requests that fail with a 5xx status, and failures of the background record expiry, with the stack trace |
+| `error` | Requests that fail with a 5xx status, failures of the background record expiry with the stack trace, and failed channel uploads |
 | `warn` | Rejected requests, and `SubscribeToShard` responses that end with an exception |
-| `info` | Every other API request, and every `POST /_control/reset` call |
+| `info` | Every other API request, every `POST /_control/reset` call and every object that a channel delivers |
 | `debug` | Health checks and CORS preflight requests |
 | `trace` | The request body and the response body on every line |
 

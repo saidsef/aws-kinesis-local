@@ -34,6 +34,16 @@ interface RecordRow {
   encryption: string | null
 }
 
+function storedRecord(row: RecordRow): StoredRecord {
+  return {
+    SequenceNumber: row.seq,
+    PartitionKey: row.partition_key,
+    Data: Buffer.from(row.data),
+    ApproximateArrivalTimestamp: row.arrival,
+    EncryptionType: row.encryption,
+  }
+}
+
 export class Store {
   readonly options: StoreOptions
   private readonly logger: Logger
@@ -77,6 +87,13 @@ export class Store {
         encryption TEXT
       );
       CREATE UNIQUE INDEX IF NOT EXISTS records_position ON records (stream, shard, seq);
+      CREATE TABLE IF NOT EXISTS delivery_positions (
+        channel TEXT NOT NULL,
+        stream TEXT NOT NULL,
+        shard INTEGER NOT NULL,
+        seq TEXT NOT NULL,
+        PRIMARY KEY (channel, stream, shard)
+      );
       INSERT OR IGNORE INTO metadata (key, value) VALUES ('schema', '1');
     `)
     this.statements = {
@@ -90,6 +107,10 @@ export class Store {
       oldestSequences: this.db.prepare('SELECT seq FROM records WHERE stream = ? AND shard = ? ORDER BY seq LIMIT ?'),
       deleteRecord: this.db.prepare('DELETE FROM records WHERE stream = ? AND shard = ? AND seq = ?'),
       deleteStreamRecords: this.db.prepare('DELETE FROM records WHERE stream = ?'),
+      deliveryRecords: this.db.prepare('SELECT seq, partition_key, data, arrival, encryption FROM records WHERE stream = ? AND shard = ? AND seq > ? AND arrival >= ? ORDER BY seq LIMIT ?'),
+      deliveryPositions: this.db.prepare('SELECT shard, seq FROM delivery_positions WHERE channel = ? AND stream = ?'),
+      putDeliveryPosition: this.db.prepare('INSERT OR REPLACE INTO delivery_positions (channel, stream, shard, seq) VALUES (?, ?, ?, ?)'),
+      deleteDeliveryPositions: this.db.prepare('DELETE FROM delivery_positions WHERE channel = ?'),
       schemaVersion: this.db.prepare("SELECT value FROM metadata WHERE key = 'schema'"),
     }
     this.load()
@@ -163,10 +184,13 @@ export class Store {
   }
 
   removeChannel(arn: string) {
+    const channel = this.channels.get(arn)
     this.cancel('channel', arn)
     this.channels.delete(arn)
     this.erase('channel', arn)
+    if (channel && !this.closed) this.statements.deleteDeliveryPositions!.run(channel.ChannelId)
     this.removePolicy(arn)
+    this.events.emit('channel-removed', arn)
   }
 
   savePolicy(arn: string, policy: string) {
@@ -214,13 +238,23 @@ export class Store {
   }
 
   readRecords(stream: string, shardIx: number, fromSequence: string, limit: number): StoredRecord[] {
-    return (this.statements.readRecords!.all(stream, shardIx, fromSequence, limit) as unknown as RecordRow[]).map(row => ({
-      SequenceNumber: row.seq,
-      PartitionKey: row.partition_key,
-      Data: Buffer.from(row.data),
-      ApproximateArrivalTimestamp: row.arrival,
-      EncryptionType: row.encryption,
-    }))
+    return (this.statements.readRecords!.all(stream, shardIx, fromSequence, limit) as unknown as RecordRow[]).map(storedRecord)
+  }
+
+  readDeliveryRecords(stream: string, shardIx: number, afterSequence: string, arrivedSince: number, limit: number): StoredRecord[] {
+    return (this.statements.deliveryRecords!.all(stream, shardIx, afterSequence, arrivedSince, limit) as unknown as RecordRow[]).map(storedRecord)
+  }
+
+  deliveryPositions(channelId: string, stream: string) {
+    const rows = this.statements.deliveryPositions!.all(channelId, stream) as { shard: number, seq: string }[]
+    return new Map(rows.map(row => [row.shard, row.seq]))
+  }
+
+  saveDeliveryPositions(channelId: string, stream: string, positions: Map<number, string>) {
+    if (this.closed) return
+    this.transaction(() => {
+      for (const [shardIx, sequenceNumber] of positions) this.statements.putDeliveryPosition!.run(channelId, stream, shardIx, sequenceNumber)
+    })
   }
 
   firstSequenceAtOrAfter(stream: string, shardIx: number, timestamp: number) {
