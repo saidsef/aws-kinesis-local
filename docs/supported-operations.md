@@ -34,7 +34,7 @@ aws-kinesis-local keeps state for every operation, but it does not run the AWS s
 | Encryption | aws-kinesis-local records the encryption type and key ID and reports `EncryptionType` on records, but it does not call KMS or encrypt the data. |
 | Enhanced monitoring | aws-kinesis-local records the shard-level metrics that are enabled, but it does not publish them to CloudWatch. |
 | Resource policies | aws-kinesis-local stores policies and returns them, but it does not enforce them. |
-| Channels | A channel delivers records only to the configured S3 endpoint, and never to Amazon S3 Tables. Delivery does not apply the storage class, expected bucket owner, encryption configuration or dead-letter queue of the channel, and it does not validate `JSON` and `STRING` records. |
+| Channels | A channel delivers records only to the configured S3 endpoint, and never to Amazon S3 Tables. Delivery does not apply the storage class, expected bucket owner or encryption configuration of the channel. Dead-letter objects use a layout of aws-kinesis-local, which [Channel delivery](configuration.md#channel-delivery) describes. |
 | Account settings | `UpdateAccountSettings` enables and disables the minimum throughput billing commitment immediately, without a minimum commitment window. |
 | Error messages | The wording of some error messages can differ from AWS. |
 
