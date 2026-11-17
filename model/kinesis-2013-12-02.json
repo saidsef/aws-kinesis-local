@@ -2,7 +2,8 @@
   "smithy": "2.0",
   "metadata": {
     "source": "https://raw.githubusercontent.com/aws/api-models-aws/6d00925efe97c160e67c2042e6c8fd2423ff3896/models/kinesis/service/2013-12-02/kinesis-2013-12-02.json",
-    "commit": "6d00925efe97c160e67c2042e6c8fd2423ff3896"
+    "commit": "6d00925efe97c160e67c2042e6c8fd2423ff3896",
+    "changes": "aws-kinesis-local removes documentation, examples, smoke tests and endpoint rules from the original model"
   },
   "shapes": {
     "com.amazonaws.kinesis#AccessDeniedException": {

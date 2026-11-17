@@ -33,6 +33,10 @@ function strip(value: Json): Json {
 const response = await fetch(source)
 if (!response.ok) throw new Error(`GET ${source} returned ${response.status}`)
 const model = strip(await response.json() as Json) as { [key: string]: Json }
-model.metadata = { source, commit }
+model.metadata = {
+  source,
+  commit,
+  changes: 'aws-kinesis-local removes documentation, examples, smoke tests and endpoint rules from the original model',
+}
 writeFileSync(target, JSON.stringify(model, null, 2) + '\n')
 console.log(`Wrote ${target} from ${commit}`)

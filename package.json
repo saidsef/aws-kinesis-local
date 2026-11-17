@@ -1,6 +1,6 @@
 {
   "name": "@saidsef/aws-kinesis-local",
-  "version": "1.9.0",
+  "version": "1.10.0",
   "description": "Local Amazon Kinesis Data Streams server for development and CI, with all 45 operations, enhanced fan-out, JSON and CBOR over HTTP/1.1 and HTTP/2",
   "keywords": [
     "aws",
@@ -13,7 +13,7 @@
     "enhanced-fan-out"
   ],
   "author": "Said Sef <saidsef@gmail.com>",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "homepage": "https://aws-kinesis-local.readthedocs.io/",
   "repository": {
     "type": "git",

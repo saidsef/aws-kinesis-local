@@ -66,4 +66,4 @@ Read the [contribution guide](CONTRIBUTING.md), then open a [pull request](https
 
 ## Licence
 
-[MIT](LICENSE.md)
+[Apache License 2.0](LICENSE)

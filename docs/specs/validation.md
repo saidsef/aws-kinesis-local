@@ -4,7 +4,7 @@ aws-kinesis-local checks every request against the Smithy model that AWS publish
 
 ## Model
 
-`model/kinesis-2013-12-02.json` is the [Kinesis model from aws/api-models-aws](https://github.com/aws/api-models-aws/tree/main/models/kinesis/service/2013-12-02). Its `metadata` block records the source URL and the commit. `npm run model -- <commit>` downloads the model at that commit and removes documentation, examples, smoke tests and endpoint rules, which aws-kinesis-local does not use.
+`model/kinesis-2013-12-02.json` is the [Kinesis model from aws/api-models-aws](https://github.com/aws/api-models-aws/tree/main/models/kinesis/service/2013-12-02). Its `metadata` block records the source URL, commit and changes that aws-kinesis-local makes to the original, which the Apache License 2.0 requires. `npm run model -- <commit>` downloads the model at that commit and removes documentation, examples, smoke tests and endpoint rules, which aws-kinesis-local does not use.
 
 ## Generator
 
