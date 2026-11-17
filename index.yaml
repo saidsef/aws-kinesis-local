@@ -4,6 +4,44 @@ entries:
   - annotations:
       artifacthub.io/changes: |
         - kind: added
+          description: The chart deploys aws-kinesis-local 1.8.0, which delivers the records of each channel to an S3 endpoint
+        - kind: added
+          description: The S3ENDPOINT, S3REGION and DELIVERYINTERVALMS values and s3.existingSecret configure channel delivery
+      artifacthub.io/license: MIT
+      artifacthub.io/links: |
+        - name: README
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/README.md
+        - name: LICENSE
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/LICENSE.md
+        - name: CONTRIBUTING
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/CONTRIBUTING.md
+    apiVersion: v2
+    appVersion: 1.8.0
+    created: "2026-11-17T11:57:10.193512895Z"
+    description: A Kinesis Local Helm chart for Kubernetes
+    digest: 142387091dee7472c686abf30fe1664bbd7332ad54d8b028727cee65732e26b0
+    home: https://github.com/saidsef/aws-kinesis-local
+    icon: https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/main/dist/MediaServices/KinesisVideoStreams2.png
+    keywords:
+    - kinesis
+    - aws
+    - local
+    - kubernetes
+    kubeVersion: '>= 1.32.0'
+    maintainers:
+    - email: saidsef@gmail.com
+      name: Said Sef
+      url: https://saidsef.co.uk/
+    name: kinesis
+    sources:
+    - https://github.com/saidsef/aws-kinesis-local.git
+    type: application
+    urls:
+    - https://github.com/saidsef/aws-kinesis-local/releases/download/kinesis-0.18.0/kinesis-0.18.0.tgz
+    version: 0.18.0
+  - annotations:
+      artifacthub.io/changes: |
+        - kind: added
           description: The chart deploys aws-kinesis-local 1.7.0, which checks the key template, data freshness interval and record format of each channel
       artifacthub.io/license: MIT
       artifacthub.io/links: |
@@ -565,4 +603,4 @@ entries:
     urls:
     - https://github.com/saidsef/aws-kinesis-local/releases/download/kinesis-0.7.3/kinesis-0.7.3.tgz
     version: 0.7.3
-generated: "2026-11-17T00:54:13.079120767Z"
+generated: "2026-11-17T11:57:10.193601618Z"
