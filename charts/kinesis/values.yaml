@@ -71,6 +71,8 @@ env:
   DELETESTREAMMS: "50"
   # -- `--updateStreamMs`, how long in milliseconds a stream or channel stays in `UPDATING`.
   UPDATESTREAMMS: "50"
+  # -- `--logLevel`, the least severe level that aws-kinesis-local logs: `error`, `warn`, `info`, `debug` or `trace`.
+  LOGLEVEL: "warn"
 
 resources:
   requests:

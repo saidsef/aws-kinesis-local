@@ -24,6 +24,7 @@ function startServer(options: Partial<StartOptions> = {}) {
     updateStreamMs: 20,
     accountId: '000000000000',
     region: 'eu-west-1',
+    logLevel: 'error',
     ...options,
   })
 }

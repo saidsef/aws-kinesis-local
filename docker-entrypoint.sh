@@ -8,4 +8,5 @@ exec node /opt/aws-kinesis-local/cli.js \
   --createStreamMs "${CREATESTREAMMS:-50}" \
   --deleteStreamMs "${DELETESTREAMMS:-50}" \
   --updateStreamMs "${UPDATESTREAMMS:-50}" \
+  --logLevel "${LOGLEVEL:-warn}" \
   "$@"

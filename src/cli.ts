@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { numberOption, parseArguments, stringOption } from './arguments.ts'
+import { isLogLevel, LOG_LEVELS } from './logger.ts'
 import { defaultOptions, start } from './server.ts'
 
 const HELP = [
@@ -19,6 +20,7 @@ const HELP = [
   '--deleteStreamMs <ms>  Amount of time streams stay in DELETING state (default: 500)',
   '--updateStreamMs <ms>  Amount of time streams stay in UPDATING state (default: 500)',
   '--shardLimit <limit>   Shard limit for error reporting (default: 10)',
+  '--logLevel <level>     Least severe level to log: error, warn, info, debug or trace (default: warn)',
   '',
   'Report bugs at github.com/saidsef/aws-kinesis-local/issues',
 ].join('\n')
@@ -29,6 +31,11 @@ if (args.help) {
   console.log(HELP)
 } else {
   const defaults = defaultOptions()
+  const logLevel = stringOption(args.logLevel) ?? defaults.logLevel
+  if (!isLogLevel(logLevel)) {
+    console.error(`Unknown log level ${logLevel}. Use ${LOG_LEVELS.join(', ')}.`)
+    process.exit(1)
+  }
   const server = await start({
     port: numberOption(args.port, defaults.port) || defaults.port,
     path: stringOption(args.path),
@@ -39,6 +46,7 @@ if (args.help) {
     deleteStreamMs: numberOption(args.deleteStreamMs, defaults.deleteStreamMs),
     updateStreamMs: numberOption(args.updateStreamMs, defaults.updateStreamMs),
     shardLimit: numberOption(args.shardLimit, defaults.shardLimit),
+    logLevel,
   })
   const { address, port } = server.address
   console.log('Listening at %s://%s:%s', server.protocol, address, port)

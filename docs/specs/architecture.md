@@ -13,6 +13,7 @@ aws-kinesis-local is a single Node.js process with no runtime npm dependencies. 
 | `src/server.ts` | Defaults, listeners, protocol detection and store start-up |
 | `src/handler.ts` | Request pipeline from headers to response |
 | `src/errors.ts` | `KinesisError`, which carries the type, status code and message of an error response, and a helper for each common error type |
+| `src/logger.ts` | Log levels and the writer of JSON log lines |
 | `src/certificate.ts` | Self-signed certificate for TLS connections |
 | `src/model.ts`, `src/generated/model.ts` | Shape types and the shapes generated from the Smithy model |
 | `src/validation/` | Type checks, constraint checks and the Coral member order |
@@ -38,6 +39,14 @@ aws-kinesis-local is a single Node.js process with no runtime npm dependencies. 
 9. Decode blobs, run the operation and serialise its result for the request's protocol.
 
 Each request runs synchronously on the event loop between the end of its body and its response, and `node:sqlite` is synchronous. Requests never interleave as a result, and aws-kinesis-local needs no per-stream locks.
+
+## Request logs
+
+The handler assigns a request ID and sets `x-amzn-RequestId` as soon as headers arrive. A response that the request size limit rejects carries the ID as well. The handler writes the log line for a request when the response closes. The duration then covers the whole response, and a `SubscribeToShard` line covers the whole event stream. A subscription reports the exception that ends its event stream to the handler. Its line then carries an error type, although the status is 200.
+
+The outcome of a request sets the level of its line. A 5xx status logs at `error`, a 4xx status or an exception event at `warn`, a health check or a CORS preflight request at `debug`, and any other request at `info`. Health checks log at `debug` because Kubernetes probes call them every few seconds.
+
+The `path` field leaves out the query string, because a presigned request carries its credential and signature there. The handler never logs headers for the same reason. At the `trace` level, `request` holds the body after JSON or CBOR decoding and before validation, or the raw text of a body that does not parse. The logger writes blobs as base64 and CBOR big integers as strings, because JSON has neither byte strings nor big integers. The event stream of a `SubscribeToShard` response stays out of the log.
 
 ## HTTP/1.1, HTTP/2 and TLS on the same port
 

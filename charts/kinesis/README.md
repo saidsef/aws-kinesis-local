@@ -1,6 +1,6 @@
 # kinesis
 
-![Version: 0.14.0](https://img.shields.io/badge/Version-0.14.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.4.0](https://img.shields.io/badge/AppVersion-1.4.0-informational?style=flat-square)
+![Version: 0.15.0](https://img.shields.io/badge/Version-0.15.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.5.0](https://img.shields.io/badge/AppVersion-1.5.0-informational?style=flat-square)
 
 A Kinesis Local Helm chart for Kubernetes
 
@@ -28,6 +28,7 @@ Kubernetes: `>= 1.32.0`
 | env.CREATESTREAMMS | string | `"50"` | `--createStreamMs`, how long in milliseconds a new stream, consumer or channel stays in `CREATING`. |
 | env.DELETESTREAMMS | string | `"50"` | `--deleteStreamMs`, how long in milliseconds a deleted stream, consumer or channel stays in `DELETING`. |
 | env.KPATH | string | `"/data"` | `--path`, the directory that holds the SQLite database. The chart mounts the data volume here. |
+| env.LOGLEVEL | string | `"warn"` | `--logLevel`, the least severe level that aws-kinesis-local logs: `error`, `warn`, `info`, `debug` or `trace`. |
 | env.PORT | string | `"4567"` | `--port`, the port that aws-kinesis-local listens on for HTTP/1.1 and HTTP/2. Also sets the container port. |
 | env.SHARDLIMIT | string | `"50"` | `--shardLimit`, the maximum number of open shards across all provisioned streams. |
 | env.UPDATESTREAMMS | string | `"50"` | `--updateStreamMs`, how long in milliseconds a stream or channel stays in `UPDATING`. |
