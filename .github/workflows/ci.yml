@@ -121,6 +121,8 @@ jobs:
       run: sh test/clients/aws-cli.sh
     - name: Test boto3
       run: python test/clients/test_boto3.py
+    - name: Test channel delivery to an S3-compatible server
+      run: sh test/delivery/run.sh
     - name: Show the server logs
       if: failure()
       run: docker logs kinesis

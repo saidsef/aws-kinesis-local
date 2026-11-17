@@ -1,6 +1,6 @@
 # Testing
 
-The CI workflow runs the suites below on each pull request that changes a file under `src/`, `test/`, `scripts/`, `model/` or `deployment/`, or one of `Dockerfile`, `.dockerignore`, `docker-entrypoint.sh`, `package.json`, `package-lock.json`, `tsconfig.json`, `tsconfig.build.json` and `.github/workflows/ci.yml`. The Charts workflow runs the Helm chart suite on each pull request that changes a file under `charts/`. The release workflow runs the unit, integration and Kinesis Client Library suites again before it publishes a version. Each client suite creates streams with unique names, so the suites can share one server.
+The CI workflow runs the suites below on each pull request that changes a file under `src/`, `test/`, `scripts/`, `model/` or `deployment/`, or one of `Dockerfile`, `.dockerignore`, `docker-entrypoint.sh`, `package.json`, `package-lock.json`, `tsconfig.json`, `tsconfig.build.json` and `.github/workflows/ci.yml`. The Charts workflow runs the Helm chart suite on each pull request that changes a file under `charts/`. The release workflow runs the unit, integration, Kinesis Client Library and channel delivery suites again before it publishes a version. Each client suite creates streams with unique names, so the suites can share one server.
 
 | Suite | Location | Target | What it covers |
 | --- | --- | --- | --- |
@@ -10,6 +10,7 @@ The CI workflow runs the suites below on each pull request that changes a file u
 | SDK against the image | `test/integration/sdk.test.ts` | The image | The integration tests for every operation, through `KINESIS_ENDPOINT` |
 | AWS CLI | `test/clients/aws-cli.sh` | The image | Streams, records, ARNs, tags, consumers, resharding, waiters and limits through the AWS CLI |
 | boto3 | `test/clients/test_boto3.py` | The image | Records, paginators, errors, resharding, `subscribe_to_shard` over HTTP/1.1 and account operations |
+| Channel delivery | `test/delivery/` | The image, with SeaweedFS | Starts the image and a SeaweedFS server on one Docker network, creates a bucket, two streams and two channels, and puts records. It reads each delivered object back and checks its key, compression and content. The script removes its containers and network on success and on failure. |
 | Kinesis Client Library | `test/kcl/` | The image, with DynamoDB local | A KCL 3 consumer in polling mode and in enhanced fan-out mode that must process every record exactly once. It runs in the release workflow only. |
 | Vulnerability scan | CI workflow | The image, before any push | Trivy uploads a report of every vulnerability and secret it finds to GitHub code scanning, and fails the workflow on any of high or critical severity |
 | Kustomize manifests | CI workflow | The image in a kind cluster | Deploys `deployment/` with the image tag that the run pushed, and fails when the StatefulSet does not become ready |
