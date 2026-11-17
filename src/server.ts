@@ -3,6 +3,8 @@ import { createServer as createHttpServer, type ServerResponse } from 'node:http
 import { createServer as createHttp2Server, createSecureServer, type ServerHttp2Session } from 'node:http2'
 import { createServer as createNetServer, type AddressInfo, type Server, type Socket } from 'node:net'
 import { selfSignedCertificate } from './certificate.ts'
+import { ChannelDelivery } from './delivery/channel.ts'
+import type { S3Client } from './delivery/s3.ts'
 import { createHandler } from './handler.ts'
 import { Logger, type LogLevel } from './logger.ts'
 import { registerTransitions } from './operations/index.ts'
@@ -24,6 +26,11 @@ export interface StartOptions {
   region: string
   shutdownMs: number
   logLevel: LogLevel
+  s3Endpoint?: string | undefined
+  s3Region?: string | undefined
+  s3AccessKeyId?: string | undefined
+  s3SecretAccessKey?: string | undefined
+  deliveryIntervalMs?: number | undefined
 }
 
 export interface KinesisLocal {
@@ -36,6 +43,7 @@ export interface KinesisLocal {
 
 const HTTP2_PREFACE = Buffer.from('PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n', 'latin1')
 const TLS_HANDSHAKE = 0x16
+const S3_TIMEOUT_MS = 30000
 
 export function defaultOptions(): StartOptions {
   return {
@@ -50,6 +58,26 @@ export function defaultOptions(): StartOptions {
     region: process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1',
     shutdownMs: 5000,
     logLevel: 'warn',
+    s3AccessKeyId: process.env.S3_ACCESS_KEY_ID || undefined,
+    s3SecretAccessKey: process.env.S3_SECRET_ACCESS_KEY || undefined,
+  }
+}
+
+function s3Client(options: StartOptions): S3Client | undefined {
+  if (!options.s3Endpoint) return undefined
+  const protocol = URL.parse(options.s3Endpoint)?.protocol
+  if (protocol !== 'http:' && protocol !== 'https:') throw new Error(`The S3 endpoint ${options.s3Endpoint} is not an http or https URL.`)
+  if (!options.s3AccessKeyId || !options.s3SecretAccessKey) {
+    throw new Error('Delivery to the S3 endpoint needs S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY in the environment.')
+  }
+  if (options.deliveryIntervalMs !== undefined && !(options.deliveryIntervalMs > 0)) {
+    throw new Error(`The delivery interval ${options.deliveryIntervalMs} is not a positive number of milliseconds.`)
+  }
+  return {
+    endpoint: options.s3Endpoint,
+    region: options.s3Region || options.region,
+    credentials: { accessKeyId: options.s3AccessKeyId, secretAccessKey: options.s3SecretAccessKey },
+    timeoutMs: S3_TIMEOUT_MS,
   }
 }
 
@@ -90,6 +118,7 @@ function hostname(address: AddressInfo) {
 export async function start(overrides: Partial<StartOptions> = {}): Promise<KinesisLocal> {
   const options = { ...defaultOptions(), ...overrides }
   const logger = new Logger(options.logLevel)
+  const s3 = s3Client(options)
   const credentials = options.keyFile && options.certFile
     ? { key: readFileSync(options.keyFile), cert: readFileSync(options.certFile) }
     : selfSignedCertificate()
@@ -146,20 +175,26 @@ export async function start(overrides: Partial<StartOptions> = {}): Promise<Kine
     store.close()
     throw error
   }
+  const delivery = s3 && new ChannelDelivery(store, logger, s3, options.deliveryIntervalMs)
+  delivery?.start()
   const address = server.address() as AddressInfo
   const protocol = options.ssl ? 'https' : 'http'
   const shutdown = async () => {
     store.drain()
     const stopped = new Promise<void>(resolve => server.close(() => resolve()))
     for (const session of sessions) session.close()
-    await new Promise<void>(resolve => {
-      const timer = setTimeout(resolve, options.shutdownMs)
-      onIdle = () => {
-        clearTimeout(timer)
-        resolve()
-      }
-      if (inFlight === 0) onIdle()
+    const idle = new Promise<void>(resolve => {
+      onIdle = resolve
+      if (inFlight === 0) resolve()
     })
+    let timer: NodeJS.Timeout | undefined
+    await Promise.race([
+      Promise.all([idle, delivery?.stop()]),
+      new Promise<void>(resolve => {
+        timer = setTimeout(resolve, options.shutdownMs)
+      }),
+    ])
+    clearTimeout(timer)
     store.close()
     for (const socket of sockets) socket.destroy()
     await stopped

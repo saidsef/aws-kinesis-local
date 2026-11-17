@@ -69,6 +69,7 @@ export interface ChannelDoc {
   EncryptionConfiguration?: Record<string, unknown>
   LoggingConfiguration: Record<string, unknown>
   _tags: Record<string, string>
+  _activatedAt?: number
   _pending?: Pending
 }
 

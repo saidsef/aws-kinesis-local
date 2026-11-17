@@ -11,7 +11,7 @@ export interface Target {
 
 export async function startTarget(options: Partial<StartOptions> = {}): Promise<Target> {
   const external = process.env.KINESIS_ENDPOINT
-  if (external && !options.path && !options.ssl) return { endpoint: external, close: async () => {} }
+  if (external && !options.path && !options.ssl && !options.s3Endpoint) return { endpoint: external, close: async () => {} }
   const server = await start({
     port: 0,
     host: '127.0.0.1',

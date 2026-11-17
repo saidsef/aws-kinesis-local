@@ -30,6 +30,18 @@ helm upgrade --install kinesis kinesis/kinesis --set env.SHARDLIMIT=200
 
 The chart sets each key under `env` as a container environment variable, so `env` accepts any variable from [Configuration](configuration.md#environment-variables).
 
+### Channel delivery
+
+The chart reads the S3 credentials for [channel delivery](configuration.md#channel-delivery) from an existing Secret, and not from a value. `s3.existingSecret` names the Secret, and `s3.accessKeyIdKey` and `s3.secretAccessKeyKey` name its keys:
+
+```shell
+kubectl create secret generic kinesis-s3 --namespace kinesis \
+  --from-literal=S3_ACCESS_KEY_ID="$S3_ACCESS_KEY_ID" \
+  --from-literal=S3_SECRET_ACCESS_KEY="$S3_SECRET_ACCESS_KEY"
+helm upgrade --install kinesis kinesis/kinesis --namespace kinesis \
+  --set env.S3ENDPOINT=http://s3.example.internal:9000 --set s3.existingSecret=kinesis-s3
+```
+
 ### Helm test
 
 ```bash

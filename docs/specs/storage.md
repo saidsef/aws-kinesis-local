@@ -9,12 +9,13 @@ aws-kinesis-local keeps its state in a SQLite database through the `node:sqlite`
 | `metadata` | `key`, `value` | Schema version |
 | `documents` | `kind`, `key`, `doc` | One JSON document for each stream, consumer, channel and policy, and the account settings |
 | `records` | `stream`, `shard`, `seq`, `partition_key`, `data`, `arrival`, `encryption` | One row for each record, with a unique index on stream, shard and sequence number |
+| `delivery_positions` | `channel`, `stream`, `shard`, `seq` | Sequence number of the last record that each channel delivered from each shard, keyed by channel ID |
 
 aws-kinesis-local loads every document into memory at start-up and writes each change through to SQLite. It reads records from SQLite on demand.
 
 ## Documents
 
-Stream documents include the hidden `_seqIx` counters and `_tags`. Fields such as `StreamModeDetails` and `MaxRecordSizeInKiB` sit beside them. Fields that start with an underscore never appear in responses.
+Stream documents include the hidden `_seqIx` counters and `_tags`. Fields such as `StreamModeDetails` and `MaxRecordSizeInKiB` sit beside them. Channel documents include `_activatedAt`, the time in milliseconds when the channel first became active. Fields that start with an underscore never appear in responses.
 
 ## Records
 

@@ -24,7 +24,7 @@ export function parseArguments(argv: string[]) {
   return result
 }
 
-export function numberOption(value: string | boolean | undefined, fallback: number) {
+export function numberOption<T extends number | undefined>(value: string | boolean | undefined, fallback: T) {
   const parsed = typeof value === 'string' ? Number(value) : NaN
   return Number.isFinite(parsed) ? parsed : fallback
 }

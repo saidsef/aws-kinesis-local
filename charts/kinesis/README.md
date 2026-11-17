@@ -1,6 +1,6 @@
 # kinesis
 
-![Version: 0.17.0](https://img.shields.io/badge/Version-0.17.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.7.0](https://img.shields.io/badge/AppVersion-1.7.0-informational?style=flat-square)
+![Version: 0.18.0](https://img.shields.io/badge/Version-0.18.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.8.0](https://img.shields.io/badge/AppVersion-1.8.0-informational?style=flat-square)
 
 A Kinesis Local Helm chart for Kubernetes
 
@@ -27,9 +27,12 @@ Kubernetes: `>= 1.32.0`
 | affinity | object | `{}` | Pod affinity rules. |
 | env.CREATESTREAMMS | string | `"50"` | `--createStreamMs`, how long in milliseconds a new stream, consumer or channel stays in `CREATING`. |
 | env.DELETESTREAMMS | string | `"50"` | `--deleteStreamMs`, how long in milliseconds a deleted stream, consumer or channel stays in `DELETING`. |
+| env.DELIVERYINTERVALMS | string | `""` | `--deliveryIntervalMs`, how long in milliseconds a channel buffers records before it writes an object. Empty uses the data freshness interval of each channel. |
 | env.KPATH | string | `"/data"` | `--path`, the directory that holds the SQLite database. The chart mounts the data volume here. |
 | env.LOGLEVEL | string | `"warn"` | `--logLevel`, the least severe level that aws-kinesis-local logs: `error`, `warn`, `info`, `debug` or `trace`. |
 | env.PORT | string | `"4567"` | `--port`, the port that aws-kinesis-local listens on for HTTP/1.1 and HTTP/2. Also sets the container port. |
+| env.S3ENDPOINT | string | `""` | `--s3Endpoint`, the S3 endpoint that channels deliver records to. Empty turns delivery off. Delivery also needs `s3.existingSecret`. |
+| env.S3REGION | string | `""` | `--s3Region`, the region in the signature of each S3 request. Empty uses the region in ARNs. |
 | env.SHARDLIMIT | string | `"50"` | `--shardLimit`, the maximum number of open shards across all provisioned streams. |
 | env.UPDATESTREAMMS | string | `"50"` | `--updateStreamMs`, how long in milliseconds a stream or channel stays in `UPDATING`. |
 | fullnameOverride | string | `""` | Override the fully qualified app name. |
@@ -56,6 +59,9 @@ Kubernetes: `>= 1.32.0`
 | resources.requests.cpu | string | `"100m"` | CPU request. |
 | resources.requests.memory | string | `"512Mi"` | Memory request. |
 | revisionHistoryLimit | int | `5` | StatefulSet `revisionHistoryLimit`. |
+| s3.accessKeyIdKey | string | `"S3_ACCESS_KEY_ID"` | Key in `s3.existingSecret` that holds the access key ID. |
+| s3.existingSecret | string | `""` | Existing Secret that holds the S3 credentials for channel delivery. The chart sets `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` from it. Empty sets neither. |
+| s3.secretAccessKeyKey | string | `"S3_SECRET_ACCESS_KEY"` | Key in `s3.existingSecret` that holds the secret access key. |
 | securityContext | object | hardened defaults | Container `securityContext`: non-root, read-only rootfs, all caps dropped, seccomp RuntimeDefault. |
 | service.headless | bool | `false` | Set `clusterIP: None` for headless DNS. Clients then reach the pods on the container port, `env.PORT`, and not on `service.port`. |
 | service.port | int | `80` | Service port. |

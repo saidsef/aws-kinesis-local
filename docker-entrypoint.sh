@@ -9,4 +9,7 @@ exec node /opt/aws-kinesis-local/cli.js \
   --deleteStreamMs "${DELETESTREAMMS:-50}" \
   --updateStreamMs "${UPDATESTREAMMS:-50}" \
   --logLevel "${LOGLEVEL:-warn}" \
+  --s3Endpoint "${S3ENDPOINT:-}" \
+  --s3Region "${S3REGION:-}" \
+  --deliveryIntervalMs "${DELIVERYINTERVALMS:-}" \
   "$@"
