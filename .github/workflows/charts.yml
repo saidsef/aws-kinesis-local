@@ -65,7 +65,7 @@ jobs:
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
       - name: Copy Readme and License
         run: |
-          cp -v LICENSE.md CONTRIBUTING.md charts/kinesis/
+          cp -v LICENSE CONTRIBUTING.md charts/kinesis/
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@92c6b97fa9f664492a2592e0d1d80bc6bf378957 # v1.9.0
         with:

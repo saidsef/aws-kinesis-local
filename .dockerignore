@@ -1,6 +1,5 @@
 .git/*
 .github
-LICENSE.md
 README.md
 argocd
 charts

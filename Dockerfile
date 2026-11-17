@@ -21,7 +21,7 @@ LABEL org.opencontainers.image.title="aws-kinesis-local" \
       org.opencontainers.image.version="${VERSION}" \
       org.opencontainers.image.authors="Said Sef <saidsef@gmail.com>" \
       org.opencontainers.image.vendor="Said Sef Associates Ltd" \
-      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.licenses="Apache-2.0" \
       org.opencontainers.image.url="https://github.com/saidsef/aws-kinesis-local" \
       org.opencontainers.image.source="https://github.com/saidsef/aws-kinesis-local" \
       org.opencontainers.image.documentation="https://aws-kinesis-local.readthedocs.io/"
@@ -43,6 +43,7 @@ RUN apk upgrade --no-cache \
  && chown nobody:nobody /data
 
 COPY --from=build /src/dist /opt/aws-kinesis-local
+COPY LICENSE /opt/aws-kinesis-local/
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 USER nobody
