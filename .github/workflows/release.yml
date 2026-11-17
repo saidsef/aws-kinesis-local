@@ -90,6 +90,8 @@ jobs:
           key: kcl-m2-${{ hashFiles('test/kcl/pom.xml') }}
       - name: Test the Kinesis Client Library
         run: IMAGE=aws-kinesis-local:release MAVEN_CACHE="$RUNNER_TEMP/kcl-m2" sh test/kcl/run.sh
+      - name: Test channel delivery to an S3-compatible server
+        run: IMAGE=aws-kinesis-local:release sh test/delivery/run.sh
 
   release:
     runs-on: ubuntu-latest
