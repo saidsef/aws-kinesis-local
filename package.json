@@ -60,7 +60,7 @@
     "start": "node src/cli.ts"
   },
   "devDependencies": {
-    "@aws-sdk/client-kinesis": "3.1164.0",
+    "@aws-sdk/client-kinesis": "3.1165.0",
     "@smithy/eventstream-codec": "4.5.2",
     "@smithy/node-http-handler": "4.14.2",
     "@types/node": "26.6.6",
