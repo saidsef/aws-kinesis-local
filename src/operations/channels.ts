@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { validateKeyTemplate } from '../delivery/key-template.ts'
 import { invalidArgument, limitExceeded, resourceInUse, resourceNotFound } from '../errors.ts'
 import type { Store } from '../store/store.ts'
 import type { ChannelDoc } from '../store/types.ts'
@@ -8,6 +9,8 @@ import {
 } from './common.ts'
 
 const DEFAULT_DATA_FRESHNESS_SECONDS = 300
+const MIN_DATA_FRESHNESS_SECONDS = 300
+const MAX_DATA_FRESHNESS_SECONDS = 900
 
 function channelArn(context: Context, name: string) {
   return `arn:aws:kinesis:${context.store.options.region}:${account(context)}:channel/${name}`
@@ -49,6 +52,25 @@ function describe(context: Context, channel: ChannelDoc) {
   return description
 }
 
+function checkDataFreshness(destination: Input | undefined) {
+  const seconds = destination?.DataFreshnessInSeconds
+  if (seconds != null && (seconds < MIN_DATA_FRESHNESS_SECONDS || seconds > MAX_DATA_FRESHNESS_SECONDS)) {
+    throw invalidArgument(`DataFreshnessInSeconds ${seconds} is outside the range of ${MIN_DATA_FRESHNESS_SECONDS} to ${MAX_DATA_FRESHNESS_SECONDS} seconds.`)
+  }
+}
+
+function checkS3Destination(data: Input, channelId: string, streamNames: string[]) {
+  const destination = data.S3DestinationConfiguration
+  if (!destination) return
+  if ((data.StreamConfigurationList as Input[]).some(entry => entry.RecordConfiguration.RecordFormatType === 'GSR_JSON')) {
+    throw invalidArgument('RecordFormatType GSR_JSON is not supported for delivery to S3. Use JSON, STRING or BYTE_ARRAY.')
+  }
+  const { OutputKeyTemplate: template, CompressionType: compressionType } = destination.StorageConfiguration
+  if (template == null) return
+  const streamName = streamNames.reduce((longest, name) => name.length > longest.length ? name : longest)
+  validateKeyTemplate(template, { channelName: data.ChannelName, channelId, streamName, compressionType })
+}
+
 function withFreshness(destination: Input | undefined) {
   if (!destination) return undefined
   return { DataFreshnessInSeconds: DEFAULT_DATA_FRESHNESS_SECONDS, ...destination }
@@ -65,20 +87,24 @@ export function createChannel(context: Context, data: Input) {
     throw limitExceeded(`This request would exceed the limit of ${CHANNEL_LIMIT} channels for the account ${account(context)}.`)
   }
   const streamConfigurations = data.StreamConfigurationList as Input[]
-  for (const entry of streamConfigurations) {
+  const streamNames = streamConfigurations.map(entry => {
     const name = streamNameFromArn(entry.StreamARN)
     if (name === undefined) throw invalidArgument(`StreamARN ${entry.StreamARN} is not a valid stream ARN.`)
     const stream = getStream(context, name)
     if (streamMode(stream) !== 'ON_DEMAND') {
       throw invalidArgument(`Stream ${name} under account ${account(context)} must be in ON_DEMAND capacity mode to deliver through a channel.`)
     }
-  }
+    return name
+  })
+  const channelId = randomUUID()
+  checkDataFreshness(data.S3DestinationConfiguration ?? data.S3TablesDestinationConfiguration)
+  checkS3Destination(data, channelId, streamNames)
   const tags: Record<string, string> = Object.create(null)
   if (data.Tags) applyTags(tags, data.Tags, 'channel', data.ChannelName, context)
   const channel: ChannelDoc = {
     ChannelName: data.ChannelName,
     ChannelARN: arn,
-    ChannelId: randomUUID(),
+    ChannelId: channelId,
     ChannelStatus: 'CREATING',
     ChannelCreationTimestamp: nowSeconds(),
     ServiceExecutionRoleARN: data.ServiceExecutionRoleARN,
@@ -143,6 +169,7 @@ export function updateChannel(context: Context, data: Input) {
   if (data.S3TablesDestinationConfiguration && destinationType(channel) !== 'S3_TABLES') {
     throw invalidArgument(`Channel ${channel.ChannelName} delivers to S3, so S3TablesDestinationConfiguration cannot be updated.`)
   }
+  checkDataFreshness(data.S3DestinationConfiguration ?? data.S3TablesDestinationConfiguration)
   if (data.S3DestinationConfiguration) {
     channel.S3DestinationConfiguration = { ...channel.S3DestinationConfiguration, ...data.S3DestinationConfiguration }
   }

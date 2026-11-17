@@ -21,7 +21,7 @@ aws-kinesis-local is a single Node.js process with no runtime npm dependencies. 
 | `src/kinesis/` | Sequence numbers, shard IDs and shard iterators |
 | `src/operations/` | One module for each feature in [Supported operations](../supported-operations.md), and the registry in `index.ts` |
 | `src/store/` | SQLite store and document types |
-| `src/delivery/` | Signed S3 client for channel delivery |
+| `src/delivery/` | Signed S3 client and object keys for channel delivery |
 | `scripts/` | Model download and code generation |
 | `model/` | Kinesis Smithy model that the generator reads |
 
@@ -114,3 +114,9 @@ A reset skips the `DELETING` state. It cancels the pending transitions of the do
 `src/delivery/s3.ts` uploads objects with `node:http`, `node:https` and `node:crypto`. It signs each `PutObject` request with Signature Version 4, as [Signature calculations for the Authorization header](https://docs.aws.amazon.com/AmazonS3/latest/developerguide/sig-v4-header-based-auth.html) describes, and signs every header that it sends. It puts the bucket name in the path, as in `/<bucket>/<key>`, and not in the host name. A bucket on a local server then does not need a DNS name of its own. A path in the endpoint, such as `/storage`, goes in front of the bucket name.
 
 A failed upload rejects with `S3Error`, which carries the status code and the `Code` element of the S3 error response. A response without an S3 error body, such as a 502 from a proxy, leaves the code empty.
+
+## Object keys
+
+`src/delivery/key-template.ts` checks output key templates and builds object keys from them, as [S3 output key template for Amazon S3 delivery](https://docs.aws.amazon.com/streams/latest/dev/data-delivery-s3-key-template.html) describes. `CreateChannel` rejects a template that breaks a rule on that page. Its length check expands the template with the channel name, the channel ID and the longest stream name of the channel.
+
+A channel without a template uses the default template from that page. The date and time variables expand in UTC. Each key carries a unique suffix of 37 characters, which is a hyphen and a random UUID. The AWS documentation limits the suffix to 38 characters and does not say where it goes. aws-kinesis-local puts it in front of the extension, and every key then ends with the extension that its template sets.

@@ -19,6 +19,8 @@ aws-kinesis-local implements all 45 operations in the [Kinesis Data Streams API]
 
 Every operation that takes a stream name also accepts the stream ARN in `StreamARN`. aws-kinesis-local serves JSON and CBOR over HTTP/1.1 and HTTP/2 on the same port.
 
+`CreateChannel` and `UpdateChannel` reject a data freshness interval outside 300 to 900 seconds. `CreateChannel` also rejects the `GSR_JSON` record format for an S3 destination, and an output key template that breaks a rule in [S3 output key template for Amazon S3 delivery](https://docs.aws.amazon.com/streams/latest/dev/data-delivery-s3-key-template.html).
+
 ## Differences from AWS
 
 aws-kinesis-local keeps state for every operation, but it does not run the AWS services behind some of them.
