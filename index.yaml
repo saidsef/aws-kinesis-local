@@ -3,6 +3,42 @@ entries:
   kinesis:
   - annotations:
       artifacthub.io/changes: |
+        - kind: added
+          description: The chart deploys aws-kinesis-local 1.5.0, which logs each request, and sets the log level through env.LOGLEVEL
+      artifacthub.io/license: MIT
+      artifacthub.io/links: |
+        - name: README
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/README.md
+        - name: LICENSE
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/LICENSE.md
+        - name: CONTRIBUTING
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/CONTRIBUTING.md
+    apiVersion: v2
+    appVersion: 1.5.0
+    created: "2026-11-17T00:02:03.020849334Z"
+    description: A Kinesis Local Helm chart for Kubernetes
+    digest: 801bc769ad6ce2b8fc1d60766ad32378d417030b0cfcf5f4e7bb3ad5d8cc4e18
+    home: https://github.com/saidsef/aws-kinesis-local
+    icon: https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/main/dist/MediaServices/KinesisVideoStreams2.png
+    keywords:
+    - kinesis
+    - aws
+    - local
+    - kubernetes
+    kubeVersion: '>= 1.32.0'
+    maintainers:
+    - email: saidsef@gmail.com
+      name: Said Sef
+      url: https://saidsef.co.uk/
+    name: kinesis
+    sources:
+    - https://github.com/saidsef/aws-kinesis-local.git
+    type: application
+    urls:
+    - https://github.com/saidsef/aws-kinesis-local/releases/download/kinesis-0.15.0/kinesis-0.15.0.tgz
+    version: 0.15.0
+  - annotations:
+      artifacthub.io/changes: |
         - kind: changed
           description: The chart deploys aws-kinesis-local 1.4.0, which clears streams through POST /_control/reset
       artifacthub.io/license: MIT
@@ -457,4 +493,4 @@ entries:
     urls:
     - https://github.com/saidsef/aws-kinesis-local/releases/download/kinesis-0.7.3/kinesis-0.7.3.tgz
     version: 0.7.3
-generated: "2026-11-11T12:44:11.517179024Z"
+generated: "2026-11-17T00:02:03.020916625Z"
