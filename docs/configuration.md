@@ -67,6 +67,18 @@ A channel delivers the records that arrive after it becomes active. It buffers t
 | `JSON`, `STRING` | Each record on a line of its own |
 | `BYTE_ARRAY` | The data of each record, unchanged, one after another |
 
+A `JSON` channel delivers only records that parse as JSON, and a `STRING` channel delivers only valid UTF-8 text. For each record that fails, aws-kinesis-local writes its identifiers and the reason to the dead-letter location, and leaves the record out of the object. The dead-letter location is the bucket in `DeadLetterQueueS3Configuration`, under its `ErrorOutputPrefix`. Without that configuration, it is the destination bucket. The prefix defaults to `errors/`. Each error object holds one JSON line for each failed record, under the key `<prefix><channel name>/<channel ID>/<yyyy>/<MM>/<dd>/<HH>/<stream name>-<yyyy>-<MM>-<dd>-<HH>-<mm>-<UUID>.json`. AWS does not document the layout of these objects, and aws-kinesis-local uses the one below:
+
+| Field | Content |
+| --- | --- |
+| `channelARN`, `streamARN` | ARNs of the channel and the stream |
+| `shardId`, `sequenceNumber` | Shard and sequence number of the record |
+| `approximateArrivalTimestamp` | Time when the record arrived, in ISO 8601 |
+| `errorCode` | `FormatMismatch` |
+| `errorMessage` | Why the record failed, such as `The record is not valid UTF-8 text.` |
+
+An error object does not hold the record data. AWS documents the same for its dead-letter queue.
+
 The database keeps the position of each channel in each shard. The position moves only after the S3 server accepts an object, so a failed upload keeps its records for the next attempt. aws-kinesis-local logs each failed upload at the `error` level. After a restart, each channel carries on from its saved position. After a reshard, a channel reads the child shards once it has delivered every record of their parents. Deleting a channel stops its delivery, and so does a reset that removes it.
 
 The example below delivers each record within about a second of its arrival:
@@ -100,7 +112,7 @@ aws-kinesis-local writes one JSON line to standard output for each request, and 
 | Level | What it adds |
 | --- | --- |
 | `error` | Requests that fail with a 5xx status, failures of the background record expiry with the stack trace, and failed channel uploads |
-| `warn` | Rejected requests, and `SubscribeToShard` responses that end with an exception |
+| `warn` | Rejected requests, `SubscribeToShard` responses that end with an exception, and records that a channel sends to its dead-letter location |
 | `info` | Every other API request, every `POST /_control/reset` call and every object that a channel delivers |
 | `debug` | Health checks and CORS preflight requests |
 | `trace` | The request body and the response body on every line |

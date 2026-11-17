@@ -10,6 +10,9 @@ import { putObject, type S3Client } from './s3.ts'
 const PAGE_SIZE = 1000
 const MAX_OBJECT_BYTES = 64 * 1024 * 1024
 const NEWLINE = Buffer.from('\n')
+const DEFAULT_ERROR_PREFIX = 'errors/'
+const ERROR_KEY_TEMPLATE = '!{channel-name}/!{channel-id}/!{yyyy}/!{MM}/!{dd}/!{HH}/!{stream-name}-!{yyyy}-!{MM}-!{dd}-!{HH}-!{mm}!{extension:.json}'
+const UTF8 = new TextDecoder('utf-8', { fatal: true })
 
 const COMPRESSORS: Record<string, (data: Buffer) => Promise<Buffer>> = {
   NONE: async data => data,
@@ -17,8 +20,12 @@ const COMPRESSORS: Record<string, (data: Buffer) => Promise<Buffer>> = {
   ZSTD: promisify(zstdCompress),
 }
 
+export interface BatchRecord extends StoredRecord {
+  ShardId: string
+}
+
 export interface Batch {
-  records: StoredRecord[]
+  records: BatchRecord[]
   positions: Map<number, string>
   full: boolean
 }
@@ -30,6 +37,40 @@ interface Worker {
 
 function delivering(channel: ChannelDoc) {
   return (channel.ChannelStatus === 'ACTIVE' || channel.ChannelStatus === 'UPDATING') && channel.S3DestinationConfiguration !== undefined
+}
+
+function bucketName(arn: string) {
+  return arn.slice(arn.lastIndexOf(':') + 1)
+}
+
+export function formatError(data: Buffer, format: string) {
+  if (format === 'BYTE_ARRAY') return undefined
+  let text: string
+  try {
+    text = UTF8.decode(data)
+  } catch {
+    return 'The record is not valid UTF-8 text.'
+  }
+  if (format !== 'JSON') return undefined
+  try {
+    JSON.parse(text)
+  } catch (error) {
+    return `The record is not valid JSON: ${(error as Error).message}`
+  }
+  return undefined
+}
+
+// AWS writes record identifiers and error context to the dead-letter location, and not the record data.
+function errorEntry(channel: ChannelDoc, streamARN: string, record: BatchRecord, reason: string) {
+  return JSON.stringify({
+    channelARN: channel.ChannelARN,
+    streamARN,
+    shardId: record.ShardId,
+    sequenceNumber: record.SequenceNumber,
+    approximateArrivalTimestamp: new Date(record.ApproximateArrivalTimestamp * 1000).toISOString(),
+    errorCode: 'FormatMismatch',
+    errorMessage: reason,
+  })
 }
 
 function objectBody(records: StoredRecord[], format: string) {
@@ -45,13 +86,14 @@ export function nextBatch(store: Store, channel: ChannelDoc, stream: StreamDoc, 
   const batch: Batch = { records: [], positions: new Map(), full: false }
   let bytes = 0
   for (let shardIx = 0; shardIx < stream.Shards.length && !batch.full; shardIx++) {
+    const { ShardId } = stream.Shards[shardIx]!
     const since = saved.has(shardIx) ? 0 : activatedAt
     let after = saved.get(shardIx) ?? ''
     let rows: StoredRecord[]
     do {
       rows = store.readDeliveryRecords(stream.StreamName, shardIx, after, since, PAGE_SIZE)
       for (const row of rows) {
-        batch.records.push(row)
+        batch.records.push({ ...row, ShardId })
         batch.positions.set(shardIx, row.SequenceNumber)
         after = row.SequenceNumber
         bytes += row.Data.length
@@ -142,26 +184,42 @@ export class ChannelDelivery {
     else if (this.workers.get(channel.ChannelARN) === worker) this.forget(channel.ChannelARN)
   }
 
-  // The position moves only after the server accepts the object, so a failed upload leaves its records for the next attempt.
+  // The positions move only after the server accepts every object of a batch, so a failed upload leaves its records for
+  // the next attempt. The error object goes first, and a failed destination upload then repeats only the error object.
   private async deliverStream(worker: Worker, entry: Record<string, unknown>) {
     const { channel } = worker
-    const streamName = streamNameFromArn(entry.StreamARN as string)!
+    const streamARN = entry.StreamARN as string
+    const streamName = streamNameFromArn(streamARN)!
     const format = (entry.RecordConfiguration as { RecordFormatType: string }).RecordFormatType
-    const storage = channel.S3DestinationConfiguration!.StorageConfiguration as Record<string, string>
-    const bucket = storage.BucketARN!.slice(storage.BucketARN!.lastIndexOf(':') + 1)
+    const destination = channel.S3DestinationConfiguration!
+    const storage = destination.StorageConfiguration as Record<string, string>
+    const deadLetter = destination.DeadLetterQueueS3Configuration as Record<string, string> | undefined
+    const bucket = bucketName(storage.BucketARN!)
+    const errorBucket = deadLetter ? bucketName(deadLetter.BucketARN!) : bucket
+    const errorPrefix = deadLetter?.ErrorOutputPrefix ?? DEFAULT_ERROR_PREFIX
     const compressionType = storage.CompressionType!
     for (;;) {
       const stream = this.store.streams.get(streamName)
       if (this.stopped || !stream || !this.current(worker)) return
       const batch = nextBatch(this.store, channel, stream)
       if (!batch.records.length) return
-      const time = new Date()
-      const key = objectKey(storage.OutputKeyTemplate, { channelName: channel.ChannelName, channelId: channel.ChannelId, streamName, compressionType, time })
-      const body = await COMPRESSORS[compressionType]!(objectBody(batch.records, format))
-      await putObject(this.client, { bucket, key, body })
+      const values = { channelName: channel.ChannelName, channelId: channel.ChannelId, streamName, compressionType, time: new Date() }
+      const valid: BatchRecord[] = []
+      const errors: string[] = []
+      for (const record of batch.records) {
+        const reason = formatError(record.Data, format)
+        if (reason === undefined) valid.push(record)
+        else errors.push(errorEntry(channel, streamARN, record, reason))
+      }
+      const errorKey = errors.length ? `${errorPrefix}${objectKey(ERROR_KEY_TEMPLATE, values)}` : undefined
+      const key = valid.length ? objectKey(storage.OutputKeyTemplate, values) : undefined
+      if (errorKey) await putObject(this.client, { bucket: errorBucket, key: errorKey, body: `${errors.join('\n')}\n` })
+      if (key) await putObject(this.client, { bucket, key, body: await COMPRESSORS[compressionType]!(objectBody(valid, format)) })
       if (!this.current(worker)) return
       this.store.saveDeliveryPositions(channel.ChannelId, streamName, batch.positions)
-      this.logger.log('info', { message: 'Channel delivered an object', channel: channel.ChannelName, stream: streamName, bucket, key, records: batch.records.length })
+      const fields = { channel: channel.ChannelName, stream: streamName }
+      if (errorKey) this.logger.log('warn', { message: 'Channel sent records to its dead-letter location', ...fields, bucket: errorBucket, key: errorKey, records: errors.length })
+      if (key) this.logger.log('info', { message: 'Channel delivered an object', ...fields, bucket, key, records: valid.length })
       if (!batch.full) return
     }
   }

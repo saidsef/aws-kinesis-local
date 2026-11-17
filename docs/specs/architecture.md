@@ -127,6 +127,8 @@ A channel without a template uses the default template from that page. The date 
 
 The records table is the buffer. The `activateChannel` transition saves the time when a channel first becomes active, and a shard without a saved position starts at the first record that arrived after that time. A delivery reads the shards of a stream in index order, from the saved position of each. Resharding appends child shards after their parents, so this order reads every parent before its children.
 
-A delivery reads rows in pages and ends an object at a size limit, so a backlog after an outage becomes several objects. An upload that gets no response fails after a timeout. The store saves the new positions in one transaction only after the S3 server accepts the object. The next interval reads the records of a failed upload again.
+Before an upload, a delivery checks each record of a `JSON` or `STRING` stream and moves the records that fail into an error object. It uploads the error object first and the destination object second. A failed destination upload then repeats only the error object on the next attempt, and never the delivered records.
+
+A delivery reads rows in pages and ends an object at a size limit, so a backlog after an outage becomes several objects. An upload that gets no response fails after a timeout. The store saves the new positions in one transaction only after the S3 server accepts every object of the batch. The next interval reads the records of a failed upload again.
 
 A reset can replace a channel with a new one under the same ARN. Each timer holds the channel document that it started with, and stops when the store no longer holds that document. Positions belong to the channel ID, and removing a channel deletes them. Shutdown stops the timers and waits for the uploads in progress, within `shutdownMs`, before it closes the store.

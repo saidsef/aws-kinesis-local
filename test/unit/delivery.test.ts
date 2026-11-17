@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { nextBatch } from '../../src/delivery/channel.ts'
+import { formatError, nextBatch } from '../../src/delivery/channel.ts'
 import { shardIdName, stringifySequence } from '../../src/kinesis/sequence.ts'
 import { Logger } from '../../src/logger.ts'
 import { Store } from '../../src/store/store.ts'
@@ -91,6 +91,20 @@ function channel(target: Store): ChannelDoc {
 function data(records: { Data: Buffer }[]) {
   return records.map(record => record.Data.toString('utf8')).join('')
 }
+
+describe('record format checks', () => {
+  it('accepts JSON and UTF-8 text, and any bytes for BYTE_ARRAY', () => {
+    for (const json of ['{"id":1}', '[1,2]', '"text"', '42', 'null']) assert.equal(formatError(Buffer.from(json), 'JSON'), undefined, json)
+    assert.equal(formatError(Buffer.from('caf\u00e9 \u2603'), 'STRING'), undefined)
+    assert.equal(formatError(Buffer.from([0xff, 0x00, 0xfe]), 'BYTE_ARRAY'), undefined)
+  })
+
+  it('names the reason a JSON or STRING record fails', () => {
+    for (const text of ['not json', '{"id":', '']) assert.match(formatError(Buffer.from(text), 'JSON')!, /^The record is not valid JSON: /, text)
+    assert.equal(formatError(Buffer.from([0xff, 0xfe]), 'STRING'), 'The record is not valid UTF-8 text.')
+    assert.equal(formatError(Buffer.from([0x7b, 0xc3]), 'JSON'), 'The record is not valid UTF-8 text.')
+  })
+})
 
 describe('channel delivery batches', () => {
   it('skips the records that arrived before the channel became active', () => {

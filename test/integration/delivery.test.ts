@@ -85,13 +85,20 @@ async function onDemandStream(client: KinesisClient, name: string) {
 type Format = 'JSON' | 'STRING' | 'BYTE_ARRAY'
 type Compression = 'NONE' | 'GZIP' | 'ZSTD'
 
-async function activeChannel(client: KinesisClient, name: string, streams: [string, Format][], compression: Compression, template?: string) {
+interface DeadLetter {
+  BucketARN: string
+  ExpectedBucketOwner: string
+  ErrorOutputPrefix?: string
+}
+
+async function activeChannel(client: KinesisClient, name: string, streams: [string, Format][], compression: Compression, template?: string, deadLetter?: DeadLetter) {
   const created = await client.send(new CreateChannelCommand({
     ChannelName: name,
     ServiceExecutionRoleARN: 'arn:aws:iam::000000000000:role/channel',
     StreamConfigurationList: streams.map(([StreamARN, RecordFormatType]) => ({ StreamARN, RecordConfiguration: { RecordFormatType } })),
     S3DestinationConfiguration: {
       StorageConfiguration: { BucketARN: `arn:aws:s3:::${BUCKET}`, ExpectedBucketOwner: '000000000000', CompressionType: compression, OutputKeyTemplate: template },
+      DeadLetterQueueS3Configuration: deadLetter,
     },
   }))
   const ChannelARN = created.ChannelDescription!.ChannelARN!
@@ -102,11 +109,15 @@ async function activeChannel(client: KinesisClient, name: string, streams: [stri
   return ChannelDescription!
 }
 
-function put(client: KinesisClient, streamName: string, values: string[], hashKey?: string) {
+function put(client: KinesisClient, streamName: string, values: (string | Buffer)[], hashKey?: string) {
   return client.send(new PutRecordsCommand({
     StreamName: streamName,
     Records: values.map(value => ({ Data: Buffer.from(value), PartitionKey: 'key', ...(hashKey ? { ExplicitHashKey: hashKey } : {}) })),
   }))
+}
+
+function errorEntries(upload: Upload) {
+  return upload.body.toString('utf8').split('\n').slice(0, -1).map(line => JSON.parse(line) as Record<string, string>)
 }
 
 describe('channel delivery', () => {
@@ -256,6 +267,51 @@ describe('channel delivery', () => {
       await sleep(INTERVAL_MS * 5)
       assert.deepEqual(s3.lines(channel.ChannelName!), ['kept'])
       assert.deepEqual(s3.lines(channelName), ['after reset'])
+    })
+  })
+
+  it('sends the identifiers of records that do not match the record format to the dead-letter bucket', async () => {
+    await deliver(async client => {
+      const stream = unique('delivery-invalid')
+      const streamARN = await onDemandStream(client, stream)
+      const deadLetter = { BucketARN: 'arn:aws:s3:::dead-letters', ExpectedBucketOwner: '000000000000', ErrorOutputPrefix: 'failed/' }
+      const channel = await activeChannel(client, unique('delivery'), [[streamARN, 'JSON']], 'NONE', undefined, deadLetter)
+      const name = channel.ChannelName!
+      const result = await put(client, stream, ['{"id":1}', 'not json', '{"id":2}'])
+      const uploads = await waitFor(async () => s3.objects(name), found => found.length >= 2)
+      const delivered = uploads.filter(upload => upload.bucket === BUCKET)
+      const failed = uploads.filter(upload => upload.bucket === 'dead-letters')
+      assert.deepEqual(delivered.map(upload => upload.body.toString('utf8')), ['{"id":1}\n{"id":2}\n'])
+      assert.equal(failed.length, 1)
+      assert.match(failed[0]!.key, new RegExp(`^failed/${name}/${channel.ChannelId}/\\d{4}/\\d{2}/\\d{2}/\\d{2}/${stream}-\\d{4}-\\d{2}-\\d{2}-\\d{2}-\\d{2}${SUFFIX}\\.json$`))
+      const [entry, ...rest] = errorEntries(failed[0]!)
+      assert.equal(rest.length, 0)
+      assert.deepEqual(Object.keys(entry!), ['channelARN', 'streamARN', 'shardId', 'sequenceNumber', 'approximateArrivalTimestamp', 'errorCode', 'errorMessage'])
+      assert.equal(entry!.channelARN, channel.ChannelARN)
+      assert.equal(entry!.streamARN, streamARN)
+      assert.equal(entry!.shardId, result.Records![1]!.ShardId)
+      assert.equal(entry!.sequenceNumber, result.Records![1]!.SequenceNumber)
+      assert.equal(entry!.errorCode, 'FormatMismatch')
+      assert.match(entry!.errorMessage!, /^The record is not valid JSON: /)
+      assert.ok(!Number.isNaN(Date.parse(entry!.approximateArrivalTimestamp!)))
+    })
+  })
+
+  it('writes errors to the destination bucket under errors/ when the channel has no dead-letter configuration', async () => {
+    await deliver(async client => {
+      const stream = unique('delivery-utf8')
+      const streamARN = await onDemandStream(client, stream)
+      const channel = await activeChannel(client, unique('delivery'), [[streamARN, 'STRING']], 'GZIP')
+      const name = channel.ChannelName!
+      const result = await put(client, stream, ['valid text', Buffer.from([0xff, 0xfe])])
+      const uploads = await waitFor(async () => s3.objects(name), found => found.length >= 2)
+      assert.ok(uploads.every(upload => upload.bucket === BUCKET))
+      const [failed, ...others] = uploads.filter(upload => upload.key.startsWith(`errors/${name}/`))
+      assert.equal(others.length, 0)
+      assert.deepEqual(errorEntries(failed!).map(entry => [entry.sequenceNumber, entry.errorMessage]), [
+        [result.Records![1]!.SequenceNumber, 'The record is not valid UTF-8 text.'],
+      ])
+      assert.deepEqual(s3.lines(`kinesis-channel/${name}/`), ['valid text'])
     })
   })
 
