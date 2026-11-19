@@ -42,7 +42,7 @@ await server.close();
 
 ## Clearing streams
 
-`POST /_control/reset` deletes every stream with its records, consumers, channels and policies, and returns the account settings to their defaults. A body of `{"stream": "orders"}` deletes only that stream, with its records, consumers and policies and the channels attached to it. The streams go at once, without the `DELETING` state, and an open `SubscribeToShard` response for a deleted stream ends with `ResourceNotFoundException`. The endpoint does not need a signature, and it answers with the names of the streams that it deleted:
+`POST /_control/reset` deletes every stream with its records, consumers, channels and policies, returns the account settings to their defaults and sets the clock back to real time. A body of `{"stream": "orders"}` deletes only that stream, with its records, consumers and policies and the channels attached to it. The streams go at once, without the `DELETING` state, and an open `SubscribeToShard` response for a deleted stream ends with `ResourceNotFoundException`. The endpoint does not need a signature, and it answers with the names of the streams that it deleted:
 
 ```bash
 curl -X POST http://localhost:4567/_control/reset -d '{"stream": "orders"}'
@@ -50,6 +50,27 @@ curl -X POST http://localhost:4567/_control/reset -d '{"stream": "orders"}'
 ```
 
 The object that `start()` returns offers the same operation as `reset()`, and `reset('orders')` clears one stream. Both return the names of the streams that they deleted.
+
+## Moving the clock
+
+`POST /_control/clock` moves the clock of aws-kinesis-local forward. A test can then reach an expiry without waiting for it. The clock follows real time until the first call. A body of `{"advanceSeconds": 86400}` moves it forward by one day. The endpoint does not need a signature, and it answers with the number of seconds that the clock is ahead of real time:
+
+```bash
+curl -X POST http://localhost:4567/_control/clock -d '{"advanceSeconds": 86400}'
+{"offsetSeconds":86400}
+```
+
+Each time value that the API reports or compares comes from the clock:
+
+- A shard iterator expires once the clock passes five minutes after `GetShardIterator` created it.
+- `GetRecords` and `SubscribeToShard` leave out records older than the retention period, and `ListShards` measures its trim horizon from the clock.
+- A stream, consumer or channel in a transitional state moves on once the clock passes its due time. The endpoint runs each of these transitions before it answers, and the next request sees the new state.
+- A `SubscribeToShard` response ends once the clock passes five minutes after its call. The 5-second wait between two calls also follows the clock.
+- Record arrival times, creation timestamps, sequence numbers and the dates in channel object keys come from the clock.
+
+The clock moves only forward. `advanceSeconds` takes a number from 0 to 315360000, which is ten years, and a call with 0 reports the offset without moving the clock. The database keeps the offset, and the clock stays ahead after a restart with `--path`. A full reset sets the clock back to real time, and a reset of one stream leaves it where it is. Log lines, the delivery interval of channels and the signatures of their S3 requests keep real time.
+
+The object that `start()` returns offers the same operation as `advanceClock(seconds)`. It returns the offset in seconds, and throws a `RangeError` for a number outside that range.
 
 ## AWS CLI
 

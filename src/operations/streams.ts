@@ -59,7 +59,7 @@ export function createStream(context: Context, data: Input) {
   if (data.WarmThroughputMiBps != null) requireBillingCommitment(context, 'WarmThroughputMiBps')
   const tags: Record<string, string> = Object.create(null)
   if (data.Tags) applyTags(tags, data.Tags, 'stream', name, context)
-  const createTime = Date.now() - SEQ_ADJUST_MS
+  const createTime = store.now() - SEQ_ADJUST_MS
   const stream: StreamDoc = {
     RetentionPeriodHours: 24,
     EnhancedMonitoring: [{ ShardLevelMetrics: [] }],

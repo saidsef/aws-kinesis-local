@@ -62,11 +62,13 @@ export class Subscription {
   private finished = false
   private timer: NodeJS.Timeout | undefined
   private deadline: NodeJS.Timeout | undefined
+  private endsAt = 0
   private lastEventAt = 0
   private readonly onRecords: (name: string, shardIx: number) => void
   private readonly onConsumerGone: (arn: string) => void
   private readonly onStreamDeleted: (name: string) => void
   private readonly onDrain: () => void
+  private readonly onClock: () => void
 
   constructor(context: Context, consumerArn: string, streamName: string, shardIx: number, shardId: string, position: string) {
     this.context = context
@@ -87,6 +89,7 @@ export class Subscription {
       if (name === this.streamName) this.fail(resourceNotFound(`Stream ${name} under account ${account(this.context)} not found.`))
     }
     this.onDrain = () => this.stop()
+    this.onClock = () => this.armDeadline()
   }
 
   get protocol(): Protocol {
@@ -105,11 +108,20 @@ export class Subscription {
     events.on('consumer-removed', this.onConsumerGone)
     events.on('stream-deleted', this.onStreamDeleted)
     events.on('drain', this.onDrain)
+    events.on('clock', this.onClock)
     sink.onClose(() => this.stop())
     sink.write(encodeEvent({ ':event-type': 'initial-response', ':content-type': this.payloadType, ':message-type': 'event' }, encodeBody({}, this.protocol)))
     if (this.context.store.draining) return this.stop()
-    this.deadline = setTimeout(() => this.stop(), SUBSCRIPTION_MS)
+    this.endsAt = this.context.store.now() + SUBSCRIPTION_MS
+    this.armDeadline()
     this.schedule(0)
+  }
+
+  private armDeadline() {
+    clearTimeout(this.deadline)
+    const remaining = this.endsAt - this.context.store.now()
+    if (remaining <= 0) return this.stop()
+    this.deadline = setTimeout(() => this.stop(), remaining)
   }
 
   private schedule(delay: number) {
@@ -132,7 +144,7 @@ export class Subscription {
       this.fail(error instanceof KinesisError ? error : new KinesisError('InternalFailureException', String(error), 500))
       return
     }
-    const now = Date.now()
+    const now = this.context.store.now()
     const event: Record<string, unknown> = { Records: result.records, MillisBehindLatest: result.millisBehindLatest }
     if (result.records.length) this.continuation = result.records[result.records.length - 1]!.SequenceNumber as string
     this.position = result.nextSequence
@@ -148,7 +160,7 @@ export class Subscription {
   }
 
   private send(event: Record<string, unknown>) {
-    this.lastEventAt = Date.now()
+    this.lastEventAt = this.context.store.now()
     const ordered = {
       Records: event.Records,
       ContinuationSequenceNumber: event.ContinuationSequenceNumber,
@@ -180,6 +192,7 @@ export class Subscription {
     events.off('consumer-removed', this.onConsumerGone)
     events.off('stream-deleted', this.onStreamDeleted)
     events.off('drain', this.onDrain)
+    events.off('clock', this.onClock)
     const { active } = stateOf(this.context.store)
     if (active.get(this.key) === this) active.delete(this.key)
     this.sink?.end()
@@ -200,7 +213,7 @@ export function subscribeToShard(context: Context, data: Input) {
   const position = startingSequence(context, stream, shard.shardIx, shard.shardId, data.StartingPosition, 'SubscribeToShard')
   const key = `${consumer.ConsumerARN}|${shard.shardId}`
   const { lastSubscribed, active } = stateOf(context.store)
-  const now = Date.now()
+  const now = context.store.now()
   const previous = lastSubscribed.get(key)
   if (previous !== undefined && now - previous < RESUBSCRIBE_WINDOW_MS) {
     throw resourceInUse(`Another active subscription exists for consumer ${consumer.ConsumerARN} on shard ${shard.shardId}. ` +

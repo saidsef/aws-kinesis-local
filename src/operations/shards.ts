@@ -21,8 +21,7 @@ function shardEndTime(shard: ShardDoc) {
   return end ? parseSequence(end).seqTime : Infinity
 }
 
-function filterShards(stream: StreamDoc, filter: ShardFilter) {
-  const now = Date.now()
+function filterShards(stream: StreamDoc, filter: ShardFilter, now: number) {
   const shards = stream.Shards
   const earliest = Math.min(...shards.map(shardCreateTime))
   const trimHorizon = Math.max(now - stream.RetentionPeriodHours * 3600 * 1000, earliest)
@@ -67,7 +66,7 @@ export function listShards(context: Context, data: Input) {
     name = streamNameOf(data)
   }
   const stream = getStream(context, name)
-  let shards = filter ? filterShards(stream, filter) : stream.Shards
+  let shards = filter ? filterShards(stream, filter, context.store.now()) : stream.Shards
   if (after != null) shards = shards.filter(shard => shard.ShardId > after)
   const limit = (data.MaxResults as number | undefined) ?? DEFAULT_LIST_SHARDS_LIMIT
   const page = shards.slice(0, limit)
@@ -245,14 +244,14 @@ export function registerShardTransitions(store: Store) {
     const stream = current.streams.get(name)
     if (!stream) return
     const { shardIx, hashKey } = data as { shardIx: number, hashKey: string }
-    applySplit(stream, shardIx, BigInt(hashKey), Date.now())
+    applySplit(stream, shardIx, BigInt(hashKey), current.now())
     finishResharding(current, stream, [shardIx])
   })
   store.registerTransition('mergeShards', (current, name, data) => {
     const stream = current.streams.get(name)
     if (!stream) return
     const { shardIxs } = data as { shardIxs: [number, number] }
-    applyMerge(stream, shardIxs[0], shardIxs[1], Date.now())
+    applyMerge(stream, shardIxs[0], shardIxs[1], current.now())
     finishResharding(current, stream, shardIxs)
   })
   store.registerTransition('updateShardCount', (current, name, data) => {
@@ -260,7 +259,7 @@ export function registerShardTransitions(store: Store) {
     if (!stream) return
     const open = stream.Shards.map((shard, shardIx) => (isOpen(shard) ? shardIx : -1)).filter(shardIx => shardIx >= 0)
     const { target } = data as { target: number }
-    if (open.length !== target) reshard(stream, target, Date.now())
+    if (open.length !== target) reshard(stream, target, current.now())
     finishResharding(current, stream, open)
   })
 }

@@ -57,7 +57,7 @@ export function registerStreamConsumer(context: Context, data: Input) {
   if (creating >= MAX_CREATING_CONSUMERS) {
     throw limitExceeded(`Account ${account(context)} already has ${MAX_CREATING_CONSUMERS} consumers in the CREATING state.`)
   }
-  const created = nowSeconds()
+  const created = nowSeconds(context)
   const consumer: ConsumerDoc = {
     ConsumerName: data.ConsumerName,
     ConsumerARN: `${stream.StreamARN}/consumer/${data.ConsumerName}:${created}`,

@@ -30,7 +30,7 @@ aws-kinesis-local is a single Node.js process with no runtime npm dependencies. 
 `src/handler.ts` handles each request in the order below, so the same faulty request always fails with the same error.
 
 1. Add `x-amzn-RequestId` and `x-amz-id-2`, and answer CORS preflight requests.
-2. Answer `GET /healthz`, `GET /readyz` and `POST /_control/reset`, and reject every other request that is not a `POST` with an XML `AccessDeniedException`.
+2. Answer `GET /healthz`, `GET /readyz`, `POST /_control/reset` and `POST /_control/clock`, and reject every other request that is not a `POST` with an XML `AccessDeniedException`.
 3. Read the content type and the `X-Amz-Target` header, and reject an empty body.
 4. Reject unsupported content types, and parse JSON or CBOR.
 5. Answer `application/json` requests with the Coral envelope.
@@ -85,6 +85,16 @@ Kinesis completes some changes asynchronously, and aws-kinesis-local models each
 The store saves each pending transition in the document it changes, with its due time and the data it needs, such as the new shards of a stream. A transition that is due when aws-kinesis-local starts runs at once, and a later one runs at its due time. A stopped container never leaves a stream stuck in a transitional state.
 
 A reset skips the `DELETING` state. It cancels the pending transitions of the documents it deletes and removes them in one SQLite transaction. A reset of one stream also removes the channels attached to it, because `DeleteStream` refuses a stream that has channels. The store reports each stream as deleted before it removes the consumers, and an open `SubscribeToShard` response ends with `ResourceNotFoundException` for the stream. A consumer ARN ends with its creation time in seconds, and a test that registers a consumer again after a reset can get the same ARN. Removing a consumer clears its last `SubscribeToShard` call, and the 5-second wait between subscriptions does not apply to the new consumer.
+
+## Clock
+
+The store reads the time through `now()`, which adds an offset to `Date.now()`. Operations, transitions, subscriptions and channel deliveries all read the time from the store. `POST /_control/clock` then moves all of them at once. The metadata table keeps the offset. A restart with `--path` then keeps the clock where a test left it, and the shard iterators and pending transitions from before the restart still match it.
+
+Moving the clock runs every pending transition that falls due, in order of due time, before the endpoint answers. The store then sets timers for the remaining transitions again from the new time. Each open subscription also sets its 5-minute timer again, and ends at once when the clock has passed it.
+
+The clock never moves back while streams exist, because each shard iterator and each `LATEST` position carries the time when it was made. A full reset deletes every stream, consumer and channel before it sets the clock back to real time. Sequence numbers stay in order whatever the clock does, because the counter comes before the record time in each sequence number.
+
+Log lines, S3 request signatures and the TLS certificate keep real time, because a log collector, an S3 server and a TLS client compare them with their own clocks. The delivery interval of a channel and the background record expiry run on real-time timers. Reads already leave out records that the clock has expired. The background expiry then only frees space.
 
 ## Sequence numbers and shard iterators
 

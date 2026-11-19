@@ -38,6 +38,7 @@ export interface KinesisLocal {
   address: AddressInfo
   protocol: 'http' | 'https'
   reset(stream?: string): string[]
+  advanceClock(seconds: number): number
   close(): Promise<void>
 }
 
@@ -205,6 +206,7 @@ export async function start(overrides: Partial<StartOptions> = {}): Promise<Kine
     address,
     protocol,
     reset: stream => store.reset(stream),
+    advanceClock: seconds => store.advanceClock(seconds),
     close: () => closing ??= shutdown(),
   }
 }

@@ -96,8 +96,8 @@ export function shardCreateTime(shard: ShardDoc) {
   return parseSequence(shard.SequenceNumberRange.StartingSequenceNumber).shardCreateTime
 }
 
-export function nowSeconds() {
-  return Math.floor(Date.now() / 1000)
+export function nowSeconds(context: Context) {
+  return Math.floor(context.store.now() / 1000)
 }
 
 const INVALID_TAG_CHARACTERS = /[^À-῿Ⰰ-퟿\w./\-=+_ @%]/

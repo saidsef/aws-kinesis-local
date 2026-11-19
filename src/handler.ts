@@ -9,13 +9,14 @@ import { DEFAULT_MAX_RECORD_SIZE_KIB, parseConsumerArn, streamNameFromArn, type 
 import { Subscription } from './operations/subscribe.ts'
 import { decodeCbor } from './protocol/cbor.ts'
 import { AMZ_CBOR, AMZ_JSON, encodeBody, serializeShape, type Protocol } from './protocol/serialize.ts'
-import type { Store } from './store/store.ts'
+import { MAX_CLOCK_ADVANCE_SECONDS, validClockAdvance, type Store } from './store/store.ts'
 import { coerceStructure, decodeBlobs, validateStructure, type ValidationContext } from './validation/validate.ts'
 
 const MAX_REQUEST_BYTES = 16 * 1024 * 1024
 const EVENT_STREAM = 'application/vnd.amazon.eventstream'
 const HEALTH_PATHS = ['/healthz', '/readyz']
 const RESET_PATH = '/_control/reset'
+const CLOCK_PATH = '/_control/clock'
 const EXPOSED_HEADERS = 'x-amzn-RequestId,x-amzn-ErrorType,x-amz-request-id,x-amz-id-2,x-amzn-ErrorMessage,Date'
 
 type Request = IncomingMessage | Http2ServerRequest
@@ -83,21 +84,36 @@ function sendHealth(store: Store, exchange: Exchange, path: string) {
   sendRaw(exchange, healthy ? 'ok\n' : 'unavailable\n', healthy ? 200 : 503)
 }
 
-function sendReset(store: Store, exchange: Exchange, body: Buffer | undefined) {
+function controlInput(exchange: Exchange, body: Buffer | undefined) {
   let input: unknown = {}
   try {
     if (body) input = JSON.parse(body.toString('utf8'))
   } catch {
     input = undefined
   }
-  const stream = (input as { stream?: unknown } | null | undefined)?.stream
   exchange.contentType = 'application/json'
   exchange.input = input
+  return typeof input === 'object' && input !== null && !Array.isArray(input) ? input as Record<string, unknown> : undefined
+}
+
+function sendReset(store: Store, exchange: Exchange, body: Buffer | undefined) {
+  const input = controlInput(exchange, body)
+  const stream = input?.stream
   if (typeof stream === 'string') exchange.stream = stream
-  if (typeof input !== 'object' || input === null || Array.isArray(input) || (stream !== undefined && typeof stream !== 'string')) {
+  if (!input || (stream !== undefined && typeof stream !== 'string')) {
     return sendResponse(exchange, { message: 'The body must be empty or a JSON object whose stream member is a string.' }, 400)
   }
   sendResponse(exchange, { streams: store.reset(stream) })
+}
+
+function sendClock(store: Store, exchange: Exchange, body: Buffer | undefined) {
+  const seconds = controlInput(exchange, body)?.advanceSeconds
+  if (!validClockAdvance(seconds)) {
+    return sendResponse(exchange, {
+      message: `The body must be a JSON object whose advanceSeconds member is a number from 0 to ${MAX_CLOCK_ADVANCE_SECONDS}.`,
+    }, 400)
+  }
+  sendResponse(exchange, { offsetSeconds: store.advanceClock(seconds) })
 }
 
 function validationContext(store: Store, data: Record<string, unknown>): ValidationContext {
@@ -217,6 +233,7 @@ function respond(store: Store, exchange: Exchange, body: Buffer | undefined) {
   const path = req.url?.split('?')[0] ?? ''
   if (req.method === 'GET' && HEALTH_PATHS.includes(path)) return sendHealth(store, exchange, path)
   if (req.method === 'POST' && path === RESET_PATH) return sendReset(store, exchange, body)
+  if (req.method === 'POST' && path === CLOCK_PATH) return sendClock(store, exchange, body)
   if (req.method !== 'POST') {
     return sendError(exchange, false, 'AccessDeniedException', 'Unable to determine service/operation name to be authorized')
   }
