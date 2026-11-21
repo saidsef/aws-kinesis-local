@@ -2,8 +2,8 @@ import { promisify } from 'node:util'
 import { gzip, zstdCompress } from 'node:zlib'
 import type { Logger } from '../logger.ts'
 import { streamNameFromArn } from '../operations/common.ts'
-import type { Store } from '../store/store.ts'
-import type { ChannelDoc, StoredRecord, StreamDoc } from '../store/types.ts'
+import type { ReadRecord, Store } from '../store/store.ts'
+import type { ChannelDoc, StreamDoc } from '../store/types.ts'
 import { objectKey } from './key-template.ts'
 import { putObject, type S3Client } from './s3.ts'
 
@@ -20,7 +20,7 @@ const COMPRESSORS: Record<string, (data: Buffer) => Promise<Buffer>> = {
   ZSTD: promisify(zstdCompress),
 }
 
-export interface BatchRecord extends StoredRecord {
+export interface BatchRecord extends ReadRecord {
   ShardId: string
 }
 
@@ -66,37 +66,37 @@ function errorEntry(channel: ChannelDoc, streamARN: string, record: BatchRecord,
     channelARN: channel.ChannelARN,
     streamARN,
     shardId: record.ShardId,
-    sequenceNumber: record.SequenceNumber,
-    approximateArrivalTimestamp: new Date(record.ApproximateArrivalTimestamp * 1000).toISOString(),
+    sequenceNumber: record.sequenceNumber,
+    approximateArrivalTimestamp: new Date(record.arrival * 1000).toISOString(),
     errorCode: 'FormatMismatch',
     errorMessage: reason,
   })
 }
 
-function objectBody(records: StoredRecord[], format: string) {
-  if (format === 'BYTE_ARRAY') return Buffer.concat(records.map(record => record.Data))
-  return Buffer.concat(records.flatMap(record => [record.Data, NEWLINE]))
+function objectBody(records: ReadRecord[], format: string) {
+  if (format === 'BYTE_ARRAY') return Buffer.concat(records.map(record => record.data))
+  return Buffer.concat(records.flatMap(record => [record.data, NEWLINE]))
 }
 
 // Child shards come after their parents in stream.Shards, and a batch ends at its size limit, so a batch never takes a
 // record from a child shard before it holds the last record of every parent.
-export function nextBatch(store: Store, channel: ChannelDoc, stream: StreamDoc, maxBytes = MAX_OBJECT_BYTES): Batch {
-  const saved = store.deliveryPositions(channel.ChannelId, stream.StreamName)
+export async function nextBatch(store: Store, channel: ChannelDoc, stream: StreamDoc, maxBytes = MAX_OBJECT_BYTES): Promise<Batch> {
+  const saved = await store.deliveryPositions(channel, stream.StreamName)
   const activatedAt = (channel._activatedAt ?? channel.ChannelCreationTimestamp * 1000) / 1000
   const batch: Batch = { records: [], positions: new Map(), full: false }
   let bytes = 0
   for (let shardIx = 0; shardIx < stream.Shards.length && !batch.full; shardIx++) {
     const { ShardId } = stream.Shards[shardIx]!
-    const since = saved.has(shardIx) ? 0 : activatedAt
-    let after = saved.get(shardIx) ?? ''
-    let rows: StoredRecord[]
+    const arrivedSince = saved.has(shardIx) ? undefined : activatedAt
+    let after = saved.get(shardIx)
+    let rows: ReadRecord[]
     do {
-      rows = store.readDeliveryRecords(stream.StreamName, shardIx, after, since, PAGE_SIZE)
+      rows = await store.readRecords({ stream: stream.StreamName, shardIx, after, arrivedSince, limit: PAGE_SIZE })
       for (const row of rows) {
         batch.records.push({ ...row, ShardId })
-        batch.positions.set(shardIx, row.SequenceNumber)
-        after = row.SequenceNumber
-        bytes += row.Data.length
+        batch.positions.set(shardIx, row.sequenceNumber)
+        after = row.sequenceNumber
+        bytes += row.data.length
         if (bytes >= maxBytes) {
           batch.full = true
           break
@@ -201,13 +201,13 @@ export class ChannelDelivery {
     for (;;) {
       const stream = this.store.streams.get(streamName)
       if (this.stopped || !stream || !this.current(worker)) return
-      const batch = nextBatch(this.store, channel, stream)
-      if (!batch.records.length) return
+      const batch = await nextBatch(this.store, channel, stream)
+      if (!batch.records.length || this.stopped || !this.current(worker)) return
       const values = { channelName: channel.ChannelName, channelId: channel.ChannelId, streamName, compressionType, time: new Date(this.store.now()) }
       const valid: BatchRecord[] = []
       const errors: string[] = []
       for (const record of batch.records) {
-        const reason = formatError(record.Data, format)
+        const reason = formatError(record.data, format)
         if (reason === undefined) valid.push(record)
         else errors.push(errorEntry(channel, streamARN, record, reason))
       }
@@ -216,7 +216,7 @@ export class ChannelDelivery {
       if (errorKey) await putObject(this.client, { bucket: errorBucket, key: errorKey, body: `${errors.join('\n')}\n` })
       if (key) await putObject(this.client, { bucket, key, body: await COMPRESSORS[compressionType]!(objectBody(valid, format)) })
       if (!this.current(worker)) return
-      this.store.saveDeliveryPositions(channel.ChannelId, streamName, batch.positions)
+      await this.store.saveDeliveryPositions(channel, streamName, batch.positions)
       const fields = { channel: channel.ChannelName, stream: streamName }
       if (errorKey) this.logger.log('warn', { message: 'Channel sent records to its dead-letter location', ...fields, bucket: errorBucket, key: errorKey, records: errors.length })
       if (key) this.logger.log('info', { message: 'Channel delivered an object', ...fields, bucket, key, records: valid.length })

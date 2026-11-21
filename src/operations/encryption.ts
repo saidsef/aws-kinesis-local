@@ -10,26 +10,24 @@ function activeStream(context: Context, name: string) {
   return stream
 }
 
-export function startStreamEncryption(context: Context, data: Input) {
+export async function startStreamEncryption(context: Context, data: Input) {
   const name = streamNameOf(data)
   const stream = activeStream(context, name)
   if (data.EncryptionType !== 'KMS') {
     throw invalidArgument(`EncryptionType ${data.EncryptionType} is not supported by StartStreamEncryption. Use KMS.`)
   }
   stream.StreamStatus = 'UPDATING'
-  context.store.saveStream(stream)
-  context.store.schedule('stream', name, 'startEncryption', context.store.options.updateStreamMs, { keyId: data.KeyId })
+  await context.store.schedule('stream', stream, 'startEncryption', context.store.options.updateStreamMs, { keyId: data.KeyId })
 }
 
-export function stopStreamEncryption(context: Context, data: Input) {
+export async function stopStreamEncryption(context: Context, data: Input) {
   const name = streamNameOf(data)
   const stream = activeStream(context, name)
   if (data.EncryptionType !== 'KMS') {
     throw invalidArgument(`EncryptionType ${data.EncryptionType} is not supported by StopStreamEncryption. Use KMS.`)
   }
   stream.StreamStatus = 'UPDATING'
-  context.store.saveStream(stream)
-  context.store.schedule('stream', name, 'stopEncryption', context.store.options.updateStreamMs)
+  await context.store.schedule('stream', stream, 'stopEncryption', context.store.options.updateStreamMs)
 }
 
 export function registerEncryptionTransitions(store: Store) {
@@ -39,7 +37,7 @@ export function registerEncryptionTransitions(store: Store) {
     stream.EncryptionType = 'KMS'
     stream.KeyId = (data as { keyId: string }).keyId
     stream.StreamStatus = 'ACTIVE'
-    current.saveStream(stream)
+    return current.saveStream(stream)
   })
   store.registerTransition('stopEncryption', (current, name) => {
     const stream = current.streams.get(name)
@@ -47,6 +45,6 @@ export function registerEncryptionTransitions(store: Store) {
     stream.EncryptionType = 'NONE'
     delete stream.KeyId
     stream.StreamStatus = 'ACTIVE'
-    current.saveStream(stream)
+    return current.saveStream(stream)
   })
 }

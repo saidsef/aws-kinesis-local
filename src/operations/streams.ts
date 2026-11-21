@@ -36,7 +36,7 @@ export function requireBillingCommitment(context: Context, parameter: string) {
   }
 }
 
-export function createStream(context: Context, data: Input) {
+export async function createStream(context: Context, data: Input) {
   const name = data.StreamName as string
   const { store } = context
   if (store.streams.has(name)) throw resourceInUse(`Stream ${name} under account ${account(context)} already exists.`)
@@ -77,11 +77,10 @@ export function createStream(context: Context, data: Input) {
   if (data.MaxRecordSizeInKiB != null) stream.MaxRecordSizeInKiB = data.MaxRecordSizeInKiB
   if (data.RecordDistributionStrategy != null) stream.RecordDistributionStrategy = data.RecordDistributionStrategy
   if (data.WarmThroughputMiBps != null) stream.WarmThroughput = { TargetMiBps: data.WarmThroughputMiBps, CurrentMiBps: data.WarmThroughputMiBps }
-  store.saveStream(stream)
-  store.schedule('stream', name, 'activateStream', store.options.createStreamMs, uniformShards(shardCount, createTime))
+  await store.schedule('stream', stream, 'activateStream', store.options.createStreamMs, uniformShards(shardCount, createTime))
 }
 
-export function deleteStream(context: Context, data: Input) {
+export async function deleteStream(context: Context, data: Input) {
   const name = streamNameOf(data)
   const { store } = context
   const stream = getStream(context, name)
@@ -96,16 +95,14 @@ export function deleteStream(context: Context, data: Input) {
     throw resourceInUse(`Stream ${name} under account ${account(context)} has channels attached. Delete the channels first.`)
   }
   stream.StreamStatus = 'DELETING'
-  store.transaction(() => {
-    store.saveStream(stream)
-    store.deleteStreamRecords(name)
-  })
+  const writes = [store.deleteStreamRecords(name)]
   for (const consumer of consumers) {
     consumer.ConsumerStatus = 'DELETING'
-    store.saveConsumer(consumer)
+    writes.push(store.saveConsumer(consumer))
   }
   store.events.emit('stream-deleted', name)
-  store.schedule('stream', name, 'deleteStream', store.options.deleteStreamMs)
+  writes.push(store.schedule('stream', stream, 'deleteStream', store.options.deleteStreamMs))
+  await Promise.all(writes)
 }
 
 function describeStreamView(stream: StreamDoc, shards: ShardDoc[], hasMoreShards: boolean) {
@@ -171,14 +168,16 @@ export function registerStreamTransitions(store: Store) {
     if (!stream) return
     stream.StreamStatus = 'ACTIVE'
     stream.Shards = shards as ShardDoc[]
-    current.saveStream(stream)
+    return current.saveStream(stream)
   })
   store.registerTransition('deleteStream', (current, name) => {
     const stream = current.streams.get(name)
+    const writes: Promise<unknown>[] = []
     for (const consumer of [...current.consumers.values()]) {
-      if (consumer.StreamName === name) current.removeConsumer(consumer.ConsumerARN)
+      if (consumer.StreamName === name) writes.push(current.removeConsumer(consumer.ConsumerARN))
     }
-    if (stream) current.removePolicy(stream.StreamARN)
-    current.removeStream(name)
+    if (stream) writes.push(current.removePolicy(stream.StreamARN))
+    writes.push(current.removeStream(name))
+    return Promise.all(writes)
   })
 }

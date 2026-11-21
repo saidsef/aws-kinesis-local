@@ -141,8 +141,8 @@ describe('reset', () => {
   it('offers the same reset through the object that start() returns', async () => {
     await activeStream('orders')
     await activeStream('payments')
-    assert.deepEqual(server.reset('orders'), ['orders'])
-    assert.deepEqual(server.reset(), ['payments'])
+    assert.deepEqual(await server.reset('orders'), ['orders'])
+    assert.deepEqual(await server.reset(), ['payments'])
     assert.deepEqual(await streamNames(), [])
   })
 
@@ -152,7 +152,7 @@ describe('reset', () => {
     let persistentClient = kinesis(persistent.endpoint)
     try {
       await persistentClient.send(new CreateStreamCommand({ StreamName: 'orders', ShardCount: 1 }))
-      assert.deepEqual(persistent.reset(), ['orders'])
+      assert.deepEqual(await persistent.reset(), ['orders'])
       persistentClient.destroy()
       await persistent.close()
       persistent = await startServer({ path })

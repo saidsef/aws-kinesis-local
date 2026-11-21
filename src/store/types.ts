@@ -82,19 +82,44 @@ export interface AccountSettings {
   }
 }
 
-export interface StoredRecord {
-  SequenceNumber: string
-  PartitionKey: string | null
-  Data: Buffer
-  ApproximateArrivalTimestamp: number
-  EncryptionType: string | null
-}
+export type DocumentKind = 'stream' | 'consumer' | 'channel' | 'policy' | 'settings' | 'clock'
 
-export interface NewRecord {
+export type StoredDocument =
+  | { kind: 'stream', key: string, value: StreamDoc }
+  | { kind: 'consumer', key: string, value: ConsumerDoc }
+  | { kind: 'channel', key: string, value: ChannelDoc }
+  | { kind: 'policy', key: string, value: string }
+  | { kind: 'settings', key: string, value: AccountSettings }
+  | { kind: 'clock', key: string, value: number }
+
+export interface StoredRecord {
   shardIx: number
   sequenceNumber: string
   partitionKey: string | null
-  data: Buffer
+  data: Uint8Array
   arrival: number
   encryptionType: string | null
+}
+
+export interface RecordQuery {
+  stream: string
+  shardIx: number
+  from?: string
+  after?: string
+  arrivedSince?: number
+  limit: number
+}
+
+export interface StorageBackend {
+  readDocuments(): Promise<StoredDocument[]>
+  putDocument(document: StoredDocument): Promise<void>
+  deleteDocument(kind: DocumentKind, key: string): Promise<void>
+  putRecords(stream: StreamDoc, records: StoredRecord[]): Promise<void>
+  readRecords(query: RecordQuery): Promise<StoredRecord[]>
+  expireRecords(stream: string, shardIx: number, arrivedBefore: number, limit: number): Promise<number>
+  deleteRecords(stream: string): Promise<void>
+  readDeliveryPositions(channelId: string, stream: string): Promise<Map<number, string>>
+  putDeliveryPositions(channelId: string, stream: string, positions: Map<number, string>): Promise<void>
+  deleteDeliveryPositions(channelId: string): Promise<void>
+  ping(): Promise<void>
 }

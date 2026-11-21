@@ -15,7 +15,7 @@ function canonicalArn(context: Context, arn: string) {
   return getStream(context, name).StreamARN
 }
 
-export function putResourcePolicy(context: Context, data: Input) {
+export async function putResourcePolicy(context: Context, data: Input) {
   const arn = canonicalArn(context, data.ResourceARN)
   let policy: unknown
   try {
@@ -26,13 +26,13 @@ export function putResourcePolicy(context: Context, data: Input) {
   if (policy === null || typeof policy !== 'object' || Array.isArray(policy)) {
     throw invalidArgument('Policy must be a valid JSON policy document.')
   }
-  context.store.savePolicy(arn, data.Policy)
+  await context.store.savePolicy(arn, data.Policy)
 }
 
 export function getResourcePolicy(context: Context, data: Input) {
   return { Policy: context.store.policies.get(canonicalArn(context, data.ResourceARN)) ?? '{}' }
 }
 
-export function deleteResourcePolicy(context: Context, data: Input) {
-  context.store.removePolicy(canonicalArn(context, data.ResourceARN))
+export async function deleteResourcePolicy(context: Context, data: Input) {
+  await context.store.removePolicy(canonicalArn(context, data.ResourceARN))
 }

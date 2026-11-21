@@ -14,7 +14,7 @@ function activeStream(context: Context, name: string) {
   return stream
 }
 
-export function updateStreamMode(context: Context, data: Input) {
+export async function updateStreamMode(context: Context, data: Input) {
   const name = streamNameOf(data)
   const stream = activeStream(context, name)
   const mode = data.StreamModeDetails.StreamMode as StreamMode
@@ -29,21 +29,20 @@ export function updateStreamMode(context: Context, data: Input) {
     requireBillingCommitment(context, 'WarmThroughputMiBps')
   }
   stream.StreamStatus = 'UPDATING'
-  context.store.saveStream(stream)
-  context.store.schedule('stream', name, 'updateStreamMode', context.store.options.updateStreamMs, {
+  await context.store.schedule('stream', stream, 'updateStreamMode', context.store.options.updateStreamMs, {
     mode,
     warmThroughput: data.WarmThroughputMiBps ?? null,
   })
 }
 
-export function updateMaxRecordSize(context: Context, data: Input) {
+export async function updateMaxRecordSize(context: Context, data: Input) {
   const name = streamNameOf(data)
   const stream = activeStream(context, name)
   stream.MaxRecordSizeInKiB = data.MaxRecordSizeInKiB
-  context.store.saveStream(stream)
+  await context.store.saveStream(stream)
 }
 
-export function updateStreamWarmThroughput(context: Context, data: Input) {
+export async function updateStreamWarmThroughput(context: Context, data: Input) {
   const name = streamNameOf(data)
   const stream = activeStream(context, name)
   if (streamMode(stream) !== 'ON_DEMAND') {
@@ -54,19 +53,18 @@ export function updateStreamWarmThroughput(context: Context, data: Input) {
   const current = stream.WarmThroughput?.CurrentMiBps ?? 0
   stream.WarmThroughput = { TargetMiBps: target, CurrentMiBps: current }
   stream.StreamStatus = 'UPDATING'
-  context.store.saveStream(stream)
-  context.store.schedule('stream', name, 'updateWarmThroughput', context.store.options.updateStreamMs, { target })
+  await context.store.schedule('stream', stream, 'updateWarmThroughput', context.store.options.updateStreamMs, { target })
   return { StreamARN: stream.StreamARN, StreamName: name, WarmThroughput: { TargetMiBps: target, CurrentMiBps: current } }
 }
 
-export function updateStreamRecordDistributionStrategy(context: Context, data: Input) {
+export async function updateStreamRecordDistributionStrategy(context: Context, data: Input) {
   const name = streamNameOf(data)
   const stream = activeStream(context, name)
   if (streamMode(stream) !== 'ON_DEMAND') {
     throw invalidArgument(`UpdateStreamRecordDistributionStrategy is supported only for streams in ON_DEMAND capacity mode. Stream ${name} is PROVISIONED.`)
   }
   stream.RecordDistributionStrategy = data.RecordDistributionStrategy
-  context.store.saveStream(stream)
+  await context.store.saveStream(stream)
 }
 
 export function registerCapacityTransitions(store: Store) {
@@ -82,7 +80,7 @@ export function registerCapacityTransitions(store: Store) {
       stream.WarmThroughput = { TargetMiBps: warmThroughput, CurrentMiBps: warmThroughput }
     }
     stream.StreamStatus = 'ACTIVE'
-    current.saveStream(stream)
+    return current.saveStream(stream)
   })
   store.registerTransition('updateWarmThroughput', (current, name, data) => {
     const stream = current.streams.get(name)
@@ -90,6 +88,6 @@ export function registerCapacityTransitions(store: Store) {
     const { target } = data as { target: number }
     stream.WarmThroughput = { TargetMiBps: target, CurrentMiBps: target }
     stream.StreamStatus = 'ACTIVE'
-    current.saveStream(stream)
+    return current.saveStream(stream)
   })
 }

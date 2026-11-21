@@ -2,13 +2,14 @@
 
 aws-kinesis-local is a single Node.js process with no runtime npm dependencies. It uses only the Node.js modules for HTTP, HTTP/2, TLS, cryptography, SQLite and zlib, so the npm package and the image ship compiled JavaScript and nothing else.
 
-[![AWS clients connect over HTTP/1.1 or HTTP/2, with or without TLS, on the same port. The listener passes each connection to the matching server. The request handler validates each request against the generated model and runs the operation, and the store keeps its data in SQLite.](architecture.svg)](architecture.svg)
+[![AWS clients connect over HTTP/1.1 or HTTP/2, with or without TLS, on the same port. The listener passes each connection to the matching server. The request handler validates each request against the generated model and runs the operation. The store keeps its data in SQLite or in a storage backend that a caller passes to start().](architecture.svg)](architecture.svg)
 
 ## Source layout
 
 | Path | Responsibility |
 | --- | --- |
-| `src/index.ts` | The package's public API: `start()`, `defaultOptions()`, and the `StartOptions` and `KinesisLocal` types |
+| `src/index.ts` | The package's public API: `start()`, `defaultOptions()`, the `StartOptions` and `KinesisLocal` types, and the `StorageBackend` interface with its document and record types |
+| `src/testing.ts` | Test suite for storage backends, which the package exports as `@saidsef/aws-kinesis-local/testing` |
 | `src/cli.ts`, `src/arguments.ts` | Command-line flags, start-up and shutdown |
 | `src/server.ts` | Defaults, listeners, protocol detection and store start-up |
 | `src/handler.ts` | Request pipeline from headers to response |
@@ -20,7 +21,7 @@ aws-kinesis-local is a single Node.js process with no runtime npm dependencies. 
 | `src/protocol/` | CBOR codec, event stream encoder and the serialiser for responses |
 | `src/kinesis/` | Sequence numbers, shard IDs and shard iterators |
 | `src/operations/` | One module for each feature in [Supported operations](../supported-operations.md), and the registry in `index.ts` |
-| `src/store/` | SQLite store and document types |
+| `src/store/` | Store, storage backend interface, SQLite backend and document types |
 | `src/delivery/` | Signed S3 client, object keys and the delivery loop for channels |
 | `scripts/` | Model download and code generation |
 | `model/` | Kinesis Smithy model that the generator reads |
@@ -39,7 +40,7 @@ aws-kinesis-local is a single Node.js process with no runtime npm dependencies. 
 8. Check member types, then member constraints, as [Request validation](validation.md) describes.
 9. Decode blobs, run the operation and serialise its result for the request's protocol.
 
-Each request runs synchronously on the event loop between the end of its body and its response, and `node:sqlite` is synchronous. Requests never interleave as a result, and aws-kinesis-local needs no per-stream locks.
+An operation changes the documents in memory before its first `await` and then waits for the storage backend. Requests can interleave while they wait. The store runs the backend calls for each stream one at a time in the order they arrive. Requests to one stream then take effect in that order, whichever backend is in use. [Storage](storage.md#order-of-backend-calls) describes the queues.
 
 ## Request logs
 
@@ -47,7 +48,7 @@ The handler assigns a request ID and sets `x-amzn-RequestId` as soon as headers 
 
 The outcome of a request sets the level of its line. A 5xx status logs at `error`, a 4xx status or an exception event at `warn`, a health check or a CORS preflight request at `debug`, and any other request at `info`. Health checks log at `debug` because Kubernetes probes call them every few seconds.
 
-The `path` field leaves out the query string, because a presigned request carries its credential and signature there. The handler never logs headers for the same reason. At the `trace` level, `request` holds the body after JSON or CBOR decoding and before validation, or the raw text of a body that does not parse. The logger writes blobs as base64 and CBOR big integers as strings, because JSON has neither byte strings nor big integers. The event stream of a `SubscribeToShard` response stays out of the log.
+The `path` field leaves out the query string, because a presigned request carries its credential and signature there. The handler never logs headers for the same reason. At the `trace` level, `request` holds the body after JSON or CBOR decoding and before validation, or the raw text of a body that does not parse. The logger writes blobs as base64 and CBOR big integers as strings, because JSON has neither byte strings nor big integers. The logger leaves out the event stream of a `SubscribeToShard` response.
 
 ## HTTP/1.1, HTTP/2 and TLS on the same port
 
@@ -68,9 +69,9 @@ The AWS SDK for Java is the only AWS SDK that sends CBOR to Kinesis. It writes r
 
 ## Health checks and shutdown
 
-`/healthz` runs a query against SQLite, so a 200 means that the event loop and the database both respond. `/readyz` also fails as soon as shutdown starts.
+`/healthz` calls `ping()` on the storage backend, which runs a query against SQLite in the default backend. A 200 then means that the event loop and the datastore both respond. `/readyz` also fails as soon as shutdown starts.
 
-`close()` sets the store to draining, which fails `/readyz` and ends every subscription. It then stops the listener, sends a `GOAWAY` frame to each HTTP/2 session and waits for the requests in progress. The server counts a request from its headers until its response closes. That count works the same for HTTP/1.1, HTTP/2 and TLS, where the sockets that the listener tracks are not the sockets that carry the requests. A request that arrives on an open HTTP/1.1 connection during shutdown still runs, and its response carries `Connection: close`. When the count reaches zero or `shutdownMs` passes, `close()` closes the store and destroys the remaining sockets.
+`close()` sets the store to draining, which fails `/readyz` and ends every subscription. It then stops the listener, sends a `GOAWAY` frame to each HTTP/2 session and waits for the requests in progress. The server counts a request from its headers until its response closes. That count works the same for HTTP/1.1, HTTP/2 and TLS, where the sockets that the listener tracks are not the sockets that carry the requests. A request that arrives on an open HTTP/1.1 connection during shutdown still runs, and its response carries `Connection: close`. When the count reaches zero or `shutdownMs` passes, `close()` waits for backend calls in progress, closes the SQLite backend and destroys remaining sockets. It leaves open a backend that a caller passed to `start()`.
 
 ## State transitions
 
@@ -84,15 +85,15 @@ Kinesis completes some changes asynchronously, and aws-kinesis-local models each
 
 The store saves each pending transition in the document it changes, with its due time and the data it needs, such as the new shards of a stream. A transition that is due when aws-kinesis-local starts runs at once, and a later one runs at its due time. A stopped container never leaves a stream stuck in a transitional state.
 
-A reset skips the `DELETING` state. It cancels the pending transitions of the documents it deletes and removes them in one SQLite transaction. A reset of one stream also removes the channels attached to it, because `DeleteStream` refuses a stream that has channels. The store reports each stream as deleted before it removes the consumers, and an open `SubscribeToShard` response ends with `ResourceNotFoundException` for the stream. A consumer ARN ends with its creation time in seconds, and a test that registers a consumer again after a reset can get the same ARN. Removing a consumer clears its last `SubscribeToShard` call, and the 5-second wait between subscriptions does not apply to the new consumer.
+A reset skips the `DELETING` state. It cancels the pending transitions of the documents it deletes, removes them from memory at once and then waits for the backend to delete them. A reset of one stream also removes the channels attached to it, because `DeleteStream` refuses a stream that has channels. The store reports each stream as deleted before it removes the consumers, and an open `SubscribeToShard` response ends with `ResourceNotFoundException` for the stream. A consumer ARN ends with its creation time in seconds, and a test that registers a consumer again after a reset can get the same ARN. Removing a consumer clears its last `SubscribeToShard` call, and the 5-second wait between subscriptions does not apply to the new consumer.
 
 ## Clock
 
-The store reads the time through `now()`, which adds an offset to `Date.now()`. Operations, transitions, subscriptions and channel deliveries all read the time from the store. `POST /_control/clock` then moves all of them at once. The metadata table keeps the offset. A restart with `--path` then keeps the clock where a test left it, and the shard iterators and pending transitions from before the restart still match it.
+The store reads the time through `now()`, which adds an offset to `Date.now()`. Operations, transitions, subscriptions and channel deliveries all read the time from the store. `POST /_control/clock` then moves all of them at once. The backend keeps the offset in the clock document. A restart with `--path` then keeps the clock where a test left it, and the shard iterators and pending transitions from before the restart still match it.
 
 Moving the clock runs every pending transition that falls due, in order of due time, before the endpoint answers. The store then sets timers for the remaining transitions again from the new time. Each open subscription also sets its 5-minute timer again, and ends at once when the clock has passed it.
 
-The clock never moves back while streams exist, because each shard iterator and each `LATEST` position carries the time when it was made. A full reset deletes every stream, consumer and channel before it sets the clock back to real time. Sequence numbers stay in order whatever the clock does, because the counter comes before the record time in each sequence number.
+The clock never moves back while streams exist, because each shard iterator and each `LATEST` position carries the time when it was made. A full reset deletes every stream, consumer and channel before it sets the clock back to real time. Sequence numbers remain in order whatever the clock does, because the counter comes before the record time in each sequence number.
 
 Log lines, S3 request signatures and the TLS certificate keep real time, because a log collector, an S3 server and a TLS client compare them with their own clocks. The delivery interval of a channel and the background record expiry run on real-time timers. Reads already leave out records that the clock has expired. The background expiry then only frees space.
 
@@ -139,6 +140,6 @@ The records table is the buffer. The `activateChannel` transition saves the time
 
 Before an upload, a delivery checks each record of a `JSON` or `STRING` stream and moves the records that fail into an error object. It uploads the error object first and the destination object second. A failed destination upload then repeats only the error object on the next attempt, and never the delivered records.
 
-A delivery reads rows in pages and ends an object at a size limit, so a backlog after an outage becomes several objects. An upload that gets no response fails after a timeout. The store saves the new positions in one transaction only after the S3 server accepts every object of the batch. The next interval reads the records of a failed upload again.
+A delivery reads rows in pages and ends an object at a size limit, so a backlog after an outage becomes several objects. An upload that gets no response fails after a timeout. The store saves new positions only after the S3 server accepts every object of a batch. The SQLite backend saves them in one transaction. The next interval reads the records of a failed upload again.
 
 A reset can replace a channel with a new one under the same ARN. Each timer holds the channel document that it started with, and stops when the store no longer holds that document. Positions belong to the channel ID, and removing a channel deletes them. Shutdown stops the timers and waits for the uploads in progress, within `shutdownMs`, before it closes the store.

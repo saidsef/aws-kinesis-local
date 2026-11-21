@@ -60,6 +60,8 @@ export class Subscription {
   private continuation: string
   private sink: EventSink | undefined
   private finished = false
+  private reading = false
+  private readAgain = false
   private timer: NodeJS.Timeout | undefined
   private deadline: NodeJS.Timeout | undefined
   private endsAt = 0
@@ -127,10 +129,14 @@ export class Subscription {
   private schedule(delay: number) {
     if (this.finished) return
     clearTimeout(this.timer)
-    this.timer = setTimeout(() => this.deliver(), delay)
+    if (this.reading) {
+      this.readAgain = true
+      return
+    }
+    this.timer = setTimeout(() => void this.deliver(), delay)
   }
 
-  private deliver() {
+  private async deliver() {
     if (this.finished || !this.sink) return
     const stream = this.context.store.streams.get(this.streamName)
     if (!stream) {
@@ -138,12 +144,17 @@ export class Subscription {
       return
     }
     let result
+    this.reading = true
+    this.readAgain = false
     try {
-      result = readShard(this.context, stream, this.shardIx, parseSequence(this.position), this.position, EVENT_RECORD_LIMIT)
+      result = await readShard(this.context, stream, this.shardIx, parseSequence(this.position), this.position, EVENT_RECORD_LIMIT)
     } catch (error) {
       this.fail(error instanceof KinesisError ? error : new KinesisError('InternalFailureException', String(error), 500))
       return
+    } finally {
+      this.reading = false
     }
+    if (this.finished) return
     const now = this.context.store.now()
     const event: Record<string, unknown> = { Records: result.records, MillisBehindLatest: result.millisBehindLatest }
     if (result.records.length) this.continuation = result.records[result.records.length - 1]!.SequenceNumber as string
@@ -156,7 +167,7 @@ export class Subscription {
     }
     event.ContinuationSequenceNumber = this.continuation
     if (result.records.length || now - this.lastEventAt >= HEARTBEAT_MS) this.send(event)
-    this.schedule(result.records.length === EVENT_RECORD_LIMIT ? 0 : POLL_MS)
+    this.schedule(this.readAgain || result.records.length === EVENT_RECORD_LIMIT ? 0 : POLL_MS)
   }
 
   private send(event: Record<string, unknown>) {
@@ -199,7 +210,7 @@ export class Subscription {
   }
 }
 
-export function subscribeToShard(context: Context, data: Input) {
+export async function subscribeToShard(context: Context, data: Input) {
   const consumer = context.store.consumers.get(data.ConsumerARN)
   if (!consumer) throw consumerNotFound(context, data.ConsumerARN)
   if (consumer.ConsumerStatus !== 'ACTIVE') {
@@ -210,7 +221,8 @@ export function subscribeToShard(context: Context, data: Input) {
   if (!shard || shard.shardIx >= stream.Shards.length) {
     throw resourceNotFound(`Could not find shard ${data.ShardId} in stream ${consumer.StreamName} under account ${account(context)}.`)
   }
-  const position = startingSequence(context, stream, shard.shardIx, shard.shardId, data.StartingPosition, 'SubscribeToShard')
+  const position = await startingSequence(context, stream, shard.shardIx, shard.shardId, data.StartingPosition, 'SubscribeToShard')
+  if (context.store.consumers.get(consumer.ConsumerARN) !== consumer) throw consumerNotFound(context, data.ConsumerARN)
   const key = `${consumer.ConsumerARN}|${shard.shardId}`
   const { lastSubscribed, active } = stateOf(context.store)
   const now = context.store.now()

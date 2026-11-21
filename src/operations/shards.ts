@@ -132,7 +132,7 @@ function applyMerge(stream: StreamDoc, shardIx: number, adjacentShardIx: number,
   })
 }
 
-export function splitShard(context: Context, data: Input) {
+export async function splitShard(context: Context, data: Input) {
   const name = streamNameOf(data)
   const target = resolveShardId(data.ShardToSplit)
   if (!target) throw missingShard(context, name, data.ShardToSplit)
@@ -152,11 +152,10 @@ export function splitShard(context: Context, data: Input) {
       `${shard.HashKeyRange.StartingHashKey} and less than the shard's EndingHashKey ${shard.HashKeyRange.EndingHashKey}.`)
   }
   stream.StreamStatus = 'UPDATING'
-  context.store.saveStream(stream)
-  context.store.schedule('stream', name, 'splitShard', context.store.options.updateStreamMs, { shardIx: target.shardIx, hashKey: hashKey.toString() })
+  await context.store.schedule('stream', stream, 'splitShard', context.store.options.updateStreamMs, { shardIx: target.shardIx, hashKey: hashKey.toString() })
 }
 
-export function mergeShards(context: Context, data: Input) {
+export async function mergeShards(context: Context, data: Input) {
   const name = streamNameOf(data)
   const requested = [data.ShardToMerge as string, data.AdjacentShardToMerge as string]
   const targets = requested.map(shardId => {
@@ -179,8 +178,7 @@ export function mergeShards(context: Context, data: Input) {
       'are not an adjacent pair of shards eligible for merging')
   }
   stream.StreamStatus = 'UPDATING'
-  context.store.saveStream(stream)
-  context.store.schedule('stream', name, 'mergeShards', context.store.options.updateStreamMs, { shardIxs: [first.shardIx, second.shardIx] })
+  await context.store.schedule('stream', stream, 'mergeShards', context.store.options.updateStreamMs, { shardIxs: [first.shardIx, second.shardIx] })
 }
 
 function reshard(stream: StreamDoc, target: number, now: number) {
@@ -205,7 +203,7 @@ function reshard(stream: StreamDoc, target: number, now: number) {
   }
 }
 
-export function updateShardCount(context: Context, data: Input) {
+export async function updateShardCount(context: Context, data: Input) {
   const name = streamNameOf(data)
   const stream = getStream(context, name)
   if (streamMode(stream) === 'ON_DEMAND') {
@@ -228,15 +226,15 @@ export function updateShardCount(context: Context, data: Input) {
     throw limitExceeded(shardLimitMessage(context, shardSum, target - current))
   }
   stream.StreamStatus = 'UPDATING'
-  context.store.saveStream(stream)
-  context.store.schedule('stream', name, 'updateShardCount', context.store.options.updateStreamMs, { target })
+  await context.store.schedule('stream', stream, 'updateShardCount', context.store.options.updateStreamMs, { target })
   return { StreamName: name, CurrentShardCount: current, TargetShardCount: target, StreamARN: stream.StreamARN }
 }
 
 function finishResharding(store: Store, stream: StreamDoc, closed: number[]) {
   stream.StreamStatus = 'ACTIVE'
-  store.saveStream(stream)
+  const saved = store.saveStream(stream)
   for (const shardIx of closed) store.events.emit('records', stream.StreamName, shardIx)
+  return saved
 }
 
 export function registerShardTransitions(store: Store) {
@@ -245,14 +243,14 @@ export function registerShardTransitions(store: Store) {
     if (!stream) return
     const { shardIx, hashKey } = data as { shardIx: number, hashKey: string }
     applySplit(stream, shardIx, BigInt(hashKey), current.now())
-    finishResharding(current, stream, [shardIx])
+    return finishResharding(current, stream, [shardIx])
   })
   store.registerTransition('mergeShards', (current, name, data) => {
     const stream = current.streams.get(name)
     if (!stream) return
     const { shardIxs } = data as { shardIxs: [number, number] }
     applyMerge(stream, shardIxs[0], shardIxs[1], current.now())
-    finishResharding(current, stream, shardIxs)
+    return finishResharding(current, stream, shardIxs)
   })
   store.registerTransition('updateShardCount', (current, name, data) => {
     const stream = current.streams.get(name)
@@ -260,6 +258,6 @@ export function registerShardTransitions(store: Store) {
     const open = stream.Shards.map((shard, shardIx) => (isOpen(shard) ? shardIx : -1)).filter(shardIx => shardIx >= 0)
     const { target } = data as { target: number }
     if (open.length !== target) reshard(stream, target, current.now())
-    finishResharding(current, stream, open)
+    return finishResharding(current, stream, open)
   })
 }

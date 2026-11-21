@@ -76,7 +76,7 @@ function withFreshness(destination: Input | undefined) {
   return { DataFreshnessInSeconds: DEFAULT_DATA_FRESHNESS_SECONDS, ...destination }
 }
 
-export function createChannel(context: Context, data: Input) {
+export async function createChannel(context: Context, data: Input) {
   const { store } = context
   const arn = channelArn(context, data.ChannelName)
   if (store.channels.has(arn)) throw resourceInUse(`Channel ${data.ChannelName} under account ${account(context)} already exists.`)
@@ -117,9 +117,9 @@ export function createChannel(context: Context, data: Input) {
   if (s3) channel.S3DestinationConfiguration = s3
   if (s3Tables) channel.S3TablesDestinationConfiguration = s3Tables
   if (data.EncryptionConfiguration) channel.EncryptionConfiguration = data.EncryptionConfiguration
-  store.saveChannel(channel)
-  store.schedule('channel', arn, 'activateChannel', store.options.createStreamMs)
-  return { ChannelDescription: describe(context, channel) }
+  const result = { ChannelDescription: describe(context, channel) }
+  await store.schedule('channel', channel, 'activateChannel', store.options.createStreamMs)
+  return result
 }
 
 export function describeChannel(context: Context, data: Input) {
@@ -158,7 +158,7 @@ export function listChannels(context: Context, data: Input) {
   return result
 }
 
-export function updateChannel(context: Context, data: Input) {
+export async function updateChannel(context: Context, data: Input) {
   const channel = getChannel(context, data.ChannelARN)
   if (channel.ChannelStatus !== 'ACTIVE') {
     throw resourceInUse(`Channel ${channel.ChannelName} under account ${account(context)} not ACTIVE, instead in state ${channel.ChannelStatus}`)
@@ -178,17 +178,16 @@ export function updateChannel(context: Context, data: Input) {
   }
   if (data.LoggingConfiguration) channel.LoggingConfiguration = data.LoggingConfiguration
   channel.ChannelStatus = 'UPDATING'
-  context.store.saveChannel(channel)
-  context.store.schedule('channel', channel.ChannelARN, 'activateChannel', context.store.options.updateStreamMs)
-  return { ChannelDescription: describe(context, channel) }
+  const result = { ChannelDescription: describe(context, channel) }
+  await context.store.schedule('channel', channel, 'activateChannel', context.store.options.updateStreamMs)
+  return result
 }
 
-export function deleteChannel(context: Context, data: Input) {
+export async function deleteChannel(context: Context, data: Input) {
   const channel = getChannel(context, data.ChannelARN)
   if (channel.ChannelStatus === 'DELETING') return
   channel.ChannelStatus = 'DELETING'
-  context.store.saveChannel(channel)
-  context.store.schedule('channel', channel.ChannelARN, 'deleteChannel', context.store.options.deleteStreamMs)
+  await context.store.schedule('channel', channel, 'deleteChannel', context.store.options.deleteStreamMs)
 }
 
 export function registerChannelTransitions(store: Store) {
@@ -197,10 +196,9 @@ export function registerChannelTransitions(store: Store) {
     if (!channel) return
     channel.ChannelStatus = 'ACTIVE'
     channel._activatedAt ??= current.now()
-    current.saveChannel(channel)
+    const saved = current.saveChannel(channel)
     current.events.emit('channel-active', arn)
+    return saved
   })
-  store.registerTransition('deleteChannel', (current, arn) => {
-    current.removeChannel(arn)
-  })
+  store.registerTransition('deleteChannel', (current, arn) => current.removeChannel(arn))
 }

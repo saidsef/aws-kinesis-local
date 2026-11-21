@@ -12,7 +12,7 @@ import {
 } from '@aws-sdk/client-kinesis'
 import { parseSequence, stringifySequence } from '../../src/kinesis/sequence.ts'
 import type { StartOptions } from '../../src/index.ts'
-import { DATABASE_FILE } from '../../src/store/store.ts'
+import { DATABASE_FILE } from '../../src/store/sqlite.ts'
 import { call } from './http.ts'
 import { kinesis, startTarget, text, waitFor } from './helpers.ts'
 

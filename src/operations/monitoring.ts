@@ -7,7 +7,7 @@ function expand(metrics: string[]) {
   return metrics.includes('ALL') ? METRICS : metrics
 }
 
-function update(context: Context, data: Input, change: (current: Set<string>, requested: string[]) => void) {
+async function update(context: Context, data: Input, change: (current: Set<string>, requested: string[]) => void) {
   const name = streamNameOf(data)
   const stream = getStream(context, name)
   const monitoring = stream.EnhancedMonitoring[0] ?? { ShardLevelMetrics: [] }
@@ -16,7 +16,7 @@ function update(context: Context, data: Input, change: (current: Set<string>, re
   change(desired, expand(data.ShardLevelMetrics as string[]))
   const ordered = METRICS.filter(metric => desired.has(metric))
   stream.EnhancedMonitoring = [{ ShardLevelMetrics: ordered }]
-  context.store.saveStream(stream)
+  await context.store.saveStream(stream)
   return { StreamName: name, CurrentShardLevelMetrics: current, DesiredShardLevelMetrics: ordered, StreamARN: stream.StreamARN }
 }
 

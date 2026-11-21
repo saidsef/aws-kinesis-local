@@ -21,7 +21,7 @@ export function describeAccountSettings(context: Context) {
   return { MinimumThroughputBillingCommitment: context.store.settings.MinimumThroughputBillingCommitment }
 }
 
-export function updateAccountSettings(context: Context, data: Input) {
+export async function updateAccountSettings(context: Context, data: Input) {
   const requested = data.MinimumThroughputBillingCommitment.Status as 'ENABLED' | 'DISABLED'
   const current = context.store.settings.MinimumThroughputBillingCommitment
   const now = nowSeconds(context)
@@ -31,6 +31,6 @@ export function updateAccountSettings(context: Context, data: Input) {
   } else {
     next = current.Status === 'DISABLED' ? current : { Status: 'DISABLED', ...(current.StartedAt ? { StartedAt: current.StartedAt } : {}), EndedAt: now }
   }
-  context.store.saveSettings({ MinimumThroughputBillingCommitment: next })
+  await context.store.saveSettings({ MinimumThroughputBillingCommitment: next })
   return { MinimumThroughputBillingCommitment: next }
 }

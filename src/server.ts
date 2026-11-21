@@ -8,7 +8,9 @@ import type { S3Client } from './delivery/s3.ts'
 import { createHandler } from './handler.ts'
 import { Logger, type LogLevel } from './logger.ts'
 import { registerTransitions } from './operations/index.ts'
+import { SqliteBackend } from './store/sqlite.ts'
 import { Store } from './store/store.ts'
+import type { StorageBackend } from './store/types.ts'
 
 export interface StartOptions {
   port: number
@@ -31,14 +33,15 @@ export interface StartOptions {
   s3AccessKeyId?: string | undefined
   s3SecretAccessKey?: string | undefined
   deliveryIntervalMs?: number | undefined
+  backend?: StorageBackend | undefined
 }
 
 export interface KinesisLocal {
   endpoint: string
   address: AddressInfo
   protocol: 'http' | 'https'
-  reset(stream?: string): string[]
-  advanceClock(seconds: number): number
+  reset(stream?: string): Promise<string[]>
+  advanceClock(seconds: number): Promise<number>
   close(): Promise<void>
 }
 
@@ -123,7 +126,19 @@ export async function start(overrides: Partial<StartOptions> = {}): Promise<Kine
   const credentials = options.keyFile && options.certFile
     ? { key: readFileSync(options.keyFile), cert: readFileSync(options.certFile) }
     : selfSignedCertificate()
-  const store = new Store(options, logger)
+  if (options.backend && options.path) throw new Error('The path option belongs to the SQLite backend and does not work with the backend option.')
+  const sqlite = options.backend ? undefined : new SqliteBackend(options.path)
+  const store = new Store(options, logger, options.backend ?? sqlite!)
+  const closeStore = async () => {
+    await store.close()
+    sqlite?.close()
+  }
+  try {
+    await store.load()
+  } catch (error) {
+    await closeStore()
+    throw error
+  }
   registerTransitions(store)
   store.startExpiry()
   store.resume()
@@ -173,7 +188,7 @@ export async function start(overrides: Partial<StartOptions> = {}): Promise<Kine
       })
     })
   } catch (error) {
-    store.close()
+    await closeStore()
     throw error
   }
   const delivery = s3 && new ChannelDelivery(store, logger, s3, options.deliveryIntervalMs)
@@ -196,7 +211,7 @@ export async function start(overrides: Partial<StartOptions> = {}): Promise<Kine
       }),
     ])
     clearTimeout(timer)
-    store.close()
+    await closeStore()
     for (const socket of sockets) socket.destroy()
     await stopped
   }
