@@ -4,6 +4,42 @@ entries:
   - annotations:
       artifacthub.io/changes: |
         - kind: changed
+          description: The chart deploys aws-kinesis-local 2.0.0, whose start() takes a storage backend from the caller
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/links: |
+        - name: README
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/README.md
+        - name: LICENSE
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/LICENSE
+        - name: CONTRIBUTING
+          url: https://github.com/saidsef/aws-kinesis-local/blob/main/CONTRIBUTING.md
+    apiVersion: v2
+    appVersion: 2.0.0
+    created: "2026-11-21T13:10:55.543442882Z"
+    description: A Kinesis Local Helm chart for Kubernetes
+    digest: 601863c633fae9f8cd63de39ae4b4a590eb266f37387083786c4c54663e051d7
+    home: https://github.com/saidsef/aws-kinesis-local
+    icon: https://raw.githubusercontent.com/awslabs/aws-icons-for-plantuml/main/dist/MediaServices/KinesisVideoStreams2.png
+    keywords:
+    - kinesis
+    - aws
+    - local
+    - kubernetes
+    kubeVersion: '>= 1.32.0'
+    maintainers:
+    - email: saidsef@gmail.com
+      name: Said Sef
+      url: https://saidsef.co.uk/
+    name: kinesis
+    sources:
+    - https://github.com/saidsef/aws-kinesis-local.git
+    type: application
+    urls:
+    - https://github.com/saidsef/aws-kinesis-local/releases/download/kinesis-0.22.0/kinesis-0.22.0.tgz
+    version: 0.22.0
+  - annotations:
+      artifacthub.io/changes: |
+        - kind: changed
           description: The chart deploys aws-kinesis-local 1.11.0, which moves its clock forward through POST /_control/clock
       artifacthub.io/license: Apache-2.0
       artifacthub.io/links: |
@@ -747,4 +783,4 @@ entries:
     urls:
     - https://github.com/saidsef/aws-kinesis-local/releases/download/kinesis-0.7.3/kinesis-0.7.3.tgz
     version: 0.7.3
-generated: "2026-11-21T12:33:49.262636699Z"
+generated: "2026-11-21T13:10:55.543593596Z"
