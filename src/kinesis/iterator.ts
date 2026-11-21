@@ -12,7 +12,7 @@ export interface IteratorContents {
   sequenceNumber: string
 }
 
-export function createShardIterator(streamName: string, shardId: string, sequenceNumber: string, now = Date.now()) {
+export function createShardIterator(streamName: string, shardId: string, sequenceNumber: string, now: number) {
   const plain = [('0000000000000' + now).slice(-14), streamName, shardId, sequenceNumber, '0'.repeat(36)].join('/')
   const cipher = createCipheriv('aes-256-cbc', KEY, IV)
   return Buffer.concat([HEADER, cipher.update(plain, 'utf8'), cipher.final()]).toString('base64')

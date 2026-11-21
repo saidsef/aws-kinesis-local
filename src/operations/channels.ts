@@ -106,7 +106,7 @@ export function createChannel(context: Context, data: Input) {
     ChannelARN: arn,
     ChannelId: channelId,
     ChannelStatus: 'CREATING',
-    ChannelCreationTimestamp: nowSeconds(),
+    ChannelCreationTimestamp: nowSeconds(context),
     ServiceExecutionRoleARN: data.ServiceExecutionRoleARN,
     StreamConfigurationList: streamConfigurations.map(entry => ({ StreamARN: entry.StreamARN, RecordConfiguration: entry.RecordConfiguration })),
     LoggingConfiguration: data.LoggingConfiguration ?? { CloudWatchLogs: { Enabled: false } },
@@ -196,7 +196,7 @@ export function registerChannelTransitions(store: Store) {
     const channel = current.channels.get(arn)
     if (!channel) return
     channel.ChannelStatus = 'ACTIVE'
-    channel._activatedAt ??= Date.now()
+    channel._activatedAt ??= current.now()
     current.saveChannel(channel)
     current.events.emit('channel-active', arn)
   })

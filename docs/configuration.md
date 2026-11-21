@@ -113,7 +113,7 @@ aws-kinesis-local writes one JSON line to standard output for each request, and 
 | --- | --- |
 | `error` | Requests that fail with a 5xx status, failures of the background record expiry with the stack trace, and failed channel uploads |
 | `warn` | Rejected requests, `SubscribeToShard` responses that end with an exception, and records that a channel sends to its dead-letter location |
-| `info` | Every other API request, every `POST /_control/reset` call and every object that a channel delivers |
+| `info` | Every other API request, every `POST /_control/reset` and `POST /_control/clock` call, and every object that a channel delivers |
 | `debug` | Health checks and CORS preflight requests |
 | `trace` | The request body and the response body on every line |
 

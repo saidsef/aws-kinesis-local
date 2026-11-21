@@ -7,7 +7,9 @@ import type { Logger } from '../logger.ts'
 import type { AccountSettings, ChannelDoc, ConsumerDoc, NewRecord, Pending, StoredRecord, StreamDoc } from './types.ts'
 
 export const DATABASE_FILE = 'aws-kinesis-local.sqlite'
+export const MAX_CLOCK_ADVANCE_SECONDS = 10 * 365 * 24 * 60 * 60
 const EXPIRY_BATCH_SIZE = 500
+const CLOCK_KEY = 'clockOffsetMs'
 
 const defaultSettings = (): AccountSettings => ({ MinimumThroughputBillingCommitment: { Status: 'DISABLED' } })
 
@@ -34,6 +36,10 @@ interface RecordRow {
   encryption: string | null
 }
 
+export function validClockAdvance(seconds: unknown): seconds is number {
+  return typeof seconds === 'number' && seconds >= 0 && seconds <= MAX_CLOCK_ADVANCE_SECONDS
+}
+
 function storedRecord(row: RecordRow): StoredRecord {
   return {
     SequenceNumber: row.seq,
@@ -58,6 +64,7 @@ export class Store {
   private readonly transitions = new Map<string, Transition>()
   private readonly timers = new Map<string, NodeJS.Timeout>()
   private readonly statements: Record<string, StatementSync>
+  private offsetMs = 0
   private closed = false
 
   constructor(options: StoreOptions, logger: Logger) {
@@ -112,6 +119,9 @@ export class Store {
       putDeliveryPosition: this.db.prepare('INSERT OR REPLACE INTO delivery_positions (channel, stream, shard, seq) VALUES (?, ?, ?, ?)'),
       deleteDeliveryPositions: this.db.prepare('DELETE FROM delivery_positions WHERE channel = ?'),
       schemaVersion: this.db.prepare("SELECT value FROM metadata WHERE key = 'schema'"),
+      readMetadata: this.db.prepare('SELECT value FROM metadata WHERE key = ?'),
+      putMetadata: this.db.prepare('INSERT OR REPLACE INTO metadata (key, value) VALUES (?, ?)'),
+      deleteMetadata: this.db.prepare('DELETE FROM metadata WHERE key = ?'),
     }
     this.load()
   }
@@ -125,6 +135,33 @@ export class Store {
       else if (row.kind === 'policy') this.policies.set(row.key, doc)
       else if (row.kind === 'settings') this.settings = doc
     }
+    const offset = this.statements.readMetadata!.get(CLOCK_KEY) as { value: string } | undefined
+    if (offset) this.offsetMs = Number(offset.value)
+  }
+
+  now() {
+    return Date.now() + this.offsetMs
+  }
+
+  advanceClock(seconds: number) {
+    if (!validClockAdvance(seconds)) throw new RangeError(`The clock moves forward by a number of seconds from 0 to ${MAX_CLOCK_ADVANCE_SECONDS}.`)
+    this.offsetMs += Math.round(seconds * 1000)
+    this.saveOffset()
+    for (;;) {
+      const next = this.pendingDocs().filter(entry => entry.pending.due <= this.now()).sort((a, b) => a.pending.due - b.pending.due)[0]
+      if (!next || this.closed) break
+      this.cancel(next.kind, next.key)
+      this.fire(next.kind, next.key)
+    }
+    this.resume()
+    this.events.emit('clock')
+    return this.offsetMs / 1000
+  }
+
+  private saveOffset() {
+    if (this.closed) return
+    if (this.offsetMs) this.statements.putMetadata!.run(CLOCK_KEY, String(this.offsetMs))
+    else this.statements.deleteMetadata!.run(CLOCK_KEY)
   }
 
   transaction<T>(work: () => T): T {
@@ -226,6 +263,8 @@ export class Store {
         for (const arn of [...this.policies.keys()]) this.removePolicy(arn)
         this.settings = defaultSettings()
         this.erase('settings', 'account')
+        this.offsetMs = 0
+        this.saveOffset()
       }
     })
     return names
@@ -304,7 +343,7 @@ export class Store {
   }
 
   private expireOldest(stream: StreamDoc, shardIx: number) {
-    const cutoff = Date.now() - stream.RetentionPeriodHours * 60 * 60 * 1000
+    const cutoff = this.now() - stream.RetentionPeriodHours * 60 * 60 * 1000
     const oldest = this.statements.oldestSequences!.all(stream.StreamName, shardIx, EXPIRY_BATCH_SIZE) as { seq: string }[]
     const expired: string[] = []
     for (const { seq } of oldest) {
@@ -322,7 +361,7 @@ export class Store {
   schedule(kind: Kind, key: string, action: string, delayMs: number, data?: unknown) {
     const doc = this.collection(kind).get(key)
     if (!doc) return
-    const pending: Pending = { action, due: Date.now() + delayMs }
+    const pending: Pending = { action, due: this.now() + delayMs }
     if (data !== undefined) pending.data = data
     doc._pending = pending
     this.persist(kind, doc)
@@ -341,7 +380,7 @@ export class Store {
     const timer = setTimeout(() => {
       this.timers.delete(id)
       this.fire(kind, key)
-    }, Math.max(0, pending.due - Date.now()))
+    }, Math.max(0, pending.due - this.now()))
     this.timers.set(id, timer)
   }
 
@@ -364,12 +403,14 @@ export class Store {
     this.timers.delete(id)
   }
 
+  private pendingDocs() {
+    return (['stream', 'consumer', 'channel'] as const).flatMap(kind => [...this.collection(kind)]
+      .filter(([, doc]) => doc._pending)
+      .map(([key, doc]) => ({ kind, key, pending: doc._pending! })))
+  }
+
   resume() {
-    for (const kind of ['stream', 'consumer', 'channel'] as const) {
-      for (const [key, doc] of [...this.collection(kind)]) {
-        if (doc._pending) this.arm(kind, key, doc._pending)
-      }
-    }
+    for (const { kind, key, pending } of this.pendingDocs()) this.arm(kind, key, pending)
   }
 
   healthy() {

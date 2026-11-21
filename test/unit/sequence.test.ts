@@ -105,7 +105,7 @@ describe('shard iterators', () => {
   })
 
   it('grows with the stream name', () => {
-    const length = (name: string) => Buffer.from(createShardIterator(name, 'shardId-000000000000', '1'), 'base64').length
+    const length = (name: string) => Buffer.from(createShardIterator(name, 'shardId-000000000000', '1', 1794063723000), 'base64').length
     assert.equal(length('a'), length('ab'))
     assert.ok(length('a'.repeat(128)) > length('a'))
   })

@@ -24,7 +24,7 @@ export function describeAccountSettings(context: Context) {
 export function updateAccountSettings(context: Context, data: Input) {
   const requested = data.MinimumThroughputBillingCommitment.Status as 'ENABLED' | 'DISABLED'
   const current = context.store.settings.MinimumThroughputBillingCommitment
-  const now = nowSeconds()
+  const now = nowSeconds(context)
   let next: AccountSettings['MinimumThroughputBillingCommitment']
   if (requested === 'ENABLED') {
     next = current.Status === 'ENABLED' ? current : { Status: 'ENABLED', StartedAt: now, EarliestAllowedEndAt: now + COMMITMENT_WINDOW_SECONDS }

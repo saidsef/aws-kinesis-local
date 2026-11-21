@@ -48,9 +48,9 @@ function locateShard(stream: StreamDoc, hashKey: bigint) {
   throw new KinesisError('InternalFailure', `No open shard covers hash key ${hashKey}`, 500)
 }
 
-function nextSequence(stream: StreamDoc, shardIx: number, createTime: number) {
+function nextSequence(context: Context, stream: StreamDoc, shardIx: number, createTime: number) {
   const group = Math.floor(shardIx / 5)
-  const now = Math.max(Date.now(), createTime)
+  const now = Math.max(context.store.now(), createTime)
   if (!stream._seqIx[group]) stream._seqIx[group] = createTime === now ? 1 : 0
   const sequenceNumber = stringifySequence({ shardCreateTime: createTime, shardIx, seqIx: stream._seqIx[group], seqTime: now })
   stream._seqIx[group] = stream._seqIx[group]! + 1
@@ -72,7 +72,7 @@ export function putRecord(context: Context, data: Input) {
   if (data.SequenceNumberForOrdering != null) {
     let valid = true
     try {
-      valid = !(parseSequence(data.SequenceNumberForOrdering).seqTime > Date.now())
+      valid = !(parseSequence(data.SequenceNumberForOrdering).seqTime > context.store.now())
     } catch {
       valid = false
     }
@@ -83,7 +83,7 @@ export function putRecord(context: Context, data: Input) {
   }
   const target = locateShard(stream, hashKey)
   dryRun(data)
-  const { sequenceNumber, now } = nextSequence(stream, target.shardIx, target.shardCreateTime)
+  const { sequenceNumber, now } = nextSequence(context, stream, target.shardIx, target.shardCreateTime)
   const encryptionType = encryptionOf(stream)
   context.store.transaction(() => {
     context.store.saveStream(stream)
@@ -119,7 +119,7 @@ export function putRecords(context: Context, data: Input) {
     for (let i = 0; i < records.length; i++) {
       const target = targets[i]!
       if (target.shardIx !== shardIx) continue
-      const { sequenceNumber, now } = nextSequence(stream, shardIx, target.shardCreateTime)
+      const { sequenceNumber, now } = nextSequence(context, stream, shardIx, target.shardCreateTime)
       rows.push({
         shardIx,
         sequenceNumber,
@@ -141,7 +141,7 @@ export function putRecords(context: Context, data: Input) {
   return result
 }
 
-function latestSequence(stream: StreamDoc, shardIx: number, now = Date.now()) {
+function latestSequence(stream: StreamDoc, shardIx: number, now: number) {
   const shard = stream.Shards[shardIx]!
   const start = parseSequence(shard.SequenceNumberRange.StartingSequenceNumber)
   return stringifySequence({
@@ -163,7 +163,7 @@ export function startingSequence(context: Context, stream: StreamDoc, shardIx: n
   const shard = stream.Shards[shardIx]!
   const shardSequence = shard.SequenceNumberRange.StartingSequenceNumber
   const shardSequenceParts = parseSequence(shardSequence)
-  const now = Date.now()
+  const now = context.store.now()
   if (position.SequenceNumber) {
     if (position.Type === 'TRIM_HORIZON' || position.Type === 'LATEST') {
       throw invalidArgument('Must either specify (1) AT_SEQUENCE_NUMBER or AFTER_SEQUENCE_NUMBER and StartingSequenceNumber or ' +
@@ -221,7 +221,7 @@ export function getShardIterator(context: Context, data: Input) {
   if (data.Timestamp != null) position.Timestamp = data.Timestamp
   const sequence = startingSequence(context, stream, shard.shardIx, shard.shardId, position, 'GetShardIterator')
   dryRun(data)
-  return { ShardIterator: createShardIterator(name, shard.shardId, sequence) }
+  return { ShardIterator: createShardIterator(name, shard.shardId, sequence, context.store.now()) }
 }
 
 function invalidIterator() {
@@ -252,7 +252,7 @@ export interface ReadResult {
 
 export function readShard(context: Context, stream: StreamDoc, shardIx: number, sequence: ParsedSequence, sequenceText: string, limit: number): ReadResult {
   const { store } = context
-  const now = Date.now()
+  const now = store.now()
   const cutoff = now - stream.RetentionPeriodHours * 60 * 60 * 1000
   const rows = store.readRecords(stream.StreamName, shardIx, sequenceText, limit)
   const expired: string[] = []
@@ -290,7 +290,7 @@ export function readShard(context: Context, stream: StreamDoc, shardIx: number, 
 }
 
 export function getRecords(context: Context, data: Input) {
-  const now = Date.now()
+  const now = context.store.now()
   const iterator = readShardIterator(data.ShardIterator)
   if (!iterator) throw invalidIterator()
   const { createdAt, streamName, shardId, sequenceNumber } = iterator
@@ -316,7 +316,7 @@ export function getRecords(context: Context, data: Input) {
   const result = readShard(context, stream, shardIx, sequence, sequenceNumber, (data.Limit as number | undefined) || 10000)
   const response: Record<string, unknown> = {
     MillisBehindLatest: result.millisBehindLatest,
-    NextShardIterator: result.shardEnded ? undefined : createShardIterator(streamName, shardId, result.nextSequence),
+    NextShardIterator: result.shardEnded ? undefined : createShardIterator(streamName, shardId, result.nextSequence, now),
     Records: result.records,
   }
   if (result.shardEnded) response.ChildShards = childShards(stream, shardId)

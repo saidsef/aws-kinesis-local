@@ -203,7 +203,7 @@ export class ChannelDelivery {
       if (this.stopped || !stream || !this.current(worker)) return
       const batch = nextBatch(this.store, channel, stream)
       if (!batch.records.length) return
-      const values = { channelName: channel.ChannelName, channelId: channel.ChannelId, streamName, compressionType, time: new Date() }
+      const values = { channelName: channel.ChannelName, channelId: channel.ChannelId, streamName, compressionType, time: new Date(this.store.now()) }
       const valid: BatchRecord[] = []
       const errors: string[] = []
       for (const record of batch.records) {
