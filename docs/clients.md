@@ -38,7 +38,7 @@ kinesis.destroy();
 await server.close();
 ```
 
-`start()` takes the same settings as the command-line flags, such as `path`, `shardLimit`, `createStreamMs`, `ssl` and `logLevel`, and the package includes TypeScript declarations for them. The server writes its [logs](configuration.md#logs) to the standard output of the test process, and `logLevel: 'error'` limits them to unexpected failures.
+`start()` takes the same settings as the command-line flags, such as `path`, `shardLimit`, `createStreamMs`, `ssl` and `logLevel`, and the package includes TypeScript declarations for them. Its `backend` option keeps the state in a datastore of your choice, as [Storage backends](#storage-backends) describes. The server writes its [logs](configuration.md#logs) to the standard output of the test process, and `logLevel: 'error'` limits them to unexpected failures.
 
 ## Clearing streams
 
@@ -49,7 +49,7 @@ curl -X POST http://localhost:4567/_control/reset -d '{"stream": "orders"}'
 {"streams":["orders"]}
 ```
 
-The object that `start()` returns offers the same operation as `reset()`, and `reset('orders')` clears one stream. Both return the names of the streams that they deleted.
+The object that `start()` returns offers the same operation as `reset()`, and `reset('orders')` clears one stream. `reset()` resolves to the names of the streams that it deleted.
 
 ## Moving the clock
 
@@ -68,9 +68,84 @@ Each time value that the API reports or compares comes from the clock:
 - A `SubscribeToShard` response ends once the clock passes five minutes after its call. The 5-second wait between two calls also follows the clock.
 - Record arrival times, creation timestamps, sequence numbers and the dates in channel object keys come from the clock.
 
-The clock moves only forward. `advanceSeconds` takes a number from 0 to 315360000, which is ten years, and a call with 0 reports the offset without moving the clock. The database keeps the offset, and the clock stays ahead after a restart with `--path`. A full reset sets the clock back to real time, and a reset of one stream leaves it where it is. Log lines, the delivery interval of channels and the signatures of their S3 requests keep real time.
+The clock moves only forward. `advanceSeconds` takes a number from 0 to 315360000, which is ten years, and a call with 0 reports the offset without moving the clock. The database keeps the offset, and the clock remains ahead after a restart with `--path`. A full reset sets the clock back to real time, and a reset of one stream leaves it where it is. Log lines, the delivery interval of channels and the signatures of their S3 requests keep real time.
 
-The object that `start()` returns offers the same operation as `advanceClock(seconds)`. It returns the offset in seconds, and throws a `RangeError` for a number outside that range.
+The object that `start()` returns offers the same operation as `advanceClock(seconds)`. It resolves to the offset in seconds, and rejects with a `RangeError` for a number outside that range.
+
+## Storage backends
+
+`start()` keeps streams, records, consumers, channels, policies, account settings and the clock in SQLite. Its `backend` option takes any object that implements the `StorageBackend` interface instead. The package exports that interface with its document and record types. A backend can then keep the state of aws-kinesis-local in any datastore. Each method returns a promise, because a backend may need to wait for its datastore:
+
+```typescript
+import { start, type DocumentKind, type StorageBackend, type StoredDocument } from '@saidsef/aws-kinesis-local';
+
+class MapBackend implements StorageBackend {
+  documents = new Map<string, StoredDocument>();
+
+  async readDocuments() {
+    return [...this.documents.values()];
+  }
+
+  async putDocument(document: StoredDocument) {
+    this.documents.set(`${document.kind} ${document.key}`, document);
+  }
+
+  async deleteDocument(kind: DocumentKind, key: string) {
+    this.documents.delete(`${kind} ${key}`);
+  }
+
+  // putRecords(), readRecords() and the other methods in the table below
+}
+
+const server = await start({ port: 0, backend: new MapBackend() });
+```
+
+[`test/backends/map.ts`](https://github.com/saidsef/aws-kinesis-local/blob/main/test/backends/map.ts) holds a complete backend built on `Map` objects. Each method does the work below.
+
+| Method | Work |
+| --- | --- |
+| `readDocuments()` | Returns every document that the backend holds. `start()` calls it once, before it listens. |
+| `putDocument(document)` | Saves a document, and replaces any document with the same kind and key. |
+| `deleteDocument(kind, key)` | Deletes a document. A missing document is not an error. |
+| `putRecords(stream, records)` | Saves the stream document and the records of one `PutRecord` or `PutRecords` call. |
+| `readRecords(query)` | Returns up to `query.limit` records of one shard in sequence number order. A query starts at `from` or after `after`, and can skip records that arrived before `arrivedSince`. |
+| `expireRecords(stream, shardIx, arrivedBefore, limit)` | Deletes up to `limit` of the oldest records of one shard that arrived before `arrivedBefore`, and returns how many it deleted. |
+| `deleteRecords(stream)` | Deletes every record of a stream. |
+| `readDeliveryPositions(channelId, stream)` | Returns the sequence number of the last record that a channel delivered from each shard, keyed by shard index. |
+| `putDeliveryPositions(channelId, stream, positions)` | Saves the positions of the shards in `positions` and keeps those of other shards. |
+| `deleteDeliveryPositions(channelId)` | Deletes the positions of a channel for every stream. |
+| `ping()` | Resolves when the datastore answers. `/healthz` returns 503 while it rejects. |
+
+A backend follows these rules:
+
+- A document has a `kind`, a `key` and a `value`. The kinds are `stream`, `consumer`, `channel`, `policy`, `settings` and `clock`.
+- The settings document always has the key `account`. The clock document always has the key `offset`.
+- Each value is plain JSON. A policy is a string, and the clock value is its offset in milliseconds.
+- The store passes a copy of each document and never changes an object after it passes it to a backend. It also copies each document that `readDocuments()` returns. A backend can keep the objects that it receives.
+- Sequence numbers have the same number of digits, and a backend can compare them as text.
+- A record carries its arrival time in seconds, with milliseconds as a fraction. Its sequence number carries the same time in whole seconds, and `arrivedBefore` is always a whole number of seconds.
+- A rejected promise ends the request that made the call with `InternalFailure`.
+- The store runs the calls for each stream one at a time, in the order that requests arrive. A backend does not need locks of its own.
+- `putRecords()` saves its stream document and records in one write where the datastore allows it. A backend that cannot do that writes the document first, as [Storage](specs/storage.md#order-of-backend-calls) explains.
+- `close()` waits for backend calls in progress and leaves the backend open. Close the datastore client after `close()` resolves.
+- The `path` option belongs to the SQLite backend, and `start()` rejects it together with `backend`.
+
+## Storage backend tests
+
+The package exports the test suite that the SQLite backend passes, as `storageBackendTests` from `@saidsef/aws-kinesis-local/testing`. Each entry has a name and a `run(backend)` function, which throws an assertion error when the backend breaks a rule. Each test needs a new, empty backend, which `createEmptyBackend()` stands for below:
+
+```typescript
+import { test } from 'node:test';
+import { storageBackendTests } from '@saidsef/aws-kinesis-local/testing';
+
+for (const { name, run } of storageBackendTests) {
+  test(name, async () => {
+    await run(await createEmptyBackend());
+  });
+}
+```
+
+The repository runs the suite against SQLite and against the backend in `test/backends/map.ts`.
 
 ## AWS CLI
 

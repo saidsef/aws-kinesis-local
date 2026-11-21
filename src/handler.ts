@@ -35,6 +35,7 @@ interface Exchange {
   error?: unknown
   input?: unknown
   output?: unknown
+  closed?: boolean
 }
 
 function header(req: Request, name: string) {
@@ -77,8 +78,14 @@ function sendError(exchange: Exchange, contentValid: boolean, type: string, mess
   return sendRaw(exchange, `<${type}>\n  <Message>${message}</Message>\n</${type}>\n`, 403)
 }
 
-function sendHealth(store: Store, exchange: Exchange, path: string) {
-  const healthy = store.healthy() && (path === '/healthz' || !store.draining)
+function sendFailure(exchange: Exchange, error: unknown) {
+  exchange.error = error
+  if (exchange.res.headersSent) return exchange.res.destroy()
+  sendResponse(exchange, { __type: 'InternalFailure' }, 500)
+}
+
+async function sendHealth(store: Store, exchange: Exchange, path: string) {
+  const healthy = await store.healthy() && (path === '/healthz' || !store.draining)
   exchange.level = 'debug'
   exchange.res.setHeader('Content-Type', 'text/plain')
   sendRaw(exchange, healthy ? 'ok\n' : 'unavailable\n', healthy ? 200 : 503)
@@ -96,24 +103,24 @@ function controlInput(exchange: Exchange, body: Buffer | undefined) {
   return typeof input === 'object' && input !== null && !Array.isArray(input) ? input as Record<string, unknown> : undefined
 }
 
-function sendReset(store: Store, exchange: Exchange, body: Buffer | undefined) {
+async function sendReset(store: Store, exchange: Exchange, body: Buffer | undefined) {
   const input = controlInput(exchange, body)
   const stream = input?.stream
   if (typeof stream === 'string') exchange.stream = stream
   if (!input || (stream !== undefined && typeof stream !== 'string')) {
     return sendResponse(exchange, { message: 'The body must be empty or a JSON object whose stream member is a string.' }, 400)
   }
-  sendResponse(exchange, { streams: store.reset(stream) })
+  sendResponse(exchange, { streams: await store.reset(stream) })
 }
 
-function sendClock(store: Store, exchange: Exchange, body: Buffer | undefined) {
+async function sendClock(store: Store, exchange: Exchange, body: Buffer | undefined) {
   const seconds = controlInput(exchange, body)?.advanceSeconds
   if (!validClockAdvance(seconds)) {
     return sendResponse(exchange, {
       message: `The body must be a JSON object whose advanceSeconds member is a number from 0 to ${MAX_CLOCK_ADVANCE_SECONDS}.`,
     }, 400)
   }
-  sendResponse(exchange, { offsetSeconds: store.advanceClock(seconds) })
+  sendResponse(exchange, { offsetSeconds: await store.advanceClock(seconds) })
 }
 
 function validationContext(store: Store, data: Record<string, unknown>): ValidationContext {
@@ -172,6 +179,7 @@ function checkAuthentication(exchange: Exchange) {
 
 function streamEvents(exchange: Exchange, subscription: Subscription) {
   const { req, res } = exchange
+  if (exchange.closed) return subscription.stop()
   req.removeAllListeners('data')
   res.statusCode = 200
   res.setHeader('Content-Type', EVENT_STREAM)
@@ -203,18 +211,18 @@ function streamEvents(exchange: Exchange, subscription: Subscription) {
   })
 }
 
-function dispatch(store: Store, exchange: Exchange, operation: string, input: Record<string, unknown>) {
+async function dispatch(store: Store, exchange: Exchange, operation: string, input: Record<string, unknown>) {
   const definition = operations[operation]!
   const context: Context = { store, protocol: protocolOf(exchange) }
   let data = coerceStructure(input, definition.input)
   validateStructure(data, definition.input, validationContext(store, data))
   data = decodeBlobs(data, definition.input) as Record<string, unknown>
-  const result = handlers[operation]!(context, data)
+  const result = await handlers[operation]!(context, data)
   if (result instanceof Subscription) return streamEvents(exchange, result)
   sendResponse(exchange, result === undefined ? undefined : serializeShape(result, definition.output, context.protocol))
 }
 
-function respond(store: Store, exchange: Exchange, body: Buffer | undefined) {
+async function respond(store: Store, exchange: Exchange, body: Buffer | undefined) {
   const { req, res } = exchange
   if (req.method !== 'OPTIONS' || !req.headers.origin) res.setHeader('x-amz-id-2', randomBytes(72).toString('base64'))
   if (req.headers.origin) {
@@ -275,11 +283,10 @@ function respond(store: Store, exchange: Exchange, body: Buffer | undefined) {
   const authError = checkAuthentication(exchange)
   if (authError) return sendResponse(exchange, authError.body, authError.statusCode)
   try {
-    dispatch(store, exchange, operation!, data as Record<string, unknown>)
+    await dispatch(store, exchange, operation!, data as Record<string, unknown>)
   } catch (error) {
     if (error instanceof KinesisError) return sendResponse(exchange, error.body, error.statusCode)
-    exchange.error = error
-    return sendResponse(exchange, { __type: 'InternalFailure' }, 500)
+    return sendFailure(exchange, error)
   }
 }
 
@@ -315,7 +322,10 @@ export function createHandler(store: Store, logger: Logger) {
     let rejected = false
     let body: Buffer | undefined
     exchange.res.setHeader('x-amzn-RequestId', exchange.requestId)
-    exchange.res.once('close', () => logRequest(logger, exchange, started, body))
+    exchange.res.once('close', () => {
+      exchange.closed = true
+      logRequest(logger, exchange, started, body)
+    })
     req.on('error', () => res.destroy())
     req.on('data', (chunk: Buffer) => {
       if (rejected) return
@@ -331,7 +341,7 @@ export function createHandler(store: Store, logger: Logger) {
     req.on('end', () => {
       if (rejected) return
       body = size ? Buffer.concat(chunks, size) : undefined
-      respond(store, exchange, body)
+      respond(store, exchange, body).catch(error => sendFailure(exchange, error))
     })
   }
 }

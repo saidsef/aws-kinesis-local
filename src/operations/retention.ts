@@ -10,7 +10,7 @@ function checkBounds(hours: number) {
   }
 }
 
-export function increaseStreamRetentionPeriod(context: Context, data: Input) {
+export async function increaseStreamRetentionPeriod(context: Context, data: Input) {
   const name = streamNameOf(data)
   const stream = getStream(context, name)
   const hours = data.RetentionPeriodHours as number
@@ -20,10 +20,10 @@ export function increaseStreamRetentionPeriod(context: Context, data: Input) {
       `existing retention period (${stream.RetentionPeriodHours} hours). Use DecreaseRetentionPeriod API.`)
   }
   stream.RetentionPeriodHours = hours
-  context.store.saveStream(stream)
+  await context.store.saveStream(stream)
 }
 
-export function decreaseStreamRetentionPeriod(context: Context, data: Input) {
+export async function decreaseStreamRetentionPeriod(context: Context, data: Input) {
   const name = streamNameOf(data)
   const stream = getStream(context, name)
   const hours = data.RetentionPeriodHours as number
@@ -33,5 +33,5 @@ export function decreaseStreamRetentionPeriod(context: Context, data: Input) {
       `existing retention period (${stream.RetentionPeriodHours} hours). Use IncreaseRetentionPeriod API.`)
   }
   stream.RetentionPeriodHours = hours
-  context.store.saveStream(stream)
+  await context.store.saveStream(stream)
 }

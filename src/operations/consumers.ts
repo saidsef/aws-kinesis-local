@@ -40,7 +40,7 @@ function findConsumer(context: Context, data: Input): ConsumerDoc {
   return consumer
 }
 
-export function registerStreamConsumer(context: Context, data: Input) {
+export async function registerStreamConsumer(context: Context, data: Input) {
   const streamName = streamNameOf({ StreamARN: data.StreamARN })
   const stream = getStream(context, streamName)
   if (stream.StreamStatus === 'CREATING' || stream.StreamStatus === 'DELETING') {
@@ -68,9 +68,9 @@ export function registerStreamConsumer(context: Context, data: Input) {
     _tags: Object.create(null),
   }
   if (data.Tags) applyTags(consumer._tags, data.Tags, 'consumer', data.ConsumerName, context)
-  context.store.saveConsumer(consumer)
-  context.store.schedule('consumer', consumer.ConsumerARN, 'activateConsumer', context.store.options.createStreamMs)
-  return { Consumer: consumerSummary(consumer) }
+  const result = { Consumer: consumerSummary(consumer) }
+  await context.store.schedule('consumer', consumer, 'activateConsumer', context.store.options.createStreamMs)
+  return result
 }
 
 export function describeStreamConsumer(context: Context, data: Input) {
@@ -94,13 +94,13 @@ export function listStreamConsumers(context: Context, data: Input) {
   return result
 }
 
-export function deregisterStreamConsumer(context: Context, data: Input) {
+export async function deregisterStreamConsumer(context: Context, data: Input) {
   const consumer = findConsumer(context, data)
   if (consumer.ConsumerStatus === 'DELETING') return
   consumer.ConsumerStatus = 'DELETING'
-  context.store.saveConsumer(consumer)
+  const saved = context.store.schedule('consumer', consumer, 'deleteConsumer', context.store.options.deleteStreamMs)
   context.store.events.emit('consumer-deleting', consumer.ConsumerARN)
-  context.store.schedule('consumer', consumer.ConsumerARN, 'deleteConsumer', context.store.options.deleteStreamMs)
+  await saved
 }
 
 export function registerConsumerTransitions(store: Store) {
@@ -108,9 +108,7 @@ export function registerConsumerTransitions(store: Store) {
     const consumer = current.consumers.get(arn)
     if (!consumer || consumer.ConsumerStatus !== 'CREATING') return
     consumer.ConsumerStatus = 'ACTIVE'
-    current.saveConsumer(consumer)
+    return current.saveConsumer(consumer)
   })
-  store.registerTransition('deleteConsumer', (current, arn) => {
-    current.removeConsumer(arn)
-  })
+  store.registerTransition('deleteConsumer', (current, arn) => current.removeConsumer(arn))
 }

@@ -157,9 +157,9 @@ describe('clock', () => {
   it('returns to real time after a full reset and not after a reset of one stream', async () => {
     await activeStream('orders')
     await activeStream('payments')
-    assert.deepEqual(server.reset('orders'), ['orders'])
+    assert.deepEqual(await server.reset('orders'), ['orders'])
     assert.equal(await advanceSeconds(0), 2 * DELAY_SECONDS)
-    assert.deepEqual(server.reset(), ['payments'])
+    assert.deepEqual(await server.reset(), ['payments'])
     assert.equal(await advanceSeconds(0), 0)
   })
 
@@ -173,20 +173,20 @@ describe('clock', () => {
   })
 
   it('offers the same clock through the object that start() returns', async () => {
-    assert.equal(server.advanceClock(60), 60)
+    assert.equal(await server.advanceClock(60), 60)
     assert.equal(await advanceSeconds(30), 90)
-    assert.throws(() => server.advanceClock(-1), RangeError)
-    assert.equal(server.advanceClock(0), 90)
+    await assert.rejects(server.advanceClock(-1), RangeError)
+    assert.equal(await server.advanceClock(0), 90)
   })
 
   it('keeps the clock across a restart', async () => {
     const path = mkdtempSync(join(tmpdir(), 'kinesis-clock-'))
     let persistent = await startServer({ path })
     try {
-      assert.equal(persistent.advanceClock(3600), 3600)
+      assert.equal(await persistent.advanceClock(3600), 3600)
       await persistent.close()
       persistent = await startServer({ path })
-      assert.equal(persistent.advanceClock(0), 3600)
+      assert.equal(await persistent.advanceClock(0), 3600)
     } finally {
       await persistent.close()
     }

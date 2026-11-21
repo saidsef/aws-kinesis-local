@@ -4,18 +4,18 @@ import {
   type Context, type Input,
 } from './common.ts'
 
-export function addTagsToStream(context: Context, data: Input) {
+export async function addTagsToStream(context: Context, data: Input) {
   const name = streamNameOf(data)
   const stream = getStream(context, name)
   applyTags(stream._tags, data.Tags, 'stream', name, context)
-  context.store.saveStream(stream)
+  await context.store.saveStream(stream)
 }
 
-export function removeTagsFromStream(context: Context, data: Input) {
+export async function removeTagsFromStream(context: Context, data: Input) {
   const name = streamNameOf(data)
   const stream = getStream(context, name)
   removeTags(stream._tags, data.TagKeys, 'stream', name, context)
-  context.store.saveStream(stream)
+  await context.store.saveStream(stream)
 }
 
 export function listTagsForStream(context: Context, data: Input) {
@@ -48,16 +48,16 @@ function resourceOf(context: Context, arn: string) {
   return { kind: 'stream', name: streamName, tags: stream._tags, save: () => store.saveStream(stream) }
 }
 
-export function tagResource(context: Context, data: Input) {
+export async function tagResource(context: Context, data: Input) {
   const resource = resourceOf(context, data.ResourceARN)
   applyTags(resource.tags, data.Tags, resource.kind, resource.name, context)
-  resource.save()
+  await resource.save()
 }
 
-export function untagResource(context: Context, data: Input) {
+export async function untagResource(context: Context, data: Input) {
   const resource = resourceOf(context, data.ResourceARN)
   removeTags(resource.tags, data.TagKeys, resource.kind, resource.name, context)
-  resource.save()
+  await resource.save()
 }
 
 export function listTagsForResource(context: Context, data: Input) {

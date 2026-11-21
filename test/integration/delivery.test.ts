@@ -259,7 +259,7 @@ describe('channel delivery', () => {
       s3.failing = Infinity
       await put(client, reset, ['before reset'])
       await sleep(INTERVAL_MS * 3)
-      target.server!.reset(reset)
+      await target.server!.reset(reset)
       s3.failing = 0
       await activeChannel(client, channelName, [[await onDemandStream(client, reset), 'STRING']], 'NONE')
       await put(client, reset, ['after reset'])
