@@ -1,6 +1,6 @@
 {
   "name": "@saidsef/aws-kinesis-local",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Local Amazon Kinesis Data Streams server for development and CI, with all 45 operations, enhanced fan-out, JSON and CBOR over HTTP/1.1 and HTTP/2",
   "keywords": [
     "aws",
@@ -61,7 +61,8 @@
     "pretest:endpoint": "npm run generate",
     "test:endpoint": "node --test --test-timeout=120000 test/integration/sdk.test.ts",
     "prestart": "npm run generate",
-    "start": "node src/cli.ts"
+    "start": "node src/cli.ts",
+    "benchmark": "node scripts/benchmark-storage.ts"
   },
   "devDependencies": {
     "@aws-sdk/client-kinesis": "3.1170.0",

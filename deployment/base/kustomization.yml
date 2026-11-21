@@ -8,4 +8,4 @@ resources:
 
 images:
   - name: docker.io/saidsef/aws-kinesis-local
-    newTag: "2.0.0"
+    newTag: "2.1.0"

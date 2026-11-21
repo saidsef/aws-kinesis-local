@@ -6,6 +6,7 @@ import type { DocumentKind, RecordQuery, StorageBackend, StoredDocument, StoredR
 
 export const DATABASE_FILE = 'aws-kinesis-local.sqlite'
 const CLOCK_METADATA_KEY = 'clockOffsetMs'
+const INCREMENTAL_VACUUM = 2
 
 interface RecordRow {
   shard: number
@@ -27,18 +28,27 @@ function storedRecord(row: RecordRow): StoredRecord {
   }
 }
 
+export interface SqliteOptions {
+  reclaimSpace?: boolean
+}
+
 export class SqliteBackend implements StorageBackend {
   private readonly db: DatabaseSync
   private readonly statements: Record<string, StatementSync>
+  private readonly onDisk: boolean
+  private readonly reclaimSpace: boolean
 
-  constructor(path?: string) {
+  constructor(path?: string, options: SqliteOptions = {}) {
     let file = ':memory:'
     if (path) {
       mkdirSync(path, { recursive: true })
       file = join(path, DATABASE_FILE)
     }
     this.db = new DatabaseSync(file)
-    if (file !== ':memory:') {
+    this.onDisk = file !== ':memory:'
+    this.reclaimSpace = options.reclaimSpace ?? true
+    if (this.reclaimSpace) this.db.exec('PRAGMA auto_vacuum = INCREMENTAL')
+    if (this.onDisk) {
       this.db.exec('PRAGMA journal_mode = WAL')
       this.db.exec('PRAGMA synchronous = NORMAL')
     }
@@ -82,7 +92,27 @@ export class SqliteBackend implements StorageBackend {
       readMetadata: this.db.prepare('SELECT value FROM metadata WHERE key = ?'),
       putMetadata: this.db.prepare('INSERT OR REPLACE INTO metadata (key, value) VALUES (?, ?)'),
       deleteMetadata: this.db.prepare('DELETE FROM metadata WHERE key = ?'),
+      autoVacuum: this.db.prepare('PRAGMA auto_vacuum'),
     }
+    if (this.reclaimSpace) this.convertToIncrementalVacuum()
+  }
+
+  private convertToIncrementalVacuum() {
+    const { auto_vacuum } = this.statements.autoVacuum!.get() as { auto_vacuum: number }
+    if (auto_vacuum === INCREMENTAL_VACUUM) return
+    this.db.exec('PRAGMA auto_vacuum = INCREMENTAL')
+    this.db.exec('VACUUM')
+    this.checkpoint()
+  }
+
+  private reclaim() {
+    if (!this.reclaimSpace) return
+    this.db.exec('PRAGMA incremental_vacuum')
+    this.checkpoint()
+  }
+
+  private checkpoint() {
+    if (this.onDisk) this.db.exec('PRAGMA wal_checkpoint(TRUNCATE)')
   }
 
   private transaction(work: () => void) {
@@ -146,12 +176,14 @@ export class SqliteBackend implements StorageBackend {
       this.transaction(() => {
         for (const seq of expired) this.statements.deleteRecord!.run(stream, shardIx, seq)
       })
+      this.reclaim()
     }
     return expired.length
   }
 
   async deleteRecords(stream: string) {
     this.statements.deleteStreamRecords!.run(stream)
+    this.reclaim()
   }
 
   async readDeliveryPositions(channelId: string, stream: string) {
