@@ -1,18 +1,18 @@
 import assert from 'node:assert/strict'
-import { existsSync, mkdtempSync } from 'node:fs'
+import { existsSync, mkdtempSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { describe, it, mock } from 'node:test'
 import {
-  CreateStreamCommand, DecreaseStreamRetentionPeriodCommand, DescribeStreamCommand, DescribeStreamSummaryCommand, GetRecordsCommand,
-  GetShardIteratorCommand, IncreaseStreamRetentionPeriodCommand, ListStreamConsumersCommand, ListTagsForStreamCommand, PutRecordCommand,
-  RegisterStreamConsumerCommand,
+  CreateStreamCommand, DecreaseStreamRetentionPeriodCommand, DeleteStreamCommand, DescribeStreamCommand, DescribeStreamSummaryCommand,
+  GetRecordsCommand, GetShardIteratorCommand, IncreaseStreamRetentionPeriodCommand, ListStreamConsumersCommand, ListTagsForStreamCommand,
+  PutRecordCommand, PutRecordsCommand, RegisterStreamConsumerCommand,
 } from '@aws-sdk/client-kinesis'
 import { parseSequence, stringifySequence } from '../../src/kinesis/sequence.ts'
 import type { StartOptions } from '../../src/index.ts'
-import { DATABASE_FILE } from '../../src/store/sqlite.ts'
+import { DATABASE_FILE, SqliteBackend } from '../../src/store/sqlite.ts'
 import { call } from './http.ts'
 import { kinesis, startTarget, text, waitFor } from './helpers.ts'
 
@@ -57,6 +57,29 @@ function insertBacklog(path: string, stream: string, first: string, count: numbe
   }
   db.exec('COMMIT')
   db.close()
+}
+
+function sizeOnDisk(path: string) {
+  const file = join(path, DATABASE_FILE)
+  return [file, `${file}-wal`].reduce((total, name) => total + (existsSync(name) ? statSync(name).size : 0), 0)
+}
+
+function autoVacuum(path: string) {
+  const db = new DatabaseSync(join(path, DATABASE_FILE), { readOnly: true })
+  try {
+    return (db.prepare('PRAGMA auto_vacuum').get() as { auto_vacuum: number }).auto_vacuum
+  } finally {
+    db.close()
+  }
+}
+
+async function putMegabytes(client: ReturnType<typeof kinesis>, name: string, megabytes: number) {
+  const Data = Buffer.alloc(10 * 1024, 'x')
+  for (let i = 0; i < megabytes / 2.5; i++) {
+    const Records = Array.from({ length: 250 }, (_, j) => ({ PartitionKey: `p${j}`, Data }))
+    const { FailedRecordCount } = await client.send(new PutRecordsCommand({ StreamName: name, Records }))
+    assert.equal(FailedRecordCount, 0)
+  }
 }
 
 async function createActive(client: ReturnType<typeof kinesis>, name: string) {
@@ -167,5 +190,59 @@ describe('record expiry', () => {
     } finally {
       await target.close()
     }
+  })
+})
+
+describe('disk space', () => {
+  it('reduces the database file after the job deletes expired records', async () => {
+    const path = directory()
+    await withServer(path, async client => {
+      const clock = rewindClock(25 * HOUR_MS)
+      await createActive(client, 'expiring')
+      await putMegabytes(client, 'expiring', 10)
+      clock.mock.restore()
+      const full = sizeOnDisk(path)
+      assert.ok(full > 10 * 1024 * 1024)
+      await waitFor(async () => sizeOnDisk(path), size => size < full / 4)
+    }, { expiryIntervalMs: 10 })
+  })
+
+  it('reduces the database file after DeleteStream', async () => {
+    const path = directory()
+    await withServer(path, async client => {
+      await createActive(client, 'deleted')
+      await putMegabytes(client, 'deleted', 10)
+      const full = sizeOnDisk(path)
+      await client.send(new DeleteStreamCommand({ StreamName: 'deleted' }))
+      await waitFor(async () => sizeOnDisk(path), size => size < full / 4)
+    })
+  })
+
+  it('converts a database from an earlier version and keeps its data', async () => {
+    const path = directory()
+    const earlier = new SqliteBackend(path, { reclaimSpace: false })
+    const target = await startTarget({ backend: earlier })
+    const client = kinesis(target.endpoint)
+    try {
+      const clock = rewindClock(25 * HOUR_MS)
+      await createActive(client, 'converted')
+      await putMegabytes(client, 'converted', 10)
+      clock.mock.restore()
+      await put(client, 'converted', 'kept')
+    } finally {
+      client.destroy()
+      await target.close()
+      earlier.close()
+    }
+    assert.equal(autoVacuum(path), 0)
+    assert.equal(recordCount(path), 1001)
+    const full = sizeOnDisk(path)
+    await withServer(path, async client => {
+      await waitFor(async () => sizeOnDisk(path), size => size < full / 4)
+      const { ShardIterator } = await client.send(new GetShardIteratorCommand({ StreamName: 'converted', ShardId: 'shardId-000000000000', ShardIteratorType: 'TRIM_HORIZON' }))
+      const { Records } = await client.send(new GetRecordsCommand({ ShardIterator }))
+      assert.deepEqual(Records?.map(record => text(record.Data)), ['kept'])
+    }, { expiryIntervalMs: 10 })
+    assert.equal(autoVacuum(path), 2)
   })
 })

@@ -16,6 +16,7 @@ npm start -- --port 4567 --path ./data
 | `npm test` | Runs the unit and integration tests against a server in the same process. |
 | `npm run build` | Compiles the source and its type declarations to `dist/`, which the npm package and the image ship. |
 | `npm run model -- <commit>` | Downloads the Kinesis Smithy model from `aws/api-models-aws` at that commit and strips its documentation. |
+| `npm run benchmark -- [records]` | Measures the SQLite backend with and without incremental vacuum, with 100,000 records of 1 KiB unless given another count. |
 
 [Architecture](specs/architecture.md) describes the source layout, and [Request validation](specs/validation.md) describes the model and the generator. The source has no comments. The pages under `docs/specs/` hold the reasons behind the design.
 

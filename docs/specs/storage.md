@@ -45,4 +45,12 @@ The job takes each shard in turn. It asks the backend to expire one batch of the
 
 The SQLite backend reads one batch of sequence numbers from the oldest end of the `records_position` index. Expiry never loads record data, because the index holds the sequence numbers. The backend reads each record time from its sequence number. The `arrival` column is in the table and not in the index. Sequence numbers rise with time within a shard, and the backend stops at the first record that is still inside the retention period.
 
-Requests and the job share one thread. The job yields to the event loop after each batch, and the queue of a stream holds a request behind one batch at most. SQLite reuses the pages that the job frees. The database file then stops growing but does not shrink.
+Requests and the job share one thread. The job yields to the event loop after each batch, and the queue of a stream holds a request behind one batch at most.
+
+## Disk space
+
+The SQLite backend creates each database in incremental auto-vacuum mode. After it deletes a batch of expired records, or every record of a deleted stream, it moves pages from the end of its database file into freed space and truncates the file. A checkpoint then writes that change from the write-ahead log to the database file and empties the log. The file gets smaller as soon as the deletes finish.
+
+SQLite accepts the auto-vacuum mode only before it first writes a database file, and switching to write-ahead logging writes the file. The backend sets the mode before it switches. A database from an earlier version goes through one full `VACUUM` at start-up. The `VACUUM` takes longer on a large file and needs up to twice the size of the database in free disk space while it runs.
+
+`npm run benchmark` compares the backend with and without incremental vacuum. Incremental vacuum does not slow writes or reads. It slows writes while the job deletes records, and slows the deletes themselves, because SQLite copies every page that it moves. The backend accepts that cost and keeps one database file and its current schema. Append-only segment files for each shard would delete whole files instead, but they need an index and crash recovery of their own.
